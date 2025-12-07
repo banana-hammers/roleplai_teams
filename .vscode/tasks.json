@@ -1,0 +1,97 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Next.js: Dev Server",
+      "type": "shell",
+      "command": "npm run dev",
+      "problemMatcher": [],
+      "isBackground": true,
+      "presentation": {
+        "reveal": "always",
+        "panel": "new"
+      },
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      }
+    },
+    {
+      "label": "Next.js: Build",
+      "type": "shell",
+      "command": "npm run build",
+      "problemMatcher": ["$tsc"],
+      "group": "build"
+    },
+    {
+      "label": "TypeScript: Watch",
+      "type": "shell",
+      "command": "tsc --watch --noEmit",
+      "problemMatcher": ["$tsc-watch"],
+      "isBackground": true,
+      "presentation": {
+        "reveal": "silent",
+        "panel": "shared"
+      }
+    },
+    {
+      "label": "ESLint: Fix All",
+      "type": "shell",
+      "command": "npx eslint . --fix",
+      "problemMatcher": ["$eslint-stylish"]
+    },
+    {
+      "label": "Supabase: Start Local",
+      "type": "shell",
+      "command": "npx supabase start",
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "new"
+      }
+    },
+    {
+      "label": "Supabase: Stop Local",
+      "type": "shell",
+      "command": "npx supabase stop",
+      "problemMatcher": []
+    },
+    {
+      "label": "Supabase: Reset Database",
+      "type": "shell",
+      "command": "npx supabase db reset",
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always"
+      }
+    },
+    {
+      "label": "Supabase: Generate Types",
+      "type": "shell",
+      "command": "npx supabase gen types typescript --local > types/database.types.ts",
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "silent"
+      }
+    },
+    {
+      "label": "Supabase: Create Migration",
+      "type": "shell",
+      "command": "npx supabase migration new ${input:migrationName}",
+      "problemMatcher": []
+    },
+    {
+      "label": "Clean Build Artifacts",
+      "type": "shell",
+      "command": "rm -rf .next node_modules/.cache",
+      "problemMatcher": []
+    }
+  ],
+  "inputs": [
+    {
+      "id": "migrationName",
+      "type": "promptString",
+      "description": "Migration name (e.g., add_user_preferences)"
+    }
+  ]
+}

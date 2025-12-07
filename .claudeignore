@@ -1,0 +1,90 @@
+# Claude Code Ignore File
+# This file tells Claude Code which files and directories to exclude from context
+
+# Dependencies
+node_modules/
+.pnp/
+.pnp.*
+.yarn/
+
+# Build outputs
+.next/
+out/
+build/
+dist/
+.turbo/
+
+# Cache
+.cache/
+.parcel-cache/
+.eslintcache
+*.tsbuildinfo
+
+# Test coverage
+coverage/
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# Environment files
+.env
+.env.local
+.env.development
+.env.production
+.env.test
+
+# OS files
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+
+# IDE files (except explicitly included VSCode configs)
+.idea/
+*.sublime-project
+*.sublime-workspace
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+!.vscode/snippets/
+
+# Vercel
+.vercel/
+
+# Lock files (too large, not needed for context)
+package-lock.json
+pnpm-lock.yaml
+yarn.lock
+
+# Generated types (can be regenerated)
+# Uncomment if you want to exclude:
+# types/database.types.ts
+
+# Supabase temp files
+supabase/.temp/
+supabase/.branches/
+
+# Next.js specific
+next-env.d.ts
+
+# Large media files
+*.mp4
+*.mov
+*.avi
+*.mkv
+*.webm
+*.zip
+*.tar
+*.tar.gz
+*.rar
+
+# Claude specific
+.claude/.cache/
+.claude/temp/

@@ -2,7 +2,7 @@
 -- Phase 2: Database setup
 
 -- Enable UUID extension
-CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 
 -- Profiles table (extends auth.users)
 CREATE TABLE profiles (
@@ -27,7 +27,7 @@ CREATE POLICY "Users can update own profile"
 
 -- Identity Cores table
 CREATE TABLE identity_cores (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
   voice TEXT NOT NULL,
   priorities JSONB DEFAULT '{}',
@@ -59,7 +59,7 @@ CREATE POLICY "Users can delete own identity core"
 CREATE TYPE context_pack_type AS ENUM ('bio', 'brand', 'rules', 'custom');
 
 CREATE TABLE context_packs (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
   name TEXT NOT NULL,
   content TEXT NOT NULL,
@@ -78,7 +78,7 @@ CREATE POLICY "Users can manage own context packs"
 CREATE TYPE approval_policy AS ENUM ('always', 'never', 'smart');
 
 CREATE TABLE roles (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
   name TEXT NOT NULL,
   description TEXT,
@@ -119,7 +119,7 @@ CREATE POLICY "Users can link own resources"
 
 -- Skills table
 CREATE TABLE skills (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
   role_id UUID REFERENCES roles(id) ON DELETE SET NULL,
   name TEXT NOT NULL,
@@ -144,7 +144,7 @@ CREATE POLICY "Users can manage own skills"
 CREATE TYPE task_status AS ENUM ('pending', 'running', 'completed', 'failed', 'requires_approval');
 
 CREATE TABLE tasks (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
   role_id UUID NOT NULL REFERENCES roles(id) ON DELETE CASCADE,
   skill_id UUID REFERENCES skills(id) ON DELETE SET NULL,
@@ -166,7 +166,7 @@ CREATE POLICY "Users can manage own tasks"
 CREATE TYPE approval_status AS ENUM ('pending', 'approved', 'rejected');
 
 CREATE TABLE task_approvals (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   task_id UUID NOT NULL REFERENCES tasks(id) ON DELETE CASCADE,
   action_type TEXT NOT NULL,
   proposed_action JSONB NOT NULL,
@@ -187,7 +187,7 @@ CREATE POLICY "Users can manage approvals for own tasks"
 
 -- User API Keys table (BYO keys)
 CREATE TABLE user_api_keys (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
   provider TEXT NOT NULL,
   encrypted_key TEXT NOT NULL,

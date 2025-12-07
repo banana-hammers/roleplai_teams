@@ -40,6 +40,9 @@ export default function Home() {
 
         <div className="flex flex-col gap-4 sm:flex-row">
           <Button asChild size="lg">
+            <Link href="/chat">Try Chat Demo</Link>
+          </Button>
+          <Button asChild variant="outline" size="lg">
             <Link href="/signup">Get Started</Link>
           </Button>
           <Button asChild variant="outline" size="lg">
@@ -47,10 +50,10 @@ export default function Home() {
           </Button>
         </div>
 
-        <div className="mt-8 rounded-lg border border-yellow-200 bg-yellow-50 p-4 text-sm dark:border-yellow-900 dark:bg-yellow-950">
-          <p className="font-medium">🚧 MVP in Development</p>
+        <div className="mt-8 rounded-lg border border-green-200 bg-green-50 p-4 text-sm dark:border-green-900 dark:bg-green-950">
+          <p className="font-medium">✅ Chat Streaming Ready!</p>
           <p className="mt-1 text-muted-foreground">
-            Phase 1 complete. Next: Database setup and authentication.
+            AI SDK integration complete. Try the chat demo above.
           </p>
         </div>
       </main>

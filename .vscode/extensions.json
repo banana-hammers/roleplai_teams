@@ -1,0 +1,39 @@
+{
+  "recommendations": [
+    // Essential for Next.js development
+    "esbenp.prettier-vscode",
+    "dbaeumer.vscode-eslint",
+    "bradlc.vscode-tailwindcss",
+
+    // TypeScript
+    "yoavbls.pretty-ts-errors",
+
+    // Next.js & React
+    "dsznajder.es7-react-js-snippets",
+
+    // Supabase
+    "supabase.supabase-sql",
+
+    // Git
+    "eamodio.gitlens",
+
+    // Utils
+    "christian-kohler.path-intellisense",
+    "wayou.vscode-todo-highlight",
+    "usernamehw.errorlens",
+
+    // AI/Claude
+    "anthropic.claude-code",
+
+    // Database
+    "mtxr.sqltools",
+
+    // Icons
+    "pkief.material-icon-theme"
+  ],
+  "unwantedRecommendations": [
+    "hookyqr.beautify",
+    "dbaeumer.jshint",
+    "ms-vscode.vscode-typescript-tslint-plugin"
+  ]
+}
