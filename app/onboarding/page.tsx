@@ -14,7 +14,7 @@ import { generateIdentityCore, generateBehaviorExamples } from '@/lib/onboarding
 const TOTAL_STEPS = 5
 
 export default function OnboardingPage() {
-  const { state, setState } = useOnboardingState()
+  const { state, setState, isHydrated } = useOnboardingState()
 
   // Generate identity and examples when personality is extracted
   const { identity, examples } = useMemo(() => {
@@ -97,6 +97,21 @@ export default function OnboardingPage() {
       ...state,
       currentStep: 3,
     })
+  }
+
+  // Show loading state until hydrated to avoid hydration mismatch
+  if (!isHydrated) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-gradient-to-b from-zinc-50 to-white dark:from-zinc-950 dark:to-black px-4 py-8">
+        <Card className="w-full max-w-2xl">
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-center py-12">
+              <div className="animate-pulse text-muted-foreground">Loading...</div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    )
   }
 
   return (

@@ -29,14 +29,15 @@ export async function completeOnboarding(
   }
 
   try {
-    // Update profile with alias and completion flag
+    // Upsert profile with alias and completion flag (creates if missing)
     const { error: profileError } = await supabase
       .from('profiles')
-      .update({
+      .upsert({
+        id: user.id,
+        email: user.email!,
         alias: data.alias,
         onboarding_completed: true,
       })
-      .eq('id', user.id)
 
     if (profileError) {
       console.error('Profile update error:', profileError)

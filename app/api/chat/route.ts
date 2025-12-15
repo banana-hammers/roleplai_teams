@@ -1,5 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
-import { streamText } from 'ai'
+import { streamText, convertToModelMessages } from 'ai'
 import { createOpenAI } from '@ai-sdk/openai'
 import { createAnthropic } from '@ai-sdk/anthropic'
 
@@ -60,7 +60,7 @@ export async function POST(req: Request) {
       aiProvider = openai(modelName)
     } else if (provider === 'anthropic') {
       const anthropic = createAnthropic({ apiKey })
-      modelName = model || 'claude-3-5-sonnet-20241022'
+      modelName = model || 'claude-sonnet-4-5-20250929'
       aiProvider = anthropic(modelName)
     } else {
       return new Response(
@@ -72,11 +72,11 @@ export async function POST(req: Request) {
     // Stream the response
     const result = streamText({
       model: aiProvider,
-      messages,
+      messages: convertToModelMessages(messages),
       temperature: 0.7,
     })
 
-    return result.toTextStreamResponse()
+    return result.toUIMessageStreamResponse()
   } catch (error) {
     console.error('Chat API error:', error)
     return new Response(

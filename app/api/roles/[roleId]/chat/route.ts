@@ -1,5 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
-import { streamText } from 'ai'
+import { streamText, convertToModelMessages } from 'ai'
 import { createOpenAI } from '@ai-sdk/openai'
 import { createAnthropic } from '@ai-sdk/anthropic'
 
@@ -142,13 +142,13 @@ ${pack.content}`)
       aiProvider = openai(modelName || 'gpt-4-turbo-preview')
     } else {
       const anthropic = createAnthropic({ apiKey })
-      aiProvider = anthropic(modelName || 'claude-3-5-sonnet-20241022')
+      aiProvider = anthropic(modelName || 'claude-sonnet-4-5-20250929')
     }
 
     // Inject system prompt as first message
     const enhancedMessages = [
       { role: 'system' as const, content: systemPrompt },
-      ...messages
+      ...convertToModelMessages(messages)
     ]
 
     // Stream the response

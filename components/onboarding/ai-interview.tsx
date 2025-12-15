@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useCallback } from 'react'
 import { useChat } from '@ai-sdk/react'
 import { DefaultChatTransport } from 'ai'
 import { Button } from '@/components/ui/button'
@@ -15,6 +15,7 @@ interface AIInterviewProps {
 export function AIInterview({ onComplete, onBack }: AIInterviewProps) {
   const [input, setInput] = useState('')
   const messagesEndRef = useRef<HTMLDivElement>(null)
+  const hasStartedRef = useRef(false)
   const [questionCount, setQuestionCount] = useState(0)
   const [isComplete, setIsComplete] = useState(false)
 
@@ -29,9 +30,10 @@ export function AIInterview({ onComplete, onBack }: AIInterviewProps) {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
 
-  // Start interview automatically
+  // Start interview automatically (with guard for React Strict Mode)
   useEffect(() => {
-    if (messages.length === 0) {
+    if (messages.length === 0 && !hasStartedRef.current) {
+      hasStartedRef.current = true
       sendMessage({
         text: "Hi! I'm ready to start.",
       })
@@ -92,7 +94,7 @@ export function AIInterview({ onComplete, onBack }: AIInterviewProps) {
           Let's chat! I'll ask you a few questions to understand your personality.
         </p>
         <p className="text-sm text-muted-foreground">
-          Question {questionCount} of ~7
+          {questionCount === 0 ? 'Starting interview...' : `Question ${questionCount} of ~7`}
         </p>
       </div>
 

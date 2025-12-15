@@ -15,36 +15,39 @@ export interface OnboardingLocalState {
 }
 
 const STORAGE_KEY = 'onboarding_state'
+const DEFAULT_STATE: OnboardingLocalState = { currentStep: 1 }
 
 /**
  * Hook for managing ephemeral onboarding state in localStorage
  */
 export function useOnboardingState() {
-  const [state, setState] = useState<OnboardingLocalState>(() => {
-    // Load from localStorage on mount (client-side only)
-    if (typeof window === 'undefined') {
-      return { currentStep: 1 }
-    }
+  // Always start with default state to avoid hydration mismatch
+  const [state, setState] = useState<OnboardingLocalState>(DEFAULT_STATE)
+  const [isHydrated, setIsHydrated] = useState(false)
 
+  // Load from localStorage after hydration (client-side only)
+  useEffect(() => {
     try {
       const saved = localStorage.getItem(STORAGE_KEY)
-      return saved ? JSON.parse(saved) : { currentStep: 1 }
+      if (saved) {
+        setState(JSON.parse(saved))
+      }
     } catch (error) {
       console.error('Failed to load onboarding state:', error)
-      return { currentStep: 1 }
     }
-  })
+    setIsHydrated(true)
+  }, [])
 
-  // Auto-save to localStorage on changes
+  // Auto-save to localStorage on changes (only after hydration)
   useEffect(() => {
-    if (typeof window !== 'undefined') {
+    if (isHydrated) {
       try {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(state))
       } catch (error) {
         console.error('Failed to save onboarding state:', error)
       }
     }
-  }, [state])
+  }, [state, isHydrated])
 
   // Clear localStorage on completion
   const completeOnboarding = () => {
@@ -53,5 +56,5 @@ export function useOnboardingState() {
     }
   }
 
-  return { state, setState, completeOnboarding }
+  return { state, setState, completeOnboarding, isHydrated }
 }

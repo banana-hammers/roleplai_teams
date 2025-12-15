@@ -23,7 +23,7 @@ export default function ChatPage() {
               <div className="h-full border rounded-lg">
                 <ChatInterface
                   provider="anthropic"
-                  model="claude-3-5-sonnet-20241022"
+                  model="claude-sonnet-4-5-20250929"
                 />
               </div>
             </TabsContent>
