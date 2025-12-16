@@ -2,6 +2,7 @@
 
 import { useChat } from '@ai-sdk/react'
 import { DefaultChatTransport } from 'ai'
+import { useRoleChat, type Message as RoleMessage } from '@/lib/hooks/use-role-chat'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { Card } from '@/components/ui/card'
@@ -11,34 +12,38 @@ import { useState } from 'react'
 
 interface ChatInterfaceProps {
   roleId?: string
-  provider?: 'openai' | 'anthropic'
-  model?: string
   roleName?: string
 }
 
-export function ChatInterface({ roleId, provider = 'anthropic', model, roleName }: ChatInterfaceProps) {
-  const endpoint = roleId ? `/api/roles/${roleId}/chat` : '/api/chat'
+export function ChatInterface({ roleId, roleName }: ChatInterfaceProps) {
   const [inputValue, setInputValue] = useState('')
 
-  const { messages, sendMessage, status, error } = useChat({
+  // Use role-specific hook for role chat, standard useChat for basic chat
+  const roleChat = useRoleChat({ roleId: roleId || '' })
+  const basicChat = useChat({
     transport: new DefaultChatTransport({
-      api: endpoint,
-      body: {
-        provider,
-        model,
-      },
+      api: '/api/chat',
+      body: { provider: 'anthropic' },
     }),
   })
 
+  // Select the appropriate chat state based on whether we have a roleId
+  const isRoleChat = !!roleId
+  const messages = isRoleChat ? roleChat.messages : basicChat.messages
+  const isLoading = isRoleChat ? roleChat.isLoading : (basicChat.status === 'streaming' || basicChat.status === 'submitted')
+  const error = isRoleChat ? roleChat.error : basicChat.error?.message
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    if (inputValue.trim()) {
-      sendMessage({ text: inputValue })
-      setInputValue('')
-    }
-  }
+    if (!inputValue.trim()) return
 
-  const isLoading = status === 'streaming' || status === 'submitted'
+    if (isRoleChat) {
+      roleChat.sendMessage(inputValue)
+    } else {
+      basicChat.sendMessage({ text: inputValue })
+    }
+    setInputValue('')
+  }
 
   return (
     <div className="flex h-full flex-col">
@@ -54,10 +59,7 @@ export function ChatInterface({ roleId, provider = 'anthropic', model, roleName 
             </p>
           )}
         </div>
-        <div className="flex gap-2">
-          <Badge variant="outline">{provider}</Badge>
-          {model && <Badge variant="secondary">{model}</Badge>}
-        </div>
+        <Badge variant="outline">Claude</Badge>
       </div>
 
       {/* Messages */}
@@ -94,13 +96,38 @@ export function ChatInterface({ roleId, provider = 'anthropic', model, roleName 
                     {message.role === 'user' ? 'You' : roleName || 'Assistant'}
                   </div>
                   <div className="text-sm whitespace-pre-wrap">
-                    {message.parts.map((part, index) => {
+                    {/* Handle role chat messages */}
+                    {isRoleChat && (message as RoleMessage).content}
+
+                    {/* Handle basic chat messages with parts */}
+                    {!isRoleChat && 'parts' in message && message.parts.map((part, index) => {
                       if (part.type === 'text') {
                         return <span key={index}>{part.text}</span>
                       }
                       return null
                     })}
                   </div>
+
+                  {/* Tool calls display (role chat only) */}
+                  {isRoleChat && (message as RoleMessage).toolCalls && (message as RoleMessage).toolCalls!.length > 0 && (
+                    <div className="mt-3 space-y-2">
+                      {(message as RoleMessage).toolCalls!.map((tool, index) => (
+                        <div
+                          key={index}
+                          className="border-l-2 border-blue-500 pl-3 py-1 text-xs"
+                        >
+                          <div className="font-medium text-blue-600">
+                            Skill: {tool.name}
+                          </div>
+                          {tool.result && (
+                            <div className="mt-1 text-muted-foreground bg-blue-50 p-2 rounded">
+                              {tool.result}
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
             </Card>
@@ -123,7 +150,7 @@ export function ChatInterface({ roleId, provider = 'anthropic', model, roleName 
           <div className="flex justify-center">
             <Card className="border-destructive bg-destructive/10 p-4">
               <p className="text-sm text-destructive">
-                Error: {error.message}
+                Error: {error}
               </p>
             </Card>
           </div>

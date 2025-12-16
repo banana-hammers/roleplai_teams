@@ -1,7 +1,12 @@
 import { createClient } from '@/lib/supabase/server'
-import { streamText, convertToModelMessages } from 'ai'
-import { createOpenAI } from '@ai-sdk/openai'
-import { createAnthropic } from '@ai-sdk/anthropic'
+import Anthropic from '@anthropic-ai/sdk'
+import {
+  skillsToAnthropicTools,
+  findSkillByToolName,
+  executeSkillTool,
+  type AnthropicTool
+} from '@/lib/skills/to-anthropic-tools'
+import type { Skill } from '@/types/skill'
 
 export const runtime = 'edge'
 
@@ -53,8 +58,22 @@ export async function POST(
       `)
       .eq('role_id', roleId)
 
+    // Fetch skills based on allowed_tools
+    const allowedToolIds = (role.allowed_tools as string[]) || []
+    let skills: Skill[] = []
+    if (allowedToolIds.length > 0) {
+      const { data: skillData } = await supabase
+        .from('skills')
+        .select('*')
+        .in('id', allowedToolIds)
+      skills = (skillData as Skill[]) || []
+    }
+
+    // Convert skills to Anthropic tools format
+    const tools: AnthropicTool[] = skillsToAnthropicTools(skills)
+
     // Build the system prompt with identity + role + context
-    const systemPromptParts = []
+    const systemPromptParts: string[] = []
 
     // Add identity core if available
     if (identityCore) {
@@ -82,12 +101,17 @@ ${role.instructions}
 ## Identity Facets
 ${JSON.stringify(role.identity_facets, null, 2)}
 
-## Allowed Tools
-${JSON.stringify(role.allowed_tools, null, 2)}
-
 ## Approval Policy
 ${role.approval_policy}
 `)
+
+    // Add available tools info to system prompt
+    if (tools.length > 0) {
+      systemPromptParts.push(`## Available Skills
+You have access to the following skills. Use them when appropriate:
+${tools.map(t => `- ${t.name}: ${t.description}`).join('\n')}
+`)
+    }
 
     // Add context packs
     if (contextPacks && contextPacks.length > 0) {
@@ -101,29 +125,24 @@ ${pack.content}`)
 
     const systemPrompt = systemPromptParts.join('\n\n---\n\n')
 
-    // Fetch user's API key for the preferred provider
-    const provider = role.model_preference?.split('/')[0] || 'anthropic'
-    const modelName = role.model_preference?.split('/')[1]
-
+    // Get API key (fall back to system key)
     const { data: apiKeys } = await supabase
       .from('user_api_keys')
       .select('encrypted_key')
       .eq('user_id', user.id)
-      .eq('provider', provider)
+      .eq('provider', 'anthropic')
       .maybeSingle()
 
     let apiKey: string | undefined
 
-    // TODO: Decrypt the API key
+    // TODO: Decrypt the API key when encryption is implemented
     if (apiKeys?.encrypted_key) {
       // apiKey = await decryptApiKey(apiKeys.encrypted_key)
     }
 
-    // Fall back to system keys
+    // Fall back to system key
     if (!apiKey) {
-      apiKey = provider === 'openai'
-        ? process.env.OPENAI_API_KEY
-        : process.env.ANTHROPIC_API_KEY
+      apiKey = process.env.ANTHROPIC_API_KEY
     }
 
     if (!apiKey) {
@@ -135,30 +154,159 @@ ${pack.content}`)
       )
     }
 
-    // Initialize AI provider
-    let aiProvider
-    if (provider === 'openai') {
-      const openai = createOpenAI({ apiKey })
-      aiProvider = openai(modelName || 'gpt-4-turbo-preview')
-    } else {
-      const anthropic = createAnthropic({ apiKey })
-      aiProvider = anthropic(modelName || 'claude-sonnet-4-5-20250929')
-    }
+    // Initialize Anthropic client
+    const anthropic = new Anthropic({ apiKey })
 
-    // Inject system prompt as first message
-    const enhancedMessages = [
-      { role: 'system' as const, content: systemPrompt },
-      ...convertToModelMessages(messages)
-    ]
+    // Get model from role preference or use default
+    const modelName = role.model_preference?.split('/')[1] || 'claude-sonnet-4-5-20250929'
 
-    // Stream the response
-    const result = streamText({
-      model: aiProvider,
-      messages: enhancedMessages,
-      temperature: 0.7,
+    // Convert messages to Anthropic format
+    const anthropicMessages: Anthropic.MessageParam[] = messages.map((m: any) => ({
+      role: m.role as 'user' | 'assistant',
+      content: m.content
+    }))
+
+    // Create a streaming response using SSE
+    const encoder = new TextEncoder()
+    const stream = new ReadableStream({
+      async start(controller) {
+        try {
+          // Agentic loop: keep going until no more tool calls
+          let currentMessages = [...anthropicMessages]
+          let continueLoop = true
+
+          while (continueLoop) {
+            const response = await anthropic.messages.create({
+              model: modelName,
+              max_tokens: 4096,
+              system: systemPrompt,
+              messages: currentMessages,
+              tools: tools.length > 0 ? tools as Anthropic.Tool[] : undefined,
+              stream: true,
+            })
+
+            let fullText = ''
+            const toolCalls: Array<{ id: string; name: string; input: Record<string, unknown> }> = []
+            let currentToolCall: { id: string; name: string; input: string } | null = null
+
+            for await (const event of response) {
+              if (event.type === 'content_block_start') {
+                if (event.content_block.type === 'tool_use') {
+                  currentToolCall = {
+                    id: event.content_block.id,
+                    name: event.content_block.name,
+                    input: ''
+                  }
+                  // Send tool call start event
+                  controller.enqueue(encoder.encode(`data: ${JSON.stringify({
+                    type: 'tool_call_start',
+                    tool: event.content_block.name
+                  })}\n\n`))
+                }
+              } else if (event.type === 'content_block_delta') {
+                if (event.delta.type === 'text_delta') {
+                  fullText += event.delta.text
+                  // Stream text to client
+                  controller.enqueue(encoder.encode(`data: ${JSON.stringify({
+                    type: 'text',
+                    content: event.delta.text
+                  })}\n\n`))
+                } else if (event.delta.type === 'input_json_delta' && currentToolCall) {
+                  currentToolCall.input += event.delta.partial_json
+                }
+              } else if (event.type === 'content_block_stop') {
+                if (currentToolCall) {
+                  try {
+                    const input = JSON.parse(currentToolCall.input)
+                    toolCalls.push({
+                      id: currentToolCall.id,
+                      name: currentToolCall.name,
+                      input
+                    })
+                  } catch {
+                    // Invalid JSON, skip this tool call
+                  }
+                  currentToolCall = null
+                }
+              } else if (event.type === 'message_stop') {
+                // Message complete
+              }
+            }
+
+            // If there are tool calls, execute them and continue the loop
+            if (toolCalls.length > 0) {
+              // Add assistant message with tool calls
+              const assistantContent: Anthropic.ContentBlockParam[] = []
+              if (fullText) {
+                assistantContent.push({ type: 'text', text: fullText })
+              }
+              for (const tc of toolCalls) {
+                assistantContent.push({
+                  type: 'tool_use',
+                  id: tc.id,
+                  name: tc.name,
+                  input: tc.input
+                })
+              }
+              currentMessages.push({
+                role: 'assistant',
+                content: assistantContent
+              })
+
+              // Execute tools and add results
+              const toolResults: Anthropic.ToolResultBlockParam[] = []
+              for (const tc of toolCalls) {
+                const skill = findSkillByToolName(skills, tc.name)
+                let result: string
+                if (skill) {
+                  result = executeSkillTool(skill, tc.input)
+                  // Send tool result event
+                  controller.enqueue(encoder.encode(`data: ${JSON.stringify({
+                    type: 'tool_result',
+                    tool: tc.name,
+                    result
+                  })}\n\n`))
+                } else {
+                  result = `Error: Unknown tool "${tc.name}"`
+                }
+                toolResults.push({
+                  type: 'tool_result',
+                  tool_use_id: tc.id,
+                  content: result
+                })
+              }
+
+              currentMessages.push({
+                role: 'user',
+                content: toolResults
+              })
+            } else {
+              // No tool calls, exit the loop
+              continueLoop = false
+            }
+          }
+
+          // Send done event
+          controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'done' })}\n\n`))
+          controller.close()
+        } catch (error) {
+          console.error('Stream error:', error)
+          controller.enqueue(encoder.encode(`data: ${JSON.stringify({
+            type: 'error',
+            message: 'An error occurred while processing your request'
+          })}\n\n`))
+          controller.close()
+        }
+      }
     })
 
-    return result.toTextStreamResponse()
+    return new Response(stream, {
+      headers: {
+        'Content-Type': 'text/event-stream',
+        'Cache-Control': 'no-cache',
+        'Connection': 'keep-alive',
+      },
+    })
   } catch (error) {
     console.error('Role chat API error:', error)
     return new Response(

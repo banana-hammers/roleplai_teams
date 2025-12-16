@@ -5,7 +5,7 @@ export interface ExtractedPersonality {
   priorities: PriorityValue[]
   boundaries: BoundaryType[]
   customBoundaries?: string[]
-  confidence: number
+  confidence?: number
 }
 
 export interface IdentityCore {
