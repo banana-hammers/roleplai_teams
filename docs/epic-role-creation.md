@@ -2,9 +2,11 @@
 
 **Goal**: Create a guided, AI-native experience where users create their first Role with practical starter Skills immediately after onboarding, transforming their identity core into a specialized AI agent.
 
-**Priority**: High | **Status**: Not Started | **Phase**: 3
+**Priority**: High | **Status**: In Progress | **Phase**: 3
 
-**Prerequisite**: Account Creation epic (Stories 1.1-1.8) must be complete.
+**Prerequisites**:
+- Account Creation epic (Stories 1.1-1.8) - Complete
+- Skill Execution feature - Complete (Claude tool calling via Anthropic SDK)
 
 ---
 
@@ -17,6 +19,7 @@ This epic transforms role creation from a form-filling exercise into an **AI-gui
 - Conversational role discovery instead of static forms
 - AI-generated role configuration based on user intent
 - Starter skills created automatically based on role purpose
+- **Skills actually execute** - Claude can call them as tools during chat
 - Instant test-drive with the new role before committing
 - Clear connection between identity core and role-specific behavior
 
@@ -361,17 +364,26 @@ export async function createRoleWithSkills(data: CreateRoleData): Promise<Create
 
 **As a user, I want to chat with my new role immediately after creating it**
 
+**Status**: Backend complete - API endpoint with tool execution exists at `/api/roles/[roleId]/chat`
+
 **Acceptance Criteria**:
 
+- [x] Compose system prompt from identity core + role + skills (done in API)
+- [x] Skills execute as Claude tools during chat (done)
+- [x] Verify role ownership via RLS (done in API)
 - [ ] `/roles/[roleId]` page loads role details
-- [ ] Compose system prompt from identity core + role + skills
 - [ ] Chat interface matches existing chat patterns
 - [ ] Display role name in header
 - [ ] Show available skills as suggested actions (optional)
 - [ ] Handle role not found (404)
-- [ ] Verify role ownership via RLS
 
 **Files**: `app/roles/[roleId]/page.tsx`
+
+**Note**: The chat API endpoint (`app/api/roles/[roleId]/chat/route.ts`) is fully implemented with:
+- Anthropic SDK direct integration
+- Agentic tool loop for multi-turn skill execution
+- SSE streaming with tool call/result events
+- Custom `useRoleChat` hook for the frontend
 
 ---
 
@@ -520,7 +532,9 @@ types/
 
 ## Dependencies
 
-- **Existing**: Supabase, AI SDK v5, shadcn/ui, Next.js 16
+- **Existing**: Supabase, Anthropic SDK, @ai-sdk/react, shadcn/ui, Next.js 16
+- **Skill Execution**: Uses `lib/skills/to-anthropic-tools.ts` for Claude tool conversion
+- **Chat Hook**: Uses `lib/hooks/use-role-chat.ts` for SSE streaming with tool calls
 - **Patterns**: Follow onboarding flow patterns exactly
 
 ---
@@ -549,6 +563,6 @@ types/
 ## Related Epics
 
 - **Epic: Account Creation** (complete) - Prerequisite, creates identity core
+- **Epic: Skill Execution** (complete) - Claude tool calling via Anthropic SDK direct
 - **Epic: Chat History & Persistence** (planned) - Save role conversations
 - **Epic: Role Management** (future) - Edit, delete, organize roles
-- **Epic: Skill Execution** (future) - Actually run skills with function calling
