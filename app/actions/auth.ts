@@ -118,24 +118,7 @@ export async function signup(formData: SignupFormData): Promise<SignupResult> {
     }
   }
 
-  // Create profile record
-  const { error: profileError } = await supabase
-    .from('profiles')
-    .insert({
-      id: authData.user.id,
-      email: formData.email,
-      onboarding_completed: false,
-    })
-
-  if (profileError) {
-    console.error('Profile creation error:', profileError)
-    // User is created but profile failed - this is a critical error
-    return {
-      success: false,
-      error: 'Account created but profile setup failed. Please contact support.'
-    }
-  }
-
+  // Profile is created automatically via database trigger (handle_new_user)
   // Redirect to onboarding
   redirect('/onboarding')
 }
