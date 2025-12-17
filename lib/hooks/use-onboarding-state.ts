@@ -1,16 +1,13 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import type { ExtractedPersonality } from '@/lib/onboarding/generate-identity'
 
 export interface OnboardingLocalState {
   currentStep: number // 1-5
   aliasName?: string
   interviewMessages?: Array<{ role: string; content: string }>
-  extractedPersonality?: {
-    voice: string
-    priorities: string[]
-    boundaries: string[]
-  }
+  extractedPersonality?: ExtractedPersonality
   testDriveMessages?: Array<{ role: string; content: string }>
 }
 

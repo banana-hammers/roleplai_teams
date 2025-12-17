@@ -7,12 +7,12 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Loader2 } from 'lucide-react'
 
-interface AIInterviewProps {
+interface RoleInterviewProps {
   onComplete: (messages: Array<{ role: string; content: string }>) => void
   onBack?: () => void
 }
 
-export function AIInterview({ onComplete, onBack }: AIInterviewProps) {
+export function RoleInterview({ onComplete, onBack }: RoleInterviewProps) {
   const [input, setInput] = useState('')
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const hasStartedRef = useRef(false)
@@ -21,7 +21,7 @@ export function AIInterview({ onComplete, onBack }: AIInterviewProps) {
 
   const { messages, sendMessage, status } = useChat({
     transport: new DefaultChatTransport({
-      api: '/api/onboarding/interview',
+      api: '/api/roles/interview',
     }),
   })
 
@@ -38,7 +38,7 @@ export function AIInterview({ onComplete, onBack }: AIInterviewProps) {
     if (messages.length === 0 && !hasStartedRef.current) {
       hasStartedRef.current = true
       sendMessage({
-        text: "Hi! I'm ready to start.",
+        text: "Hi! I'm ready to create my first role.",
       })
     }
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
@@ -48,8 +48,8 @@ export function AIInterview({ onComplete, onBack }: AIInterviewProps) {
     const assistantMessages = messages.filter(m => m.role === 'assistant')
     setQuestionCount(assistantMessages.length)
 
-    // Check if Nova is concluding (7+ questions or completion phrase)
-    if (assistantMessages.length >= 7) {
+    // Check if Forge is concluding (3+ questions or completion phrase)
+    if (assistantMessages.length >= 3) {
       const lastMessage = assistantMessages[assistantMessages.length - 1]
       const content = lastMessage.parts
         .map(part => part.type === 'text' ? part.text : '')
@@ -57,10 +57,12 @@ export function AIInterview({ onComplete, onBack }: AIInterviewProps) {
         .toLowerCase()
 
       if (
-        content.includes('have everything') ||
-        content.includes('show you your identity') ||
-        content.includes("that's all i need") ||
-        assistantMessages.length >= 9
+        content.includes('let me put together') ||
+        content.includes('config and suggest') ||
+        content.includes('starter skills for you') ||
+        content.includes("i'll generate") ||
+        (content.includes('perfect!') && content.includes('so you want')) ||
+        assistantMessages.length >= 6
       ) {
         setIsComplete(true)
       }
@@ -75,7 +77,7 @@ export function AIInterview({ onComplete, onBack }: AIInterviewProps) {
     setInput('')
   }
 
-  const handleComplete = async () => {
+  const handleComplete = useCallback(async () => {
     // Convert messages to simple format for storage
     const simpleMessages = messages.map(m => ({
       role: m.role,
@@ -85,19 +87,19 @@ export function AIInterview({ onComplete, onBack }: AIInterviewProps) {
     }))
 
     onComplete(simpleMessages)
-  }
+  }, [messages, onComplete])
 
   return (
     <div className="space-y-6">
       <div className="space-y-2 text-center">
         <h2 className="text-2xl font-semibold tracking-tight">
-          AI Personality Interview
+          Create Your Role
         </h2>
         <p className="text-muted-foreground">
-          Let's chat! I'll ask you a few questions to understand your personality.
+          Tell Forge what kind of AI assistant you want to create.
         </p>
         <p className="text-sm text-muted-foreground">
-          {questionCount === 0 ? 'Starting interview...' : `Question ${questionCount} of ~7`}
+          {questionCount === 0 ? 'Starting conversation...' : `Question ${questionCount} of ~5`}
         </p>
       </div>
 
@@ -124,7 +126,7 @@ export function AIInterview({ onComplete, onBack }: AIInterviewProps) {
               >
                 {message.role === 'assistant' && (
                   <div className="text-xs font-semibold mb-1 text-muted-foreground">
-                    Nova
+                    Forge
                   </div>
                 )}
                 <div className="text-sm whitespace-pre-wrap">{content}</div>
@@ -150,7 +152,7 @@ export function AIInterview({ onComplete, onBack }: AIInterviewProps) {
           <Input
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            placeholder="Type your answer..."
+            placeholder="Describe what you want your role to do..."
             disabled={isInProgress}
             className="flex-1"
             autoFocus
@@ -168,7 +170,7 @@ export function AIInterview({ onComplete, onBack }: AIInterviewProps) {
       {isComplete && (
         <div className="space-y-4">
           <div className="rounded-lg border border-green-200 bg-green-50 p-3 text-sm text-green-900 dark:border-green-900 dark:bg-green-950 dark:text-green-100 text-center">
-            Interview complete! Ready to see your identity profile.
+            Ready to generate your role configuration!
           </div>
           <div className="flex justify-between gap-4">
             {onBack && (
@@ -177,7 +179,7 @@ export function AIInterview({ onComplete, onBack }: AIInterviewProps) {
               </Button>
             )}
             <Button onClick={handleComplete} className="ml-auto">
-              Continue to Identity Preview
+              Generate Role
             </Button>
           </div>
         </div>

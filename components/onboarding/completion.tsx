@@ -47,8 +47,8 @@ export function Completion({ aliasName, identity }: CompletionProps) {
         localStorage.removeItem('onboarding_state')
       }
 
-      // For now, redirect to home - will be role creation page later
-      router.push('/')
+      // Redirect to role creation
+      router.push('/roles/create')
     } catch (err) {
       console.error('Completion error:', err)
       setError('An unexpected error occurred')

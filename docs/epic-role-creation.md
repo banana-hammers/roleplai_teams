@@ -2,7 +2,7 @@
 
 **Goal**: Create a guided, AI-native experience where users create their first Role with practical starter Skills immediately after onboarding, transforming their identity core into a specialized AI agent.
 
-**Priority**: High | **Status**: In Progress | **Phase**: 3
+**Priority**: High | **Status**: Complete | **Phase**: 3
 
 **Prerequisites**:
 - Account Creation epic (Stories 1.1-1.8) - Complete
@@ -58,14 +58,16 @@ Step 3: Confirmation + Success
 
 ### Story 2.1: Role Creation Wizard Entry Point
 
+**Status**: Complete
+
 **As a user who completed onboarding, I want to easily start creating my first role so I can put my identity to work**
 
 **Acceptance Criteria**:
 
-- [ ] "Create Your First Role" button on completion screen redirects to `/roles/create`
-- [ ] `/roles/create` page loads with step indicator (Step 1 of 3)
-- [ ] Protected route - redirects to login if not authenticated
-- [ ] If user already has roles, still allows creating new ones
+- [x] "Create Your First Role" button on completion screen redirects to `/roles/create`
+- [x] `/roles/create` page loads with step indicator (Step 1 of 3)
+- [x] Protected route - redirects to login if not authenticated
+- [x] If user already has roles, still allows creating new ones
 
 **Files**: `app/roles/create/page.tsx`, `components/onboarding/completion.tsx`
 
@@ -73,22 +75,24 @@ Step 3: Confirmation + Success
 
 ### Story 2.2: AI Role Interview with Forge
 
+**Status**: Complete
+
 **As a new user, I want to describe what I need in conversation so the system understands my intent naturally**
 
 **Acceptance Criteria**:
 
-- [ ] AI guide "Forge" introduces itself as the role architect
-- [ ] Forge asks 3-5 conversational questions about:
+- [x] AI guide "Forge" introduces itself as the role architect
+- [x] Forge asks 3-5 conversational questions about:
   - Role's primary purpose (what task/job should it do?)
   - Role's domain/context (what area does it work in?)
   - Specific behaviors or capabilities wanted
   - Any constraints or boundaries for this role
   - Example tasks they'd want this role to handle
-- [ ] Questions adapt based on user's answers
-- [ ] Accept natural language responses
-- [ ] Show progress indicator (e.g., "Question 2 of ~5")
-- [ ] Interview concludes with summary of understood requirements
-- [ ] Streaming responses for natural conversation feel
+- [x] Questions adapt based on user's answers
+- [x] Accept natural language responses
+- [x] Show progress indicator (e.g., "Question 2 of ~5")
+- [x] Interview concludes with summary of understood requirements
+- [x] Streaming responses for natural conversation feel
 
 **Files**: `components/roles/role-interview.tsx`, `app/api/roles/interview/route.ts`, `lib/constants/role-prompts.ts`
 
@@ -129,21 +133,23 @@ and suggest some starter skills for you..."
 
 ### Story 2.3: Role Configuration Extraction
 
+**Status**: Complete
+
 **As the system, I want to extract structured role configuration from the interview conversation**
 
 **Acceptance Criteria**:
 
-- [ ] Extract role `name` - catchy, descriptive (e.g., "Email Ninja")
-- [ ] Extract `description` - 1-2 sentence summary
-- [ ] Generate `instructions` - detailed behavior instructions (2-4 paragraphs)
-- [ ] Generate `identity_facets`:
+- [x] Extract role `name` - catchy, descriptive (e.g., "Email Ninja")
+- [x] Extract `description` - 1-2 sentence summary
+- [x] Generate `instructions` - detailed behavior instructions (2-4 paragraphs)
+- [x] Generate `identity_facets`:
   - `tone_adjustment` - how this role modifies communication style
   - `priority_override` - which priorities are elevated for this role
   - `special_behaviors` - role-specific behaviors
-- [ ] Set `approval_policy` - default to 'smart' unless specified
-- [ ] Fetch user's identity core to personalize suggestions
-- [ ] Use structured output (Zod schema) for consistent format
-- [ ] Handle extraction errors gracefully
+- [x] Set `approval_policy` - default to 'smart' unless specified
+- [x] Fetch user's identity core to personalize suggestions
+- [x] Use structured output (Zod schema) for consistent format
+- [x] Handle extraction errors gracefully
 
 **Files**: `app/api/roles/extract/route.ts`, `types/role-creation.ts`
 
@@ -167,19 +173,21 @@ const roleConfigSchema = z.object({
 
 ### Story 2.4: Starter Skills Generation
 
+**Status**: Complete
+
 **As a user, I want my role to come with practical skills I can use immediately**
 
 **Acceptance Criteria**:
 
-- [ ] Generate 2-4 starter skills based on role purpose
-- [ ] Each skill includes:
+- [x] Generate 2-4 starter skills based on role purpose
+- [x] Each skill includes:
   - `name` - action-oriented (e.g., "Draft Email")
   - `description` - what the skill does
   - `prompt_template` - actual prompt with `{{placeholders}}`
   - `input_schema` - JSON schema for required inputs
   - `examples` - 1-2 example input/output pairs
-- [ ] Skills are contextually appropriate for role type
-- [ ] Skills use the user's identity core voice and priorities
+- [x] Skills are contextually appropriate for role type
+- [x] Skills use the user's identity core voice and priorities
 
 **Files**: `app/api/roles/extract/route.ts`, `lib/constants/role-prompts.ts`
 
@@ -228,23 +236,25 @@ Use my voice and communication style. Keep it {{tone}}.`,
 
 ### Story 2.5: Role Preview and Editing
 
+**Status**: Complete
+
 **As a user, I want to review and adjust the generated role before creating it**
 
 **Acceptance Criteria**:
 
-- [ ] Display generated role configuration:
+- [x] Display generated role configuration:
   - Name (editable)
   - Description (editable)
   - Instructions preview (expandable)
   - Identity facets summary
-- [ ] Display suggested skills as cards:
+- [x] Display suggested skills as cards:
   - Skill name and description
   - Toggle checkbox to include/exclude
   - Expandable to see prompt template
-- [ ] "Looks Good" button to proceed to creation
-- [ ] "Let Me Adjust" button to return to interview
-- [ ] Preserve interview messages if user goes back
-- [ ] Show loading state while extracting
+- [x] "Looks Good" button to proceed to creation
+- [x] "Let Me Adjust" button to return to interview
+- [x] Preserve interview messages if user goes back
+- [x] Show loading state while extracting
 
 **Files**: `components/roles/role-preview.tsx`, `components/roles/role-skills-preview.tsx`
 
@@ -293,16 +303,18 @@ Use my voice and communication style. Keep it {{tone}}.`,
 
 ### Story 2.6: Role and Skills Creation
 
+**Status**: Complete
+
 **As a user, I want my role and skills saved to the database so I can use them**
 
 **Acceptance Criteria**:
 
-- [ ] Create role record in `roles` table
-- [ ] Create skill records in `skills` table linked to role
-- [ ] Update role's `allowed_tools` with created skill IDs
-- [ ] Handle creation errors with rollback
-- [ ] Show loading state: "Creating your role..."
-- [ ] Return role ID and skill IDs on success
+- [x] Create role record in `roles` table
+- [x] Create skill records in `skills` table linked to role
+- [x] Update role's `allowed_tools` with created skill IDs
+- [x] Handle creation errors with rollback
+- [x] Show loading state: "Creating your role..."
+- [x] Return role ID and skill IDs on success
 
 **Files**: `app/actions/roles.ts`
 
@@ -322,15 +334,17 @@ export async function createRoleWithSkills(data: CreateRoleData): Promise<Create
 
 ### Story 2.7: Role Creation Success
 
+**Status**: Complete
+
 **As a user, I want confirmation that my role was created and quick access to start using it**
 
 **Acceptance Criteria**:
 
-- [ ] Show success message with role name
-- [ ] Display summary of created role and skills
-- [ ] "Start Chatting" button → redirects to `/roles/[roleId]`
-- [ ] "Create Another Role" button → restarts wizard
-- [ ] Clear local state on successful creation
+- [x] Show success message with role name
+- [x] Display summary of created role and skills
+- [x] "Start Chatting" button → redirects to `/roles/[roleId]`
+- [x] "Create Another Role" button → restarts wizard
+- [x] Clear local state on successful creation
 
 **Files**: `components/roles/role-creation-complete.tsx`
 
@@ -362,20 +376,20 @@ export async function createRoleWithSkills(data: CreateRoleData): Promise<Create
 
 ### Story 2.8: Role Chat Page
 
-**As a user, I want to chat with my new role immediately after creating it**
+**Status**: Complete
 
-**Status**: Backend complete - API endpoint with tool execution exists at `/api/roles/[roleId]/chat`
+**As a user, I want to chat with my new role immediately after creating it**
 
 **Acceptance Criteria**:
 
 - [x] Compose system prompt from identity core + role + skills (done in API)
 - [x] Skills execute as Claude tools during chat (done)
 - [x] Verify role ownership via RLS (done in API)
-- [ ] `/roles/[roleId]` page loads role details
-- [ ] Chat interface matches existing chat patterns
-- [ ] Display role name in header
-- [ ] Show available skills as suggested actions (optional)
-- [ ] Handle role not found (404)
+- [x] `/roles/[roleId]` page loads role details
+- [x] Chat interface matches existing chat patterns
+- [x] Display role name in header
+- [x] Show available skills as suggested actions (optional)
+- [x] Handle role not found (404)
 
 **Files**: `app/roles/[roleId]/page.tsx`
 
@@ -389,16 +403,18 @@ export async function createRoleWithSkills(data: CreateRoleData): Promise<Create
 
 ### Story 2.9: Role Creation State Management
 
+**Status**: Complete
+
 **As the system, I want to track role creation progress so users can resume if interrupted**
 
 **Acceptance Criteria**:
 
-- [ ] Use localStorage for ephemeral state during session
-- [ ] Track: currentStep, interviewMessages, extractedConfig, selectedSkillIds
-- [ ] Handle hydration correctly (avoid SSR mismatch)
-- [ ] Auto-save on state changes
-- [ ] Clear state on successful creation
-- [ ] If user closes browser mid-creation, restart from step 1 (acceptable for <2min flow)
+- [x] Use localStorage for ephemeral state during session
+- [x] Track: currentStep, interviewMessages, extractedConfig, selectedSkillIds
+- [x] Handle hydration correctly (avoid SSR mismatch)
+- [x] Auto-save on state changes
+- [x] Clear state on successful creation
+- [x] If user closes browser mid-creation, restart from step 1 (acceptable for <2min flow)
 
 **Files**: `lib/hooks/use-role-creation-state.ts`
 
@@ -416,6 +432,26 @@ interface RoleCreationLocalState {
   createdRoleId?: string
 }
 ```
+
+---
+
+### Story 2.10: Roles Listing Page
+
+**Status**: Complete
+
+**As a user, I want to view all my created roles so I can manage and chat with them**
+
+**Acceptance Criteria**:
+
+- [x] `/roles` page lists all user's roles in a card grid
+- [x] Each role card shows: name, description (truncated), skill count, approval policy
+- [x] Click role card → navigate to `/roles/[roleId]` chat
+- [x] "Create Role" button in header → `/roles/create`
+- [x] Empty state when no roles: "No roles yet" with CTA to create first role
+- [x] Loading state while fetching roles
+- [x] Uses `getUserRoles()` server action for data fetching
+
+**Files**: `app/roles/page.tsx`
 
 ---
 
@@ -498,6 +534,7 @@ Important: This role will use their Identity Core (base personality), so focus o
 ```
 app/
   roles/
+    page.tsx                # Roles listing page
     create/
       page.tsx              # Wizard container
     [roleId]/

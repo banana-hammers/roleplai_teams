@@ -35,6 +35,9 @@ export function TestDrive({ identity, onConfirm, onAdjust }: TestDriveProps) {
     }),
   })
 
+  // Check if chat is in progress (using string comparison to avoid type issues with AI SDK v5)
+  const isInProgress = String(status) === 'streaming' || String(status) === 'in_progress'
+
   // Auto-scroll to bottom
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -48,7 +51,7 @@ export function TestDrive({ identity, onConfirm, onAdjust }: TestDriveProps) {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    if (!input.trim() || status === 'in_progress') return
+    if (!input.trim() || isInProgress) return
 
     sendMessage({ text: input })
     setInput('')
@@ -132,7 +135,7 @@ export function TestDrive({ identity, onConfirm, onAdjust }: TestDriveProps) {
           )
         })}
 
-        {status === 'in_progress' && (
+        {isInProgress && (
           <div className="flex justify-start">
             <div className="bg-background border rounded-lg px-4 py-2">
               <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
@@ -149,13 +152,13 @@ export function TestDrive({ identity, onConfirm, onAdjust }: TestDriveProps) {
           value={input}
           onChange={(e) => setInput(e.target.value)}
           placeholder="Type your message..."
-          disabled={status === 'in_progress'}
+          disabled={isInProgress}
           className="flex-1"
           autoFocus
         />
         <Button
           type="submit"
-          disabled={!input.trim() || status === 'in_progress'}
+          disabled={!input.trim() || isInProgress}
         >
           Send
         </Button>
