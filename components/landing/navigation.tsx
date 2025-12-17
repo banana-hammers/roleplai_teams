@@ -20,10 +20,10 @@ export function Navigation() {
         {/* Desktop Navigation */}
         <div className="hidden items-center gap-6 md:flex">
           <Link
-            href="#features"
+            href="#roleplaIrs"
             className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
           >
-            Features
+            RoleplAIrs
           </Link>
           <Link
             href="#how-it-works"
@@ -67,11 +67,11 @@ export function Navigation() {
         <div className="border-t border-border/40 bg-background px-6 py-4 md:hidden">
           <div className="flex flex-col gap-4">
             <Link
-              href="#features"
+              href="#roleplaIrs"
               className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
               onClick={() => setMobileMenuOpen(false)}
             >
-              Features
+              RoleplAIrs
             </Link>
             <Link
               href="#how-it-works"

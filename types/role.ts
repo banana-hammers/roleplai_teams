@@ -18,3 +18,10 @@ export interface RoleContextPack {
   role_id: string
   context_pack_id: string
 }
+
+export interface RoleSkill {
+  role_id: string
+  skill_id: string
+  config_overrides: Record<string, any>
+  created_at: string
+}

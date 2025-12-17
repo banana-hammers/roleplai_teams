@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Navigation } from "@/components/landing/navigation";
+import { Navbar } from "@/components/navigation";
 import { Footer } from "@/components/landing/footer";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Users, Lightbulb, Fingerprint } from "lucide-react";
@@ -27,7 +27,7 @@ const pillars = [
     icon: Fingerprint,
     title: "Authentic Extension",
     description:
-      "Your identity is yours. Our job is to help you extend it - consistently, controllably, and authentically - across every AI interaction.",
+      "Your identity is yours. RoleplAIrs are extensions of you — not replacements. We help you project your authentic self into every AI interaction, consistently and controllably.",
   },
 ];
 
@@ -61,7 +61,7 @@ const team = [
 export default function AboutPage() {
   return (
     <div className="min-h-screen bg-background">
-      <Navigation />
+      <Navbar variant="landing" />
       <main>
         {/* Hero Section */}
         <section className="relative overflow-hidden">
@@ -76,8 +76,8 @@ export default function AboutPage() {
               Not Replace It.
             </h1>
             <p className="mx-auto mt-6 max-w-2xl text-lg text-muted-foreground sm:text-xl">
-              We&apos;re building AI tools that extend your team&apos;s
-              authentic voice into every interaction.
+              We&apos;re building RoleplAIrs — AI agents that extend your
+              authentic personality into every interaction.
             </p>
           </div>
         </section>
@@ -90,10 +90,11 @@ export default function AboutPage() {
                 Our Mission
               </h2>
               <blockquote className="mt-8 text-xl italic text-muted-foreground sm:text-2xl">
-                &ldquo;We believe the best AI doesn&apos;t sound like AI - it
-                sounds like you. RoleplayAI Teams exists to help teams create AI
-                agents that carry their unique voice, expertise, and values into
-                every conversation.&rdquo;
+                &ldquo;We believe the best AI doesn&apos;t sound like AI — it
+                sounds like you. RoleplayAI Teams exists to help you create
+                RoleplAIrs — AI agents that are true extensions of your
+                personality, carrying your voice, expertise, and values into
+                every interaction.&rdquo;
               </blockquote>
             </div>
           </div>
@@ -144,9 +145,9 @@ export default function AboutPage() {
                   The result? AI that sounds like everyone else&apos;s AI.
                 </p>
                 <p className="mt-4 text-lg text-muted-foreground">
-                  Your team has spent years developing a unique voice, building
-                  domain expertise, and establishing trust with customers. Why
-                  should your AI throw all that away?
+                  RoleplAIrs are different. Through a simple conversation, you
+                  create AI agents that speak with your voice, know your world,
+                  and get better the more you use them.
                 </p>
               </div>
             </div>
@@ -161,12 +162,14 @@ export default function AboutPage() {
                 Our Vision
               </h2>
               <p className="mx-auto mt-8 max-w-3xl text-xl text-muted-foreground">
-                We envision a future where every team has AI agents that truly
-                represent them. Where technology amplifies human creativity and
-                expertise rather than homogenizing it.
+                We envision a future where everyone has RoleplAIrs — AI agents
+                that are true extensions of their personality. Where technology
+                amplifies human creativity and expertise rather than
+                homogenizing it.
               </p>
               <p className="mx-auto mt-6 max-w-3xl text-xl font-medium text-foreground">
-                Where your AI sounds unmistakably like you.
+                Where your AI sounds unmistakably like you, because it IS you —
+                extended, enhanced, and leveling up alongside you.
               </p>
             </div>
           </div>
@@ -221,15 +224,16 @@ export default function AboutPage() {
 
           <div className="mx-auto max-w-4xl px-6 text-center">
             <h2 className="font-display text-2xl font-bold tracking-tight sm:text-3xl">
-              Join the Adventure
+              Meet Your RoleplAIrs
             </h2>
             <p className="mt-4 text-lg text-muted-foreground">
-              Ready to level up your team&apos;s AI? Your quest starts here.
+              Start a conversation with Nova and create your first RoleplAIr in
+              minutes.
             </p>
             <div className="mt-8">
               <Button asChild variant="gradient" size="lg" className="gap-2">
                 <Link href="/signup">
-                  Begin Your Journey
+                  Create Your First RoleplAIr
                   <ArrowRight className="size-4" />
                 </Link>
               </Button>

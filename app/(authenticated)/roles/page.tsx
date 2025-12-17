@@ -35,19 +35,9 @@ export default function RolesPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-zinc-50 to-white dark:from-zinc-950 dark:to-black">
-      {/* Header */}
-      <header className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="container flex h-14 items-center justify-between px-4">
-          <h1 className="text-xl font-semibold">Your Roles</h1>
-          <Button onClick={() => router.push('/roles/create')}>
-            <Plus className="mr-2 h-4 w-4" />
-            Create Role
-          </Button>
-        </div>
-      </header>
-
       {/* Content */}
       <main className="container px-4 py-8">
+        <h1 className="mb-6 text-2xl font-semibold">Your Roles</h1>
         {roles.length === 0 ? (
           /* Empty state */
           <Card className="mx-auto max-w-md">

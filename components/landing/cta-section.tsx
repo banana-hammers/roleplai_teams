@@ -14,26 +14,26 @@ export function CTASection() {
           <h2 className="max-w-2xl font-display text-3xl font-bold tracking-tight sm:text-4xl lg:text-5xl">
             Ready to{" "}
             <span className="bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-              start your quest?
+              meet your RoleplAIrs?
             </span>
           </h2>
 
           <p className="mt-6 max-w-xl text-lg text-muted-foreground">
-            Join teams leveling up their AI game. Create your first character
-            in minutes and watch your agents evolve.
+            Start a conversation with Nova and meet your first RoleplAIr in
+            minutes. No forms, no configuration — just talk.
           </p>
 
           <div className="mt-10">
             <Button asChild variant="gradient" size="lg" className="gap-2">
               <Link href="/signup">
-                Begin Your Journey
+                Create Your First RoleplAIr
                 <ArrowRight className="size-4" />
               </Link>
             </Button>
           </div>
 
           <p className="mt-4 text-sm text-muted-foreground">
-            Starter pack: 1 identity core, 3 roles, 10 skills. No credit card required.
+            Free to start. No credit card required.
           </p>
         </div>
       </div>

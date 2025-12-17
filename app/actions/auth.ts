@@ -139,3 +139,9 @@ export async function signup(formData: SignupFormData): Promise<SignupResult> {
   // Redirect to onboarding
   redirect('/onboarding')
 }
+
+export async function logout(): Promise<void> {
+  const supabase = await createClient()
+  await supabase.auth.signOut()
+  redirect('/login')
+}

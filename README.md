@@ -1,25 +1,34 @@
 # RoleplayAI Teams
 
-A Next.js application for managing AI-powered role-based agents with identity cores, context packs, and team collaboration features.
+**Level Up Together With Your RoleplAIrs** — AI agents with your personality that grow the more you use them. Created through conversation, not configuration.
 
 ## Overview
 
-RoleplayAI Teams enables users to create personalized AI agents (roles) that maintain consistent identity across interactions. Each role combines:
+RoleplayAI Teams lets you create AI agents called **RoleplAIrs** that sound like you and get better over time. Instead of filling out forms, you just talk:
 
-- **Identity Core**: Your personal voice, priorities, boundaries, and decision-making rules
-- **Role Definition**: Specific instructions, tools, and approval policies for different contexts
-- **Context Packs**: Bio, brand guidelines, rules, and custom context that can be shared across roles
-- **BYO API Keys**: Bring your own OpenAI or Anthropic API keys with spend limits
+1. **Chat with Nova** — Our AI interviewer captures your voice in a 5-minute conversation
+2. **Forge your RoleplAIr** — Tell Forge what you need and it builds your agent with starter Skills
+3. **Start Talking** — Your RoleplAIr responds with your voice, your style, your way of thinking
+
+Each RoleplAIr combines:
+
+- **Identity Core**: Your personality (voice, values, boundaries) — created once, inherited by all your RoleplAIrs
+- **RoleplAIrs**: Specialized versions of you for different tasks (sales, support, writing, coding)
+- **Lore**: Knowledge they remember — your bio, brand guidelines, docs
+- **Skills**: Abilities they can perform — draft emails, review code (with XP leveling coming soon)
+- **Tools**: Integrations to take action — send emails, create PRs (coming soon)
 
 ## Features
 
-✅ **Multi-Provider AI Support** - OpenAI and Anthropic (Claude)
-✅ **Identity-Driven Conversations** - Consistent personality across all roles
-✅ **Role-Based Access** - Different agents for different tasks
-✅ **Context Management** - Reusable context packs for teams
+✅ **Conversational Onboarding** - Nova interviews you to capture your voice; Forge builds your RoleplAIrs
+✅ **Identity Core** - Your personality shared across all RoleplAIrs
+✅ **RoleplAIrs** - Specialized AI agents for different tasks
+✅ **Skills System** - Abilities your RoleplAIrs can perform
+✅ **Lore (Context Packs)** - Reusable knowledge they remember
+✅ **Multi-Provider AI** - OpenAI and Anthropic (Claude)
 ✅ **Streaming Chat** - Real-time responses with Vercel AI SDK v5
 ✅ **Supabase Backend** - Authentication, database, and RLS security
-✅ **Modern UI** - Built with Next.js 16, React 19, Tailwind CSS 4, and shadcn/ui
+✅ **Modern UI** - Next.js 16, React 19, Tailwind CSS 4, shadcn/ui
 
 ## Quick Start
 
@@ -159,12 +168,14 @@ npm run start
 
 ## Database Schema
 
-Core tables:
-- `identity_cores` - User identity definitions
-- `roles` - AI agent configurations
-- `context_packs` - Reusable context snippets
-- `user_api_keys` - Encrypted BYO API keys
-- `tasks` - Task tracking (planned)
+Core tables (with UI terminology mapping):
+- `identity_cores` - Your personality (Identity Core)
+- `roles` - AI agents (called **RoleplAIrs** in the UI)
+- `context_packs` - Knowledge snippets (called **Lore** in the UI)
+- `skills` - Abilities your RoleplAIrs can perform
+- `tasks` - Task execution tracking
+- `task_approvals` - Approval workflow for sensitive actions
+- `user_api_keys` - BYO API keys (encryption TODO)
 
 All tables use Row-Level Security (RLS) for multi-tenant isolation.
 
@@ -198,13 +209,21 @@ Follow [Conventional Commits](https://www.conventionalcommits.org/) for commit m
 
 ## Roadmap
 
+**Completed:**
+- [x] Nova (AI interviewer for Identity Core creation)
+- [x] Forge (AI-guided RoleplAIr creation)
+- [x] Skills system infrastructure
+- [x] Task execution with approval workflow
+- [x] Lore (context packs) management
+- [x] Role-Skills many-to-many relationships (schema)
+
+**In Progress:**
+- [ ] XP & Leveling for Skills
+- [ ] Chat history persistence (schema ready, API/UI TODO)
+- [ ] Tool integrations (email, Slack, GitHub)
 - [ ] API key encryption
-- [ ] Chat history persistence
-- [ ] Tool/function calling with approval workflow
 - [ ] Team collaboration features
 - [ ] Spend tracking and limits
-- [ ] Advanced role management UI
-- [ ] Task creation from chats
 
 ---
 

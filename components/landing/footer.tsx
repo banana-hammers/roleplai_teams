@@ -2,10 +2,10 @@ import Link from "next/link";
 
 const footerLinks = {
   Product: [
-    { name: "Features", href: "#features" },
+    { name: "RoleplAIrs", href: "#roleplaIrs" },
     { name: "How It Works", href: "#how-it-works" },
+    { name: "Skills & Tools", href: "#skills-vs-tools" },
     { name: "Pricing", href: "#" },
-    { name: "Changelog", href: "#" },
   ],
   Resources: [
     { name: "Documentation", href: "#" },
@@ -37,7 +37,8 @@ export function Footer() {
               </span>
             </Link>
             <p className="mt-4 text-sm text-muted-foreground">
-              AI agents that truly represent you. One identity. Infinite roles.
+              RoleplAIrs: AI agents that are extensions of you. One Identity
+              Core. Infinite possibilities.
             </p>
           </div>
 

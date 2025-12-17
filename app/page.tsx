@@ -1,4 +1,4 @@
-import { Navigation } from "@/components/landing/navigation";
+import { Navbar } from "@/components/navigation";
 import { Hero } from "@/components/landing/hero";
 import { ConversationalFlow } from "@/components/landing/conversational-flow";
 import { Anatomy } from "@/components/landing/anatomy";
@@ -9,7 +9,7 @@ import { Footer } from "@/components/landing/footer";
 export default function Home() {
   return (
     <div className="min-h-screen bg-background">
-      <Navigation />
+      <Navbar variant="landing" />
       <main>
         <Hero />
         <ConversationalFlow />
