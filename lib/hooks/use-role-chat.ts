@@ -7,6 +7,7 @@ export interface Message {
   role: 'user' | 'assistant'
   content: string
   toolCalls?: Array<{
+    id?: string
     name: string
     result?: string
   }>
@@ -25,8 +26,8 @@ export interface UseRoleChatReturn {
 }
 
 /**
- * Custom hook for role-based chat with tool execution support.
- * Handles SSE stream from the role chat API endpoint.
+ * Custom hook for role-based chat with Claude Agent SDK.
+ * Handles SSE stream from the agent API endpoint with full tool support.
  */
 export function useRoleChat({ roleId }: UseRoleChatOptions): UseRoleChatReturn {
   const [messages, setMessages] = useState<Message[]>([])
@@ -67,7 +68,7 @@ export function useRoleChat({ roleId }: UseRoleChatOptions): UseRoleChatReturn {
     try {
       abortControllerRef.current = new AbortController()
 
-      const response = await fetch(`/api/roles/${roleId}/chat`, {
+      const response = await fetch(`/api/roles/${roleId}/agent`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ messages: apiMessages }),
@@ -86,7 +87,7 @@ export function useRoleChat({ roleId }: UseRoleChatOptions): UseRoleChatReturn {
       const reader = response.body.getReader()
       const decoder = new TextDecoder()
       let buffer = ''
-      let currentToolCalls: Array<{ name: string; result?: string }> = []
+      let currentToolCalls: Array<{ id?: string; name: string; result?: string }> = []
 
       while (true) {
         const { done, value } = await reader.read()
@@ -104,21 +105,25 @@ export function useRoleChat({ roleId }: UseRoleChatOptions): UseRoleChatReturn {
             try {
               const event = JSON.parse(data)
 
-              if (event.type === 'text') {
+              if (event.type === 'text' || event.type === 'text_delta') {
                 setMessages(prev => prev.map(m =>
                   m.id === assistantId
                     ? { ...m, content: m.content + event.content }
                     : m
                 ))
               } else if (event.type === 'tool_call_start') {
-                currentToolCalls.push({ name: event.tool })
+                currentToolCalls.push({ id: event.id, name: event.tool })
                 setMessages(prev => prev.map(m =>
                   m.id === assistantId
                     ? { ...m, toolCalls: [...currentToolCalls] }
                     : m
                 ))
               } else if (event.type === 'tool_result') {
-                const toolIndex = currentToolCalls.findIndex(t => t.name === event.tool && !t.result)
+                // Match by ID (agent endpoint) or by name (chat endpoint fallback)
+                const toolIndex = currentToolCalls.findIndex(t =>
+                  (event.id && t.id === event.id) ||
+                  (event.tool && t.name === event.tool && !t.result)
+                )
                 if (toolIndex !== -1) {
                   currentToolCalls[toolIndex].result = event.result
                   setMessages(prev => prev.map(m =>
