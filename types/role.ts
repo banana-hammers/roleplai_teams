@@ -1,5 +1,16 @@
 export type ApprovalPolicy = 'always' | 'never' | 'smart'
 
+/**
+ * Tool configuration for granular control over role capabilities
+ */
+export interface ToolConfig {
+  builtInTools?: string[]        // ["Read", "Write", "Edit", "Bash", "Glob", "Grep"]
+  webTools?: string[]            // ["WebSearch", "WebFetch"]
+  mcpToolPatterns?: string[]     // ["mcp__github__*", "mcp__postgres__*"]
+  disallowedTools?: string[]     // ["Write:/etc/*", "Bash:rm -rf"]
+  requireApproval?: string[]     // ["Write", "Bash", "Edit"]
+}
+
 export interface Role {
   id: string
   user_id: string
@@ -10,6 +21,7 @@ export interface Role {
   allowed_tools: string[]
   approval_policy: ApprovalPolicy
   model_preference: string | null
+  tool_config: ToolConfig | null  // SDK tool permissions
   created_at: string
   updated_at: string
 }
