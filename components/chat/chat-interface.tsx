@@ -8,7 +8,9 @@ import { Textarea } from '@/components/ui/textarea'
 import { Card } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
 import { Badge } from '@/components/ui/badge'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { MessageBubble } from '@/components/chat/message-bubble'
+import { TypingIndicator } from '@/components/chat/typing-indicator'
 
 interface ChatInterfaceProps {
   roleId?: string
@@ -17,6 +19,7 @@ interface ChatInterfaceProps {
 
 export function ChatInterface({ roleId, roleName }: ChatInterfaceProps) {
   const [inputValue, setInputValue] = useState('')
+  const [lastMessageCount, setLastMessageCount] = useState(0)
 
   // Use role-specific hook for role chat, standard useChat for basic chat
   const roleChat = useRoleChat({ roleId: roleId || '' })
@@ -32,6 +35,14 @@ export function ChatInterface({ roleId, roleName }: ChatInterfaceProps) {
   const messages = isRoleChat ? roleChat.messages : basicChat.messages
   const isLoading = isRoleChat ? roleChat.isLoading : (basicChat.status === 'streaming' || basicChat.status === 'submitted')
   const error = isRoleChat ? roleChat.error : basicChat.error?.message
+
+  // Track message count for new message animations
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setLastMessageCount(messages.length)
+    }, 350)
+    return () => clearTimeout(timer)
+  }, [messages.length])
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -78,73 +89,51 @@ export function ChatInterface({ roleId, roleName }: ChatInterfaceProps) {
           </div>
         )}
 
-        {messages.map((message) => (
-          <div
-            key={message.id}
-            className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
-          >
-            <Card
-              className={`max-w-[80%] p-4 ${
-                message.role === 'user'
-                  ? 'bg-primary text-primary-foreground'
-                  : 'bg-muted'
-              }`}
-            >
-              <div className="flex items-start gap-3">
-                <div className="flex-1">
-                  <div className="text-sm font-medium mb-1">
-                    {message.role === 'user' ? 'You' : roleName || 'Assistant'}
-                  </div>
-                  <div className="text-sm whitespace-pre-wrap">
-                    {/* Handle role chat messages */}
-                    {isRoleChat && (message as RoleMessage).content}
+        {messages.map((message, index) => {
+          // Extract content based on chat type
+          const content = isRoleChat
+            ? (message as RoleMessage).content
+            : 'parts' in message
+              ? message.parts.map(part => part.type === 'text' ? part.text : '').join('')
+              : ''
 
-                    {/* Handle basic chat messages with parts */}
-                    {!isRoleChat && 'parts' in message && message.parts.map((part, index) => {
-                      if (part.type === 'text') {
-                        return <span key={index}>{part.text}</span>
-                      }
-                      return null
-                    })}
-                  </div>
+          const isNew = index >= lastMessageCount
+          const senderName = message.role === 'user' ? undefined : (roleName || 'Assistant')
 
-                  {/* Tool calls display (role chat only) */}
-                  {isRoleChat && (message as RoleMessage).toolCalls && (message as RoleMessage).toolCalls!.length > 0 && (
-                    <div className="mt-3 space-y-2">
-                      {(message as RoleMessage).toolCalls!.map((tool, index) => (
-                        <div
-                          key={index}
-                          className="border-l-2 border-blue-500 pl-3 py-1 text-xs"
-                        >
-                          <div className="font-medium text-blue-600">
-                            Skill: {tool.name}
-                          </div>
-                          {tool.result && (
-                            <div className="mt-1 text-muted-foreground bg-blue-50 p-2 rounded">
-                              {tool.result}
-                            </div>
-                          )}
+          return (
+            <div key={message.id}>
+              <MessageBubble
+                role={message.role as 'user' | 'assistant'}
+                content={content}
+                senderName={senderName}
+                isNew={isNew}
+              />
+
+              {/* Tool calls display (role chat only) */}
+              {isRoleChat && (message as RoleMessage).toolCalls && (message as RoleMessage).toolCalls!.length > 0 && (
+                <div className="ml-12 mt-2 space-y-2">
+                  {(message as RoleMessage).toolCalls!.map((tool, toolIndex) => (
+                    <div
+                      key={toolIndex}
+                      className="border-l-2 border-blue-500 pl-3 py-1 text-xs bg-blue-50/50 dark:bg-blue-950/20 rounded-r"
+                    >
+                      <div className="font-medium text-blue-600 dark:text-blue-400">
+                        Skill: {tool.name}
+                      </div>
+                      {tool.result && (
+                        <div className="mt-1 text-muted-foreground">
+                          {tool.result}
                         </div>
-                      ))}
+                      )}
                     </div>
-                  )}
+                  ))}
                 </div>
-              </div>
-            </Card>
-          </div>
-        ))}
+              )}
+            </div>
+          )
+        })}
 
-        {isLoading && (
-          <div className="flex justify-start">
-            <Card className="max-w-[80%] p-4 bg-muted">
-              <div className="flex items-center gap-2">
-                <div className="h-2 w-2 animate-bounce rounded-full bg-foreground/50" />
-                <div className="h-2 w-2 animate-bounce rounded-full bg-foreground/50 [animation-delay:0.2s]" />
-                <div className="h-2 w-2 animate-bounce rounded-full bg-foreground/50 [animation-delay:0.4s]" />
-              </div>
-            </Card>
-          </div>
-        )}
+        {isLoading && <TypingIndicator senderName={roleName || 'Assistant'} />}
 
         {error && (
           <div className="flex justify-center">

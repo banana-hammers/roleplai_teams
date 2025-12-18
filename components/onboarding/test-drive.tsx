@@ -5,8 +5,9 @@ import { useChat } from '@ai-sdk/react'
 import { DefaultChatTransport } from 'ai'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Badge } from '@/components/ui/badge'
-import { Loader2, Sparkles } from 'lucide-react'
+import { Sparkles } from 'lucide-react'
+import { MessageBubble } from '@/components/chat/message-bubble'
+import { TypingIndicator } from '@/components/chat/typing-indicator'
 import type { IdentityCore } from '@/lib/onboarding/generate-identity'
 
 interface TestDriveProps {
@@ -26,6 +27,7 @@ const TEST_PROMPTS = [
 export function TestDrive({ identity, onConfirm, onAdjust }: TestDriveProps) {
   const [input, setInput] = useState('')
   const [messageCount, setMessageCount] = useState(0)
+  const [lastMessageCount, setLastMessageCount] = useState(0)
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
   const { messages, sendMessage, status } = useChat({
@@ -48,6 +50,14 @@ export function TestDrive({ identity, onConfirm, onAdjust }: TestDriveProps) {
     const userMessages = messages.filter(m => m.role === 'user')
     setMessageCount(userMessages.length)
   }, [messages])
+
+  // Track message count for new message animations
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setLastMessageCount(messages.length)
+    }, 350)
+    return () => clearTimeout(timer)
+  }, [messages.length])
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -110,38 +120,20 @@ export function TestDrive({ identity, onConfirm, onAdjust }: TestDriveProps) {
             .map(part => part.type === 'text' ? part.text : '')
             .join('')
 
+          const isNew = index >= lastMessageCount
+
           return (
-            <div
+            <MessageBubble
               key={index}
-              className={`flex ${
-                message.role === 'user' ? 'justify-end' : 'justify-start'
-              }`}
-            >
-              <div
-                className={`max-w-[80%] rounded-lg px-4 py-2 ${
-                  message.role === 'user'
-                    ? 'bg-primary text-primary-foreground'
-                    : 'bg-background border'
-                }`}
-              >
-                {message.role === 'assistant' && (
-                  <div className="text-xs font-semibold mb-1 text-muted-foreground">
-                    Your AI
-                  </div>
-                )}
-                <div className="text-sm whitespace-pre-wrap">{content}</div>
-              </div>
-            </div>
+              role={message.role as 'user' | 'assistant'}
+              content={content}
+              senderName={message.role === 'assistant' ? 'Your AI' : undefined}
+              isNew={isNew}
+            />
           )
         })}
 
-        {isInProgress && (
-          <div className="flex justify-start">
-            <div className="bg-background border rounded-lg px-4 py-2">
-              <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
-            </div>
-          </div>
-        )}
+        {isInProgress && <TypingIndicator senderName="Your AI" />}
 
         <div ref={messagesEndRef} />
       </div>

@@ -2,13 +2,15 @@
 
 import { useState, useRef, useEffect, use } from 'react'
 import { useRouter } from 'next/navigation'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { useRoleChat } from '@/lib/hooks/use-role-chat'
 import { getRole, getRoleSkills } from '@/app/actions/roles'
 import { Loader2, Send, ArrowLeft, Wrench } from 'lucide-react'
+import { MessageBubble } from '@/components/chat/message-bubble'
+import { TypingIndicator } from '@/components/chat/typing-indicator'
 import type { Role } from '@/types/role'
 import type { Skill } from '@/types/skill'
 
@@ -23,6 +25,7 @@ export default function RoleChatPage({ params }: RoleChatPageProps) {
   const [skills, setSkills] = useState<Skill[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [input, setInput] = useState('')
+  const [lastMessageCount, setLastMessageCount] = useState(0)
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
   const { messages, isLoading: isChatLoading, error, sendMessage, clearMessages } = useRoleChat({
@@ -60,6 +63,14 @@ export default function RoleChatPage({ params }: RoleChatPageProps) {
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
+
+  // Track message count for new message animations
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setLastMessageCount(messages.length)
+    }, 350)
+    return () => clearTimeout(timer)
+  }, [messages.length])
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -139,36 +150,27 @@ export default function RoleChatPage({ params }: RoleChatPageProps) {
                 </div>
               )}
 
-              {messages.map((message) => (
-                <div
-                  key={message.id}
-                  className={`flex ${
-                    message.role === 'user' ? 'justify-end' : 'justify-start'
-                  }`}
-                >
-                  <div
-                    className={`max-w-[80%] rounded-lg px-4 py-2 ${
-                      message.role === 'user'
-                        ? 'bg-primary text-primary-foreground'
-                        : 'bg-muted'
-                    }`}
-                  >
-                    {message.role === 'assistant' && (
-                      <div className="text-xs font-semibold mb-1 text-muted-foreground">
-                        {role.name}
-                      </div>
-                    )}
-                    <div className="text-sm whitespace-pre-wrap">{message.content}</div>
+              {messages.map((message, index) => {
+                const isNew = index >= lastMessageCount
+
+                return (
+                  <div key={message.id}>
+                    <MessageBubble
+                      role={message.role as 'user' | 'assistant'}
+                      content={message.content}
+                      senderName={message.role === 'assistant' ? role.name : undefined}
+                      isNew={isNew}
+                    />
 
                     {/* Tool calls */}
                     {message.toolCalls && message.toolCalls.length > 0 && (
-                      <div className="mt-2 space-y-1">
+                      <div className="ml-12 mt-2 space-y-1">
                         {message.toolCalls.map((tc, i) => (
                           <div
                             key={i}
-                            className="text-xs bg-background/50 rounded p-2 border"
+                            className="text-xs bg-blue-50/50 dark:bg-blue-950/20 rounded-r p-2 border-l-2 border-blue-500"
                           >
-                            <div className="flex items-center gap-1 font-medium">
+                            <div className="flex items-center gap-1 font-medium text-blue-600 dark:text-blue-400">
                               <Wrench className="h-3 w-3" />
                               {tc.name}
                             </div>
@@ -182,16 +184,10 @@ export default function RoleChatPage({ params }: RoleChatPageProps) {
                       </div>
                     )}
                   </div>
-                </div>
-              ))}
+                )
+              })}
 
-              {isChatLoading && (
-                <div className="flex justify-start">
-                  <div className="bg-muted rounded-lg px-4 py-2">
-                    <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
-                  </div>
-                </div>
-              )}
+              {isChatLoading && <TypingIndicator senderName={role.name} />}
 
               {error && (
                 <div className="flex justify-center">

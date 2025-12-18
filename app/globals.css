@@ -144,3 +144,45 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* AI Avatar animations */
+@keyframes pulse-glow {
+  0%, 100% {
+    box-shadow: 0 0 8px var(--primary), 0 0 16px var(--primary);
+    opacity: 1;
+  }
+  50% {
+    box-shadow: 0 0 16px var(--primary), 0 0 32px var(--primary);
+    opacity: 0.85;
+  }
+}
+
+@keyframes ring-expand {
+  0% {
+    transform: scale(1);
+    opacity: 0.6;
+  }
+  100% {
+    transform: scale(2.5);
+    opacity: 0;
+  }
+}
+
+@keyframes orb-breathe {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.08);
+  }
+}
+
+/* Typing dots wave animation */
+@keyframes typing-wave {
+  0%, 60%, 100% {
+    transform: translateY(0);
+  }
+  30% {
+    transform: translateY(-4px);
+  }
+}
