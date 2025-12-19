@@ -1,144 +1,185 @@
-import { Fingerprint, Users, BookOpen, Zap, Wrench } from "lucide-react";
+import {
+  Fingerprint,
+  Users,
+  BookOpen,
+  Zap,
+  Wrench,
+  Check,
+  TrendingUp,
+  Brain,
+  History,
+} from "lucide-react";
+
+const components = [
+  {
+    icon: Fingerprint,
+    name: "Identity Core",
+    description:
+      "Your voice, values, and boundaries. Created once through a conversation with Nova, then inherited by every RoleplAIr you create.",
+    color: "identity-accent",
+  },
+  {
+    icon: BookOpen,
+    name: "Lore",
+    description:
+      "Context they remember — your bio, brand guidelines, product docs. Attach different Lore packs to different RoleplAIrs.",
+    color: "context-accent",
+  },
+  {
+    icon: Zap,
+    name: "Skills",
+    description:
+      "Abilities they can perform — draft emails, review code, summarize docs. Skills earn XP and level up the more you use them.",
+    color: "skills-accent",
+  },
+  {
+    icon: Wrench,
+    name: "Tools",
+    description:
+      "Integrations that let them take action — send emails, create PRs, update calendars. Coming soon.",
+    color: "muted-foreground",
+    muted: true,
+  },
+];
+
+const exampleLore = ["Brand Voice", "Product Docs", "Sales Playbook"];
 
 export function Anatomy() {
   return (
-    <section id="roleplaIrs" className="bg-muted/20 py-24 sm:py-32">
-      <div className="mx-auto max-w-4xl px-6">
+    <section id="roleplaIrs" className="bg-muted/20 py-12 sm:py-16">
+      <div className="mx-auto max-w-6xl px-6">
         <div className="text-center">
           <h2 className="font-display text-3xl font-bold tracking-tight sm:text-4xl">
-            Anatomy of a{" "}
+            Meet Your{" "}
             <span className="bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-              RoleplAIr
+              RoleplAIrs
             </span>
           </h2>
           <p className="mt-4 text-lg text-muted-foreground">
-            How the pieces fit together
+            AI agents with your personality that level up the more you use them
           </p>
         </div>
 
-        {/* Tree Visualization */}
-        <div className="mt-16 flex flex-col items-center">
-          {/* Identity Core - Top */}
-          <div className="relative">
-            <div className="flex flex-col items-center">
-              <div className="rounded-xl border border-identity-accent/30 bg-identity-accent/10 p-6 transition-transform hover:scale-105">
-                <div className="flex items-center gap-3">
-                  <div className="rounded-lg bg-identity-accent/20 p-2">
-                    <Fingerprint className="size-6 text-identity-accent" />
+        <div className="mt-10 grid gap-8 lg:grid-cols-2">
+          {/* Left: Example RoleplAIr Card */}
+          <div className="flex items-center justify-center">
+            <div className="w-full max-w-sm rounded-xl border border-roles-accent/30 bg-card p-6 shadow-lg">
+              {/* Header */}
+              <div className="flex items-center gap-3">
+                <div className="flex size-12 items-center justify-center rounded-xl bg-roles-accent/20">
+                  <Users className="size-6 text-roles-accent" />
+                </div>
+                <div className="flex-1">
+                  <h3 className="font-semibold">Sales Assistant</h3>
+                  <p className="text-sm text-muted-foreground">Ready to help</p>
+                </div>
+                <div className="flex items-center gap-1 rounded-full bg-skills-accent/10 px-2 py-1 text-xs font-medium text-skills-accent">
+                  <TrendingUp className="size-3" />
+                  LVL 4
+                </div>
+              </div>
+
+              {/* Identity Core Status */}
+              <div className="mt-5 flex items-center gap-2 rounded-lg border border-identity-accent/20 bg-identity-accent/5 px-3 py-2">
+                <Fingerprint className="size-4 text-identity-accent" />
+                <span className="text-sm">Identity Core</span>
+                <Check className="ml-auto size-4 text-identity-accent" />
+              </div>
+
+              {/* Lore */}
+              <div className="mt-4">
+                <div className="mb-2 flex items-center gap-2 text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                  <BookOpen className="size-3" />
+                  Lore
+                </div>
+                <div className="flex flex-wrap gap-1.5">
+                  {exampleLore.map((item) => (
+                    <span
+                      key={item}
+                      className="rounded-full border border-context-accent/20 bg-context-accent/10 px-2.5 py-1 text-xs"
+                    >
+                      {item}
+                    </span>
+                  ))}
+                </div>
+              </div>
+
+              {/* Skills with XP */}
+              <div className="mt-4">
+                <div className="mb-2 flex items-center gap-2 text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                  <Zap className="size-3" />
+                  Skills
+                </div>
+                <div className="space-y-2">
+                  <div>
+                    <div className="mb-1 flex items-center justify-between text-xs">
+                      <span>Draft Email</span>
+                      <span className="text-skills-accent">LVL 4</span>
+                    </div>
+                    <div className="h-1.5 w-full overflow-hidden rounded-full bg-skills-accent/20">
+                      <div className="h-full w-4/5 rounded-full bg-skills-accent" />
+                    </div>
                   </div>
                   <div>
-                    <div className="font-semibold">Identity Core</div>
-                    <div className="text-sm text-muted-foreground">
-                      Your personality
+                    <div className="mb-1 flex items-center justify-between text-xs">
+                      <span>Research</span>
+                      <span className="text-skills-accent">LVL 2</span>
+                    </div>
+                    <div className="h-1.5 w-full overflow-hidden rounded-full bg-skills-accent/20">
+                      <div className="h-full w-2/5 rounded-full bg-skills-accent" />
                     </div>
                   </div>
                 </div>
               </div>
-              <p className="mt-2 max-w-xs text-center text-xs text-muted-foreground">
-                Your voice, values, and boundaries. Created once, inherited by
-                all your RoleplAIrs.
-              </p>
-            </div>
 
-            {/* Connector line down */}
-            <div className="mx-auto h-8 w-px bg-gradient-to-b from-identity-accent/50 to-roles-accent/50" />
+              {/* Growth indicators */}
+              <div className="mt-5 space-y-2 border-t border-border pt-4">
+                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                  <Brain className="size-3 text-roles-accent" />
+                  <span>Learns your preferences over time</span>
+                </div>
+                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                  <History className="size-3 text-roles-accent" />
+                  <span>Remembers past conversations</span>
+                </div>
+              </div>
+            </div>
           </div>
 
-          {/* RoleplAIrs - Middle */}
-          <div className="relative">
-            <div className="flex flex-col items-center">
-              <div className="rounded-xl border border-roles-accent/30 bg-roles-accent/10 p-6 transition-transform hover:scale-105">
-                <div className="flex items-center gap-3">
-                  <div className="rounded-lg bg-roles-accent/20 p-2">
-                    <Users className="size-6 text-roles-accent" />
+          {/* Right: Component Cards */}
+          <div className="grid gap-4 sm:grid-cols-2">
+            {components.map((component) => (
+              <div
+                key={component.name}
+                className={`rounded-xl border bg-card p-5 transition-colors ${
+                  component.muted
+                    ? "border-border/50"
+                    : `border-${component.color}/30 hover:border-${component.color}/50`
+                }`}
+              >
+                <div className="flex items-start gap-3">
+                  <div
+                    className={`shrink-0 rounded-lg p-2 ${
+                      component.muted ? "bg-muted" : `bg-${component.color}/10`
+                    }`}
+                  >
+                    <component.icon
+                      className={`size-5 ${
+                        component.muted
+                          ? "text-muted-foreground"
+                          : `text-${component.color}`
+                      }`}
+                    />
                   </div>
                   <div>
-                    <div className="font-semibold">RoleplAIrs</div>
-                    <div className="text-sm text-muted-foreground">
-                      Your agents
-                    </div>
+                    <h4 className="font-semibold">{component.name}</h4>
+                    <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
+                      {component.description}
+                    </p>
                   </div>
                 </div>
               </div>
-              <p className="mt-2 max-w-xs text-center text-xs text-muted-foreground">
-                Specialized versions of you for different tasks — sales,
-                support, writing, coding.
-              </p>
-            </div>
-
-            {/* Connector line down with branches */}
-            <div className="mx-auto h-8 w-px bg-gradient-to-b from-roles-accent/50 to-border" />
-          </div>
-
-          {/* Branch connector */}
-          <div className="relative w-full max-w-md">
-            <div className="absolute left-1/2 top-0 h-px w-full -translate-x-1/2 bg-border" />
-            <div className="absolute left-[16.67%] top-0 h-4 w-px bg-border" />
-            <div className="absolute left-1/2 top-0 h-4 w-px -translate-x-1/2 bg-border" />
-            <div className="absolute right-[16.67%] top-0 h-4 w-px bg-border" />
-          </div>
-
-          {/* Bottom row: Lore, Skills, Tools */}
-          <div className="mt-4 grid w-full max-w-xl grid-cols-3 gap-4">
-            {/* Lore */}
-            <div className="flex flex-col items-center">
-              <div className="rounded-xl border border-context-accent/30 bg-context-accent/10 p-4 transition-transform hover:scale-105">
-                <div className="flex flex-col items-center gap-2 text-center">
-                  <div className="rounded-lg bg-context-accent/20 p-2">
-                    <BookOpen className="size-5 text-context-accent" />
-                  </div>
-                  <div>
-                    <div className="text-sm font-semibold">Lore</div>
-                    <div className="text-xs text-muted-foreground">
-                      Knowledge
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <p className="mt-2 text-center text-xs text-muted-foreground">
-                Context they remember — your bio, brand, docs
-              </p>
-            </div>
-
-            {/* Skills */}
-            <div className="flex flex-col items-center">
-              <div className="rounded-xl border border-skills-accent/30 bg-skills-accent/10 p-4 transition-transform hover:scale-105">
-                <div className="flex flex-col items-center gap-2 text-center">
-                  <div className="rounded-lg bg-skills-accent/20 p-2">
-                    <Zap className="size-5 text-skills-accent" />
-                  </div>
-                  <div>
-                    <div className="text-sm font-semibold">Skills</div>
-                    <div className="text-xs text-muted-foreground">
-                      Abilities
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <p className="mt-2 text-center text-xs text-muted-foreground">
-                What they can do — draft emails, review code
-              </p>
-            </div>
-
-            {/* Tools */}
-            <div className="flex flex-col items-center">
-              <div className="rounded-xl border border-border/50 bg-muted/50 p-4 transition-transform hover:scale-105">
-                <div className="flex flex-col items-center gap-2 text-center">
-                  <div className="rounded-lg bg-muted p-2">
-                    <Wrench className="size-5 text-muted-foreground" />
-                  </div>
-                  <div>
-                    <div className="text-sm font-semibold">Tools</div>
-                    <div className="text-xs text-muted-foreground">
-                      Integrations
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <p className="mt-2 text-center text-xs text-muted-foreground">
-                How they act — send emails, create PRs
-              </p>
-            </div>
+            ))}
           </div>
         </div>
       </div>

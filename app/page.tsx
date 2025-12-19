@@ -2,7 +2,7 @@ import { Navbar } from "@/components/navigation";
 import { Hero } from "@/components/landing/hero";
 import { ConversationalFlow } from "@/components/landing/conversational-flow";
 import { Anatomy } from "@/components/landing/anatomy";
-import { LevelUp } from "@/components/landing/level-up";
+import { Missions } from "@/components/landing/missions";
 import { CTASection } from "@/components/landing/cta-section";
 import { Footer } from "@/components/landing/footer";
 
@@ -14,7 +14,7 @@ export default function Home() {
         <Hero />
         <ConversationalFlow />
         <Anatomy />
-        <LevelUp />
+        <Missions />
         <CTASection />
       </main>
       <Footer />

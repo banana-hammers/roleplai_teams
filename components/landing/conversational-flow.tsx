@@ -1,86 +1,157 @@
-import { MessageSquare, Hammer, Sparkles } from "lucide-react";
+import { MessageSquare, Sparkles, Bot } from "lucide-react";
 
-const steps = [
+const novaChat = [
   {
-    number: "01",
-    icon: MessageSquare,
-    title: "Chat with Nova",
-    subtitle: "5-minute conversation",
-    description:
-      "Nova, our AI interviewer, asks a few questions about how you communicate. No forms to fill out — just a natural conversation that captures your voice.",
-    color: "text-identity-accent",
-    bgColor: "bg-identity-accent/10",
+    role: "assistant",
+    name: "Nova",
+    message: "Hey! I'm Nova. Tell me a bit about yourself — what do you do?",
   },
   {
-    number: "02",
-    icon: Hammer,
-    title: "Forge Your RoleplAIr",
-    subtitle: "Guided creation",
-    description:
-      "Tell Forge what you need — an email assistant, research buddy, or coding helper. It builds your first agent with starter Skills already equipped.",
-    color: "text-roles-accent",
-    bgColor: "bg-roles-accent/10",
+    role: "user",
+    message: "I run a small marketing agency. Mostly B2B clients.",
   },
   {
-    number: "03",
-    icon: Sparkles,
-    title: "Start Talking",
-    subtitle: "Instant use",
-    description:
-      "That's it. Your RoleplAIr is ready. Start chatting and watch it respond with your voice, your style, your way of thinking.",
-    color: "text-skills-accent",
-    bgColor: "bg-skills-accent/10",
+    role: "assistant",
+    name: "Nova",
+    message:
+      "Nice! When you're writing for clients, what's your style? Formal, casual, somewhere in between?",
+  },
+  {
+    role: "user",
+    message: "Professional but friendly. I like to keep things clear and actionable.",
+  },
+  {
+    role: "assistant",
+    name: "Nova",
+    message: "Got it. I've captured your voice. Ready to create your first RoleplAIr?",
+  },
+];
+
+const forgeChat = [
+  {
+    role: "user",
+    message: "I need help drafting client proposals",
+  },
+  {
+    role: "assistant",
+    name: "Forge",
+    message:
+      "Creating your Proposal Writer... I've added Skills for drafting, research, and pricing. Your Identity Core is already connected.",
   },
 ];
 
 export function ConversationalFlow() {
   return (
-    <section className="py-24 sm:py-32">
+    <section className="py-12 sm:py-16">
       <div className="mx-auto max-w-6xl px-6">
         <div className="text-center">
           <h2 className="font-display text-3xl font-bold tracking-tight sm:text-4xl">
-            Setup Through{" "}
+            As Easy as Having a{" "}
             <span className="bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
               Conversation
             </span>
           </h2>
           <p className="mt-4 text-lg text-muted-foreground">
-            No complex configuration. Just talk.
+            No forms. No configuration. Just talk.
           </p>
         </div>
 
-        <div className="mt-16">
-          <div className="grid gap-8 lg:grid-cols-3">
-            {steps.map((step, index) => (
-              <div key={step.number} className="relative">
-                {/* Connector line for desktop */}
-                {index < steps.length - 1 && (
-                  <div className="absolute left-1/2 top-12 hidden h-px w-full bg-gradient-to-r from-border to-transparent lg:block" />
-                )}
-
-                <div className="flex flex-col items-center text-center">
-                  {/* Icon with number */}
-                  <div className="relative mb-6">
+        <div className="mt-10 grid gap-8 lg:grid-cols-2">
+          {/* Left: Nova Chat */}
+          <div>
+            <div className="mb-4 flex items-center gap-2">
+              <div className="flex size-8 items-center justify-center rounded-lg bg-identity-accent/20">
+                <MessageSquare className="size-4 text-identity-accent" />
+              </div>
+              <span className="font-medium">Chat with Nova</span>
+              <span className="text-sm text-muted-foreground">— captures your voice</span>
+            </div>
+            <div className="rounded-xl border border-identity-accent/20 bg-card p-4">
+              <div className="space-y-3">
+                {novaChat.map((msg, i) => (
+                  <div
+                    key={i}
+                    className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
+                  >
                     <div
-                      className={`flex size-24 items-center justify-center rounded-2xl ${step.bgColor} transition-transform hover:scale-105`}
+                      className={`max-w-[85%] rounded-2xl px-4 py-2 ${
+                        msg.role === "user"
+                          ? "bg-primary text-primary-foreground"
+                          : "bg-muted"
+                      }`}
                     >
-                      <step.icon className={`size-10 ${step.color}`} />
-                    </div>
-                    <div className="absolute -right-2 -top-2 flex size-8 items-center justify-center rounded-full bg-primary text-sm font-bold text-primary-foreground">
-                      {index + 1}
+                      {msg.role === "assistant" && (
+                        <p className="mb-0.5 text-xs font-medium text-identity-accent">
+                          {msg.name}
+                        </p>
+                      )}
+                      <p className="text-sm">{msg.message}</p>
                     </div>
                   </div>
+                ))}
+              </div>
+            </div>
+          </div>
 
-                  <h3 className="text-xl font-semibold">{step.title}</h3>
-                  <p className={`mt-1 text-sm font-medium ${step.color}`}>
-                    {step.subtitle}
-                  </p>
-                  <p className="mt-3 text-muted-foreground">
-                    {step.description}
-                  </p>
+          {/* Right: Forge + Result */}
+          <div className="space-y-6">
+            {/* Forge Chat */}
+            <div>
+              <div className="mb-4 flex items-center gap-2">
+                <div className="flex size-8 items-center justify-center rounded-lg bg-roles-accent/20">
+                  <Bot className="size-4 text-roles-accent" />
+                </div>
+                <span className="font-medium">Tell Forge what you need</span>
+              </div>
+              <div className="rounded-xl border border-roles-accent/20 bg-card p-4">
+                <div className="space-y-3">
+                  {forgeChat.map((msg, i) => (
+                    <div
+                      key={i}
+                      className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
+                    >
+                      <div
+                        className={`max-w-[85%] rounded-2xl px-4 py-2 ${
+                          msg.role === "user"
+                            ? "bg-primary text-primary-foreground"
+                            : "bg-muted"
+                        }`}
+                      >
+                        {msg.role === "assistant" && (
+                          <p className="mb-0.5 text-xs font-medium text-roles-accent">
+                            {msg.name}
+                          </p>
+                        )}
+                        <p className="text-sm">{msg.message}</p>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
-            ))}
+            </div>
+
+            {/* Result Card */}
+            <div>
+              <div className="mb-4 flex items-center gap-2">
+                <div className="flex size-8 items-center justify-center rounded-lg bg-skills-accent/20">
+                  <Sparkles className="size-4 text-skills-accent" />
+                </div>
+                <span className="font-medium">Start using it</span>
+              </div>
+              <div className="rounded-xl border border-skills-accent/20 bg-card p-4">
+                <div className="flex items-center gap-3">
+                  <div className="flex size-10 items-center justify-center rounded-lg bg-roles-accent/20">
+                    <Bot className="size-5 text-roles-accent" />
+                  </div>
+                  <div>
+                    <p className="font-medium">Proposal Writer</p>
+                    <p className="text-sm text-muted-foreground">
+                      Ready with your voice, 3 Skills equipped
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>

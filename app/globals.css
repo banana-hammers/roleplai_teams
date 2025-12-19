@@ -43,6 +43,7 @@
   --color-roles-accent: var(--roles-accent);
   --color-skills-accent: var(--skills-accent);
   --color-context-accent: var(--context-accent);
+  --color-missions-accent: var(--missions-accent);
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
@@ -78,6 +79,7 @@
   --roles-accent: oklch(0.65 0.18 195);
   --skills-accent: oklch(0.70 0.18 145);
   --context-accent: oklch(0.70 0.16 45);
+  --missions-accent: oklch(0.70 0.18 75);
   --chart-1: oklch(0.646 0.222 41.116);
   --chart-2: oklch(0.6 0.118 184.704);
   --chart-3: oklch(0.398 0.07 227.392);
@@ -121,6 +123,7 @@
   --roles-accent: oklch(0.72 0.16 195);
   --skills-accent: oklch(0.75 0.16 145);
   --context-accent: oklch(0.75 0.14 45);
+  --missions-accent: oklch(0.75 0.16 75);
   --chart-1: oklch(0.488 0.243 264.376);
   --chart-2: oklch(0.696 0.17 162.48);
   --chart-3: oklch(0.769 0.188 70.08);

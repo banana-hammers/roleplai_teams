@@ -17,6 +17,7 @@ Each RoleplAIr combines:
 - **Lore**: Knowledge they remember — your bio, brand guidelines, docs
 - **Skills**: Abilities they can perform — draft emails, review code (with XP leveling coming soon)
 - **Tools**: Integrations to take action — send emails, create PRs (coming soon)
+- **Missions**: Party up 2-5 RoleplAIrs for long-running goals — days, weeks, months of collaboration (coming soon)
 
 ## Features
 
@@ -29,6 +30,7 @@ Each RoleplAIr combines:
 ✅ **Streaming Chat** - Real-time responses with Vercel AI SDK v5
 ✅ **Supabase Backend** - Authentication, database, and RLS security
 ✅ **Modern UI** - Next.js 16, React 19, Tailwind CSS 4, shadcn/ui
+🚧 **Missions** - Party up 2-5 RoleplAIrs for collaborative long-term goals (coming soon)
 
 ## Quick Start
 
@@ -218,6 +220,7 @@ Follow [Conventional Commits](https://www.conventionalcommits.org/) for commit m
 - [x] Role-Skills many-to-many relationships (schema)
 
 **In Progress:**
+- [ ] **Missions** - Party system for multi-RoleplAIr collaboration toward shared goals
 - [ ] XP & Leveling for Skills
 - [ ] Chat history persistence (schema ready, API/UI TODO)
 - [ ] Tool integrations (email, Slack, GitHub)

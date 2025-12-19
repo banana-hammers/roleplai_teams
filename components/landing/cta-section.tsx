@@ -4,7 +4,7 @@ import { ArrowRight } from "lucide-react";
 
 export function CTASection() {
   return (
-    <section className="relative overflow-hidden py-24 sm:py-32">
+    <section className="relative overflow-hidden py-12 sm:py-16">
       {/* Background gradient */}
       <div className="absolute inset-0 -z-10 bg-gradient-to-br from-primary/10 via-background to-accent/10" />
       <div className="absolute inset-0 -z-10 bg-[radial-gradient(ellipse_at_center,rgba(120,80,200,0.1),transparent_70%)]" />

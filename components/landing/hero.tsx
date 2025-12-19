@@ -8,7 +8,7 @@ export function Hero() {
       {/* Background gradient */}
       <div className="absolute inset-0 -z-10 bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(120,80,200,0.15),rgba(255,255,255,0))]" />
 
-      <div className="mx-auto max-w-6xl px-6 py-24 sm:py-32 lg:py-40">
+      <div className="mx-auto max-w-6xl px-6 py-16 sm:py-20 lg:py-24">
         <div className="flex flex-col items-center text-center">
           {/* Badge */}
           <div className="mb-8 inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-4 py-1.5 text-sm font-medium text-primary">
