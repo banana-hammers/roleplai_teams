@@ -75,14 +75,6 @@ export function PreferencesSettings() {
                   </p>
                 </div>
               </SelectItem>
-              <SelectItem value="never">
-                <div>
-                  <span className="font-medium">Never Ask</span>
-                  <p className="text-xs text-muted-foreground">
-                    Auto-approve all tool uses
-                  </p>
-                </div>
-              </SelectItem>
             </SelectContent>
           </Select>
         </div>

@@ -88,37 +88,47 @@ Implementation Notes:
 
 ✅ **Streaming responses** - Real-time token-by-token streaming
 ✅ **Multi-provider support** - OpenAI and Anthropic
-✅ **BYO API keys** - Database schema ready (encryption TODO)
+✅ **BYO API keys** - AES-256-GCM encryption with PBKDF2 key derivation
 ✅ **Identity injection** - Role-specific chats use identity core
 ✅ **Context composition** - Combines identity + role + context packs
 ✅ **RLS security** - All database queries use row-level security
 ✅ **Error handling** - Graceful fallbacks and user-friendly errors
+✅ **Web tools** - Built-in web search and web fetch capabilities
+✅ **Prompt caching** - 90% cost savings on repeated system prompts
+✅ **Rate limiting** - 30 requests/minute per user
+✅ **Agentic loop** - Automatic tool execution with streaming
+
+### 4. Web Tools
+
+**Location:** [lib/tools/](lib/tools/)
+
+| Tool | Description | API Provider |
+|------|-------------|--------------|
+| `web_search` | Search the web for information | Brave Search or Serper |
+| `web_fetch` | Fetch and extract content from URLs | Built-in |
+
+**How it works:**
+1. Role chat endpoint combines built-in tools with custom skills
+2. Anthropic API called with tools array
+3. If response contains `tool_use` blocks, execute tools server-side
+4. Loop continues until no more tool calls
+5. Final text response streamed to client
+
+**Files:**
+- [lib/tools/web-search.ts](lib/tools/web-search.ts) - Brave/Serper search integration
+- [lib/tools/web-fetch.ts](lib/tools/web-fetch.ts) - URL fetching + HTML parsing
+- [lib/tools/builtin-tools.ts](lib/tools/builtin-tools.ts) - Tool registry + executor
 
 ## 🚧 TODO Items
 
-### Critical
-1. **API Key Encryption** - Implement encryption/decryption for `user_api_keys.encrypted_key`
-   - Use Supabase Vault or pgsodium extension
-   - Update both chat endpoints to decrypt keys
-
-2. **Authentication Flow** - Users currently redirected to /login
-   - Need signup/login forms
-   - Email + password or OAuth
-
 ### Nice to Have
-3. **Tool/Function Calling** - Leverage Vercel AI SDK's tool support
-   - Define tools in role configuration
-   - Implement approval workflow for sensitive actions
-
-4. **Chat History Persistence** - Save conversations to database
+1. **Chat History Persistence** - Save conversations to database
    - New table: `conversations` and `messages`
    - Load previous chats
 
-5. **API Key Management UI** - Settings page to add/edit/delete API keys
+2. **Spend Tracking** - Monitor API usage against `spend_limit`
 
-6. **Spend Tracking** - Monitor API usage against `spend_limit`
-
-7. **Task Creation from Chats** - Convert chat interactions to tracked tasks
+3. **Task Creation from Chats** - Convert chat interactions to tracked tasks
 
 ## Testing
 
@@ -156,16 +166,18 @@ Both API routes use `export const runtime = 'edge'`:
 ### Security Model
 - User authentication via Supabase Auth
 - RLS policies enforce data isolation
-- API keys stored encrypted (to be implemented)
+- API keys encrypted with AES-256-GCM (PBKDF2 key derivation)
 - Role ownership verified before use
+- Rate limiting (30 req/min per user)
 
 ## Next Steps
 
-1. **Implement API key encryption** (see [Database Schema](supabase/migrations/20250101000000_initial_schema.sql))
-2. **Build authentication UI** (signup/login forms)
-3. **Create role management pages** (CRUD for roles, identity cores, context packs)
-4. **Add function calling** with approval workflow
-5. **Build task tracking UI** to monitor agent actions
+1. ~~Implement API key encryption~~ ✅ Complete
+2. ~~Build authentication UI~~ ✅ Complete
+3. ~~Create role management pages~~ ✅ Complete
+4. ~~Add web tools~~ ✅ Complete (web_search, web_fetch)
+5. **Chat history persistence** - Save conversations to database
+6. **Spend tracking** - Monitor API usage against spend limits
 
 ## Files Created
 
@@ -177,13 +189,22 @@ app/
     roles/
       [roleId]/
         chat/
-          route.ts                # Role-specific chat endpoint
+          route.ts                # Role-specific chat endpoint (with tools)
   chat/
     page.tsx                      # Chat demo page
 
 components/
   chat/
     chat-interface.tsx            # Reusable chat UI component
+
+lib/
+  tools/
+    builtin-tools.ts              # Tool registry + executor
+    web-search.ts                 # Brave/Serper search integration
+    web-fetch.ts                  # URL fetching + HTML parsing
+  crypto/
+    api-key-encryption.ts         # AES-256-GCM encryption
+  rate-limit.ts                   # In-memory rate limiter
 ```
 
 ## Migration to AI SDK v5

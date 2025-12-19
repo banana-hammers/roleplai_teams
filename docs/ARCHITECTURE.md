@@ -226,7 +226,7 @@ POST /api/roles/{roleId}/chat
 - API routes verify role ownership before chat
 
 ### Data Protection
-- API keys stored encrypted (TODO: implement decryption)
+- API keys encrypted using AES-256-GCM (implemented)
 - Environment variables for system secrets
 - HTTPS in production (enforced by Vercel/Supabase)
 
@@ -312,19 +312,24 @@ ANTHROPIC_API_KEY=sk-ant-...
 
 ## Future Enhancements
 
+### Completed
+- [x] API key encryption/decryption
+- [x] Web tools (search, fetch) with agentic loop
+- [x] Prompt caching (90% cost savings)
+- [x] Rate limiting per user
+
 ### Planned Features
-- [ ] API key encryption/decryption
-- [ ] Tool/function calling with approval workflow
 - [ ] Chat history persistence
 - [ ] Team collaboration (shared roles/context)
 - [ ] Spend tracking and limits
 - [ ] Advanced analytics
+- [ ] Message batching API (50% cost savings)
 
 ### Potential Improvements
 - Redis caching for frequently accessed data
 - WebSocket for bidirectional communication
 - Background jobs for async tasks
-- Rate limiting per user
+- Distributed rate limiting
 - Audit logging
 
 ## Key Design Decisions

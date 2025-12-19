@@ -26,8 +26,8 @@ export interface UseRoleChatReturn {
 }
 
 /**
- * Custom hook for role-based chat with Claude Agent SDK.
- * Handles SSE stream from the agent API endpoint with full tool support.
+ * Custom hook for role-based chat with web tools support.
+ * Handles SSE stream from the chat API endpoint with built-in tools (web_search, web_fetch).
  */
 export function useRoleChat({ roleId }: UseRoleChatOptions): UseRoleChatReturn {
   const [messages, setMessages] = useState<Message[]>([])
@@ -68,7 +68,7 @@ export function useRoleChat({ roleId }: UseRoleChatOptions): UseRoleChatReturn {
     try {
       abortControllerRef.current = new AbortController()
 
-      const response = await fetch(`/api/roles/${roleId}/agent`, {
+      const response = await fetch(`/api/roles/${roleId}/chat`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ messages: apiMessages }),

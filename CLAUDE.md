@@ -84,6 +84,23 @@ This project uses **AI SDK v5**, which has breaking changes from v4:
    - Fetches user's identity core, role, and context packs
    - Composes system prompt from all sources
    - Enforces role ownership via RLS
+   - **Built-in tools**: `web_search` (Brave/Serper API), `web_fetch` (URL fetching)
+   - **Prompt caching**: 90% cost savings on repeated system prompts
+   - **Agentic loop**: Automatic tool execution with streaming
+
+### Built-in Web Tools
+
+Located in `lib/tools/`:
+- **web-search.ts** - Web search using Brave Search or Serper API
+- **web-fetch.ts** - Fetch and parse web page content
+- **builtin-tools.ts** - Tool registry and execution
+
+Requires environment variables:
+```bash
+BRAVE_API_KEY=...      # https://brave.com/search/api/
+# OR
+SERPER_API_KEY=...     # https://serper.dev/
+```
 
 ### System Prompt Composition
 
@@ -237,10 +254,12 @@ import type { Role } from '@/types/role'
 - `PHASE_2_SETUP.md` - Deleted. Phase 2 is complete.
 
 ### API Key Encryption
-- Schema is ready in `user_api_keys.encrypted_key` column
-- Encryption/decryption logic is **NOT** implemented
-- Both chat endpoints have TODO comments for decryption
-- Currently falls back to system keys from environment variables
+- **Fully implemented** using AES-256-GCM with PBKDF2 key derivation
+- Encryption utility: [lib/crypto/api-key-encryption.ts](lib/crypto/api-key-encryption.ts)
+- Keys encrypted on save: [app/api/user/api-keys/route.ts](app/api/user/api-keys/route.ts)
+- Keys decrypted in all chat endpoints before use
+- Requires `ENCRYPTION_MASTER_KEY` environment variable (min 32 chars)
+- Falls back to system keys if user has no BYO keys
 
 ### Model Preference Format
 Stored in `roles.model_preference` as `provider/model`:
@@ -311,6 +330,14 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
 # AI Providers (system fallback keys when users don't BYO)
 OPENAI_API_KEY=sk-...
 ANTHROPIC_API_KEY=sk-ant-...
+
+# Encryption (required for BYO API key feature)
+ENCRYPTION_MASTER_KEY=your-secure-random-string-at-least-32-chars
+
+# Web Tools (optional - for web search and fetch)
+BRAVE_API_KEY=...      # https://brave.com/search/api/
+# OR
+SERPER_API_KEY=...     # https://serper.dev/
 ```
 
 ## Current Status
@@ -322,10 +349,11 @@ ANTHROPIC_API_KEY=sk-ant-...
 - ✅ Role-based chat with identity injection
 - ✅ Context pack composition
 - ✅ shadcn/ui components
+- ✅ API key encryption/decryption
+- ✅ Web tools (search, fetch) with agentic loop
+- ✅ Prompt caching for cost savings
 
 **TODO**:
-- ⚠️ API key encryption/decryption
 - 🚧 Chat history persistence
-- 🚧 Tool/function calling with approval workflow
 - 🚧 Task tracking UI
 - 🚧 Spend tracking and limits

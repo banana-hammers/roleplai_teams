@@ -172,9 +172,22 @@ export function RoleSettingsForm({ role, mcpServers, roleSkills, allSkills }: Ro
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="always">Always Ask</SelectItem>
-                    <SelectItem value="smart">Smart</SelectItem>
-                    <SelectItem value="never">Never Ask</SelectItem>
+                    <SelectItem value="always">
+                      <div>
+                        <span className="font-medium">Always Ask</span>
+                        <p className="text-xs text-muted-foreground">
+                          Require approval for all tool uses
+                        </p>
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="smart">
+                      <div>
+                        <span className="font-medium">Smart</span>
+                        <p className="text-xs text-muted-foreground">
+                          Auto-approve safe operations, ask for risky ones
+                        </p>
+                      </div>
+                    </SelectItem>
                   </SelectContent>
                 </Select>
               </div>

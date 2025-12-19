@@ -1,8 +1,23 @@
-# Epic: Security Hardening for Agent Capabilities and API Keys
+# Epic: Security Hardening for API Keys and Chat
 
 ## Status: Implemented
 
+**Last Updated:** December 2025 (post-Vercel optimization)
+
 This document describes the security vulnerabilities identified and the fixes implemented.
+
+---
+
+## Architecture Note
+
+The project uses **Direct Anthropic API** on Vercel Edge, not the Claude Agent SDK. This simplifies the security model:
+
+| Feature | Old (SDK) | Current (Edge) |
+|---------|-----------|----------------|
+| File Operations | Needed sandboxing | N/A (no filesystem) |
+| Bash Commands | Needed validation | N/A (no shell) |
+| MCP Servers | Needed env whitelisting | N/A (not supported) |
+| Tool Permissions | Complex validation | Simplified (web tools only) |
 
 ---
 
@@ -26,86 +41,23 @@ ENCRYPTION_MASTER_KEY=<32+ character secret>
 
 ---
 
-### 2. Process.env Mutation Race Condition
-**Status:** Fixed
-
-**Problem:** Agent route mutated `process.env.ANTHROPIC_API_KEY`, causing race conditions between concurrent requests.
-
-**Solution:** Pass API key via SDK's `env` option instead:
-```typescript
-const options: Options = {
-  // ...
-  env: {
-    ...process.env,
-    ANTHROPIC_API_KEY: apiKey, // Isolated per-request
-  },
-}
-```
-
-**File:** [app/api/roles/[roleId]/agent/route.ts](../app/api/roles/[roleId]/agent/route.ts)
-
----
-
 ## P1: High Severity Issues (Fixed)
 
-### 3. Dangerous Tool Combination Validation
-**Status:** Implemented
-
-**Problem:** `approval_policy: 'never'` with dangerous tools like Bash could allow destructive operations.
-
-**Solution:**
-- Added `DANGEROUS_TOOLS` constant: `['Bash', 'Write', 'Edit', 'Task']`
-- `mapApprovalPolicy()` now automatically upgrades to `'acceptEdits'` when dangerous tools are present
-- Added `validateToolPermissionCombination()` for explicit validation
-
-**File:** [lib/agent/tool-permissions.ts](../lib/agent/tool-permissions.ts)
-
----
-
-### 4. MCP Environment Variable Whitelist
-**Status:** Implemented
-
-**Problem:** MCP config `${VAR_NAME}` placeholders could access any environment variable, including secrets.
-
-**Solution:**
-- Added `ALLOWED_MCP_ENV_VARS` whitelist with safe integration tokens
-- Non-whitelisted variables are blocked with warning logged
-
-**File:** [lib/agent/mcp-resolver.ts](../lib/agent/mcp-resolver.ts)
-
----
-
-### 5. Improved Tool Disallow Pattern Matching
-**Status:** Implemented
-
-**Problem:** Simple string `includes()` could be bypassed with extra whitespace.
-
-**Solution:**
-- Added `normalizeForMatching()` to collapse whitespace
-- Added regex pattern support with `regex:` prefix
-- Both original and normalized strings checked
-
-**File:** [lib/agent/tool-permissions.ts](../lib/agent/tool-permissions.ts)
-
----
-
-## P2: Medium Severity Issues (Fixed)
-
-### 6. Rate Limiting
+### 2. Rate Limiting
 **Status:** Implemented
 
 **Problem:** No rate limiting allowed abuse of expensive AI API calls.
 
 **Solution:**
 - Created [lib/rate-limit.ts](../lib/rate-limit.ts) with in-memory rate limiter
-- Applied to chat (30/min), agent (20/min), API keys (10/min)
+- Applied to chat endpoint (30/min)
 - Returns 429 with Retry-After header when exceeded
 
 **Note:** For production at scale, consider Vercel KV or Upstash Redis.
 
 ---
 
-### 7. Authentication Required for Chat
+### 3. Authentication Required for Chat
 **Status:** Implemented
 
 **Problem:** `/api/chat` allowed unauthenticated access to system API keys.
@@ -116,7 +68,7 @@ const options: Options = {
 
 ---
 
-### 8. Skill Template Input Sanitization
+### 4. Skill Template Input Sanitization
 **Status:** Implemented
 
 **Problem:** User input directly interpolated into prompt templates without validation.
@@ -130,19 +82,53 @@ const options: Options = {
 
 ---
 
+## Removed Security Features (No Longer Needed)
+
+The following security features were removed because they applied to the Claude Agent SDK which is no longer used:
+
+| Feature | Original File | Status |
+|---------|--------------|--------|
+| Process.env mutation fix | `agent/route.ts` | N/A - endpoint removed |
+| Dangerous tool validation | `lib/agent/tool-permissions.ts` | N/A - file removed |
+| MCP env var whitelist | `lib/agent/mcp-resolver.ts` | N/A - file removed |
+
+These were necessary when using the SDK to spawn Claude Code as a child process. With the Edge-based architecture, these attack vectors don't exist.
+
+---
+
+## Current Security Model
+
+### Web Tools Security
+
+The only built-in tools are `web_search` and `web_fetch`:
+
+| Tool | Security Consideration | Mitigation |
+|------|----------------------|------------|
+| `web_search` | API key exposure | Server-side only, not in responses |
+| `web_fetch` | SSRF risk | Only HTTP/HTTPS, user-agent set |
+| `web_fetch` | Large response DoS | Content truncated to 50KB |
+
+### API Key Security
+
+| Layer | Protection |
+|-------|-----------|
+| Storage | AES-256-GCM encrypted |
+| Derivation | PBKDF2 with user ID salt |
+| Access | RLS policies enforce user isolation |
+| Fallback | System keys if user has none |
+
+---
+
 ## Files Modified
 
 | File | Changes |
 |------|---------|
-| `lib/crypto/api-key-encryption.ts` | New - AES-GCM encryption |
-| `lib/rate-limit.ts` | New - Rate limiting |
-| `app/api/user/api-keys/route.ts` | New - Server-side key encryption |
-| `app/api/chat/route.ts` | Auth required, decryption, rate limiting |
-| `app/api/roles/[roleId]/agent/route.ts` | Fixed env mutation, decryption, rate limiting |
-| `app/api/roles/[roleId]/chat/route.ts` | Added decryption |
+| `lib/crypto/api-key-encryption.ts` | AES-GCM encryption |
+| `lib/rate-limit.ts` | Rate limiting |
+| `app/api/user/api-keys/route.ts` | Server-side key encryption |
+| `app/api/chat/route.ts` | Auth required, decryption |
+| `app/api/roles/[roleId]/chat/route.ts` | Decryption, web tools |
 | `components/settings/api-keys-settings.tsx` | Use server API for encryption |
-| `lib/agent/tool-permissions.ts` | Dangerous tool validation, improved patterns |
-| `lib/agent/mcp-resolver.ts` | Env var whitelist |
 | `lib/skills/to-anthropic-tools.ts` | Input sanitization |
 
 ---
@@ -153,17 +139,22 @@ const options: Options = {
 # Required for API key encryption
 ENCRYPTION_MASTER_KEY=<32+ character secret>
 
-# Existing - AI providers
+# AI providers
 OPENAI_API_KEY=sk-...
 ANTHROPIC_API_KEY=sk-ant-...
+
+# Web tools (optional)
+BRAVE_API_KEY=...
+# OR
+SERPER_API_KEY=...
 ```
 
 ---
 
 ## Testing Recommendations
 
-- [ ] Test encryption/decryption roundtrip
-- [ ] Test rate limit 429 responses
-- [ ] Test dangerous tool + bypassPermissions is blocked
-- [ ] Test MCP env var whitelist blocks sensitive vars
-- [ ] Test template input length truncation
+- [x] Test encryption/decryption roundtrip
+- [x] Test rate limit 429 responses
+- [x] Test template input length truncation
+- [ ] Test web fetch URL validation
+- [ ] Test web fetch content truncation

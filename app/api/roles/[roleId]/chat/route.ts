@@ -3,9 +3,13 @@ import Anthropic from '@anthropic-ai/sdk'
 import {
   skillsToAnthropicTools,
   findSkillByToolName,
-  executeSkillTool,
-  type AnthropicTool
+  executeSkillTool
 } from '@/lib/skills/to-anthropic-tools'
+import {
+  getAvailableBuiltinTools,
+  isBuiltinTool,
+  executeBuiltinTool
+} from '@/lib/tools/builtin-tools'
 import { decryptApiKey, isEncryptionConfigured } from '@/lib/crypto/api-key-encryption'
 import type { Skill } from '@/types/skill'
 
@@ -71,7 +75,20 @@ export async function POST(
     }
 
     // Convert skills to Anthropic tools format
-    const tools: AnthropicTool[] = skillsToAnthropicTools(skills)
+    const skillTools = skillsToAnthropicTools(skills)
+
+    // Get built-in tools (web_search, web_fetch)
+    const builtinTools = getAvailableBuiltinTools()
+
+    // Combine all tools (cast skill tools to match Anthropic.Tool type)
+    const tools: Anthropic.Tool[] = [
+      ...builtinTools,
+      ...skillTools.map(t => ({
+        name: t.name,
+        description: t.description,
+        input_schema: t.input_schema as Anthropic.Tool['input_schema']
+      }))
+    ]
 
     // Build the system prompt with identity + role + context
     const systemPromptParts: string[] = []
@@ -185,7 +202,14 @@ ${pack.content}`)
             const response = await anthropic.messages.create({
               model: modelName,
               max_tokens: 4096,
-              system: systemPrompt,
+              // Use prompt caching for system prompt (90% cost savings on cache hits)
+              system: [
+                {
+                  type: 'text',
+                  text: systemPrompt,
+                  cache_control: { type: 'ephemeral' }
+                }
+              ],
               messages: currentMessages,
               tools: tools.length > 0 ? tools as Anthropic.Tool[] : undefined,
               stream: true,
@@ -262,19 +286,28 @@ ${pack.content}`)
               // Execute tools and add results
               const toolResults: Anthropic.ToolResultBlockParam[] = []
               for (const tc of toolCalls) {
-                const skill = findSkillByToolName(skills, tc.name)
                 let result: string
-                if (skill) {
-                  result = executeSkillTool(skill, tc.input)
-                  // Send tool result event
-                  controller.enqueue(encoder.encode(`data: ${JSON.stringify({
-                    type: 'tool_result',
-                    tool: tc.name,
-                    result
-                  })}\n\n`))
+
+                // Check if it's a built-in tool first
+                if (isBuiltinTool(tc.name)) {
+                  result = await executeBuiltinTool(tc.name, tc.input)
                 } else {
-                  result = `Error: Unknown tool "${tc.name}"`
+                  // Try to find a matching skill
+                  const skill = findSkillByToolName(skills, tc.name)
+                  if (skill) {
+                    result = executeSkillTool(skill, tc.input)
+                  } else {
+                    result = `Error: Unknown tool "${tc.name}"`
+                  }
                 }
+
+                // Send tool result event
+                controller.enqueue(encoder.encode(`data: ${JSON.stringify({
+                  type: 'tool_result',
+                  tool: tc.name,
+                  result
+                })}\n\n`))
+
                 toolResults.push({
                   type: 'tool_result',
                   tool_use_id: tc.id,

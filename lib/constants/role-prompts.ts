@@ -29,162 +29,43 @@ When you have enough information (typically after 3-5 exchanges), conclude with 
 
 After this conclusion, the user will click a button to generate the role configuration.`
 
-export const ROLE_EXTRACTION_PROMPT = `You are a role configuration extractor. Based on the interview conversation below, extract a structured role configuration and generate 2-4 practical starter skills.
+export const ROLE_EXTRACTION_PROMPT = `Extract a role configuration and 2-4 starter skills from this interview.
 
-INTERVIEW TRANSCRIPT:
+INTERVIEW:
 {{transcript}}
 
-USER'S IDENTITY CORE (their base personality that all roles inherit):
+IDENTITY CORE (base personality):
 {{identity_core}}
 
 ---
 
-Extract the following information and output it as valid JSON:
+Output valid JSON (no markdown) with this structure:
 
-1. **Role Configuration**:
-   - name: A catchy, descriptive name, max 50 characters (e.g., "Email Ninja", "Research Buddy", "Code Whisperer")
-   - description: 1-2 sentence summary of what this role does (max 200 characters, be concise!)
-   - instructions: Detailed behavior instructions (2-4 paragraphs) that explain:
-     - The role's primary purpose and how to approach tasks
-     - Key behaviors and patterns to follow
-     - How to handle edge cases or unclear requests
-   - identity_facets: Role-specific personality adjustments:
-     - tone_adjustment: How this role modifies communication style (e.g., "more formal with clients")
-     - priority_override: Which priorities are elevated for this role (e.g., ["efficiency", "accuracy"])
-     - special_behaviors: Role-specific behaviors (e.g., ["always proofread before sending", "ask clarifying questions"])
-   - approval_policy: Default to "smart" unless the user specified otherwise
-
-2. **Starter Skills** (2-4 practical skills based on the role's purpose):
-   Each skill should include:
-   - name: Action-oriented name, max 50 characters (e.g., "Draft Email", "Summarize Article")
-   - description: What the skill does (max 150 characters, be concise!)
-   - prompt_template: A detailed prompt with {{placeholders}} for user inputs
-   - input_schema: JSON Schema for required inputs
-   - examples: 1 example input/output pair
-
-SKILL GENERATION GUIDELINES:
-- Skills should be immediately useful for the role's stated purpose
-- Use the user's identity core voice in the prompt templates
-- Include clear placeholders like {{recipient}}, {{topic}}, {{content}}
-- Make input_schema practical - only require essential fields
-- For tone fields, use enums like ["formal", "friendly", "brief"]
-
-EXAMPLE SKILLS BY ROLE TYPE:
-- Email Assistant: Draft Email, Summarize Thread, Extract Action Items, Reply Suggestions
-- Research Buddy: Deep Dive Search, Summarize Article, Compare Sources, Create Outline
-- Code Reviewer: Review PR, Explain Code, Suggest Improvements, Document Function
-- Writing Assistant: Improve Draft, Check Tone, Expand Outline, Proofread
-- Meeting Assistant: Summarize Notes, Extract Action Items, Draft Follow-up, Create Agenda
-
-OUTPUT FORMAT (valid JSON only, no markdown):
 {
   "role": {
-    "name": "string",
-    "description": "string",
-    "instructions": "string",
+    "name": "Catchy name, max 50 chars",
+    "description": "1-2 sentences, max 200 chars",
+    "instructions": "2-4 paragraphs: purpose, behaviors, edge cases",
     "identity_facets": {
-      "tone_adjustment": "string or null",
-      "priority_override": ["string"],
-      "special_behaviors": ["string"]
+      "tone_adjustment": "How this role modifies style, or null",
+      "priority_override": ["elevated priorities"],
+      "special_behaviors": ["role-specific behaviors"]
     },
     "approval_policy": "smart"
   },
   "skills": [
     {
-      "name": "string",
-      "description": "string",
-      "prompt_template": "string with {{placeholders}}",
-      "input_schema": {
-        "type": "object",
-        "properties": {
-          "field_name": {
-            "type": "string",
-            "description": "string"
-          }
-        },
-        "required": ["field_name"]
-      },
-      "examples": [
-        {
-          "input": { "field_name": "value" },
-          "expected_output": "string"
-        }
-      ]
+      "name": "Action name, max 50 chars",
+      "description": "What it does, max 150 chars",
+      "prompt_template": "Prompt with {{placeholders}}",
+      "input_schema": { "type": "object", "properties": {...}, "required": [...] },
+      "examples": [{ "input": {...}, "expected_output": "..." }]
     }
   ]
-}`
-
-// Skill template examples for reference
-export const SKILL_TEMPLATES = {
-  email_assistant: [
-    {
-      name: 'Draft Email',
-      description: 'Draft a professional email based on context and purpose',
-      prompt_template: `Draft an email with the following details:
-
-To: {{recipient}}
-Purpose: {{purpose}}
-Key points to include:
-{{key_points}}
-
-Tone: {{tone}}
-
-Use my voice and communication style. Be {{tone}} and keep it focused.`,
-      input_schema: {
-        type: 'object' as const,
-        properties: {
-          recipient: { type: 'string', description: 'Who the email is to' },
-          purpose: { type: 'string', description: 'Why we are sending this email' },
-          key_points: { type: 'string', description: 'Main points to cover' },
-          tone: { type: 'string', enum: ['formal', 'friendly', 'brief'], description: 'Desired tone' },
-        },
-        required: ['recipient', 'purpose'],
-      },
-    },
-    {
-      name: 'Summarize Thread',
-      description: 'Summarize a long email thread into key points',
-      prompt_template: `Summarize this email thread:
-
-{{email_thread}}
-
-Provide:
-1. Main topic/decision being discussed
-2. Key points from each participant
-3. Current status or next steps
-4. Any action items`,
-      input_schema: {
-        type: 'object' as const,
-        properties: {
-          email_thread: { type: 'string', description: 'The email thread to summarize' },
-        },
-        required: ['email_thread'],
-      },
-    },
-  ],
-  research_assistant: [
-    {
-      name: 'Summarize Article',
-      description: 'Summarize an article or document into key takeaways',
-      prompt_template: `Summarize this content:
-
-{{content}}
-
-Format: {{format}}
-
-Provide:
-1. Main thesis or argument
-2. Key supporting points
-3. Notable data or evidence
-4. Conclusions or implications`,
-      input_schema: {
-        type: 'object' as const,
-        properties: {
-          content: { type: 'string', description: 'The article or document to summarize' },
-          format: { type: 'string', enum: ['bullet_points', 'paragraph', 'executive_summary'], description: 'Output format' },
-        },
-        required: ['content'],
-      },
-    },
-  ],
 }
+
+GUIDELINES:
+- Skills should be immediately useful for the role's purpose
+- Use identity core voice in prompt templates
+- Include clear {{placeholders}} like {{recipient}}, {{topic}}
+- Only require essential input fields`
