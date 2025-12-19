@@ -4,7 +4,72 @@ import Anthropic from '@anthropic-ai/sdk'
 import { ROLE_EXTRACTION_PROMPT } from '@/lib/constants/role-prompts'
 import { extractionResultSchema, type ExtractionResult } from '@/types/role-creation'
 
+// JSON Schema for tool_use - mirrors extractionResultSchema
+const EXTRACTION_TOOL_SCHEMA: Anthropic.Tool = {
+  name: 'extract_role',
+  description: 'Extract a structured role configuration and starter skills from an interview transcript',
+  input_schema: {
+    type: 'object' as const,
+    properties: {
+      role: {
+        type: 'object',
+        properties: {
+          name: { type: 'string', description: 'Catchy role name, max 100 chars' },
+          description: { type: 'string', description: '1-2 sentences describing the role, max 500 chars' },
+          instructions: { type: 'string', description: '2-4 paragraphs covering purpose, behaviors, and edge cases' },
+          identity_facets: {
+            type: 'object',
+            properties: {
+              tone_adjustment: { type: 'string', description: 'How this role modifies communication style' },
+              priority_override: { type: 'array', items: { type: 'string' }, description: 'Elevated priorities for this role' },
+              special_behaviors: { type: 'array', items: { type: 'string' }, description: 'Role-specific behaviors' },
+            },
+          },
+          approval_policy: { type: 'string', enum: ['always', 'never', 'smart'], description: 'When to require user approval' },
+        },
+        required: ['name', 'description', 'instructions', 'identity_facets', 'approval_policy'],
+      },
+      skills: {
+        type: 'array',
+        minItems: 2,
+        maxItems: 4,
+        items: {
+          type: 'object',
+          properties: {
+            name: { type: 'string', description: 'Action name, max 100 chars' },
+            description: { type: 'string', description: 'What the skill does, max 500 chars' },
+            prompt_template: { type: 'string', description: 'Prompt with {{placeholders}} for inputs' },
+            input_schema: {
+              type: 'object',
+              properties: {
+                type: { type: 'string', const: 'object' },
+                properties: { type: 'object', additionalProperties: { type: 'object' } },
+                required: { type: 'array', items: { type: 'string' } },
+              },
+              required: ['type', 'properties'],
+            },
+            examples: {
+              type: 'array',
+              items: {
+                type: 'object',
+                properties: {
+                  input: { type: 'object' },
+                  expected_output: { type: 'string' },
+                },
+                required: ['input', 'expected_output'],
+              },
+            },
+          },
+          required: ['name', 'description', 'prompt_template', 'input_schema'],
+        },
+      },
+    },
+    required: ['role', 'skills'],
+  },
+}
+
 export const runtime = 'edge'
+export const maxDuration = 60 // Allow up to 60 seconds for complex extractions
 
 /**
  * Role + Skills Extraction Endpoint
@@ -68,60 +133,26 @@ Decision Rules: ${JSON.stringify(identityCore.decision_rules)}`
 
     const response = await anthropic.messages.create({
       model: 'claude-sonnet-4-5-20250929',
-      max_tokens: 16384, // High limit for complex skill extractions with examples
+      max_tokens: 4096,
+      tools: [EXTRACTION_TOOL_SCHEMA],
+      tool_choice: { type: 'tool', name: 'extract_role' },
       messages: [
         {
           role: 'user',
           content: extractionPrompt,
         },
       ],
-      temperature: 0.3, // Lower temperature for more consistent extraction
     })
 
-    // Check if response was truncated
-    if (response.stop_reason === 'max_tokens') {
-      console.error('Extraction response was truncated due to max_tokens limit')
-      return NextResponse.json(
-        { error: 'Response was too long. Please try a simpler role description.' },
-        { status: 500 }
-      )
+    // Extract tool use result from response
+    const toolUseBlock = response.content.find(block => block.type === 'tool_use')
+    if (!toolUseBlock || toolUseBlock.type !== 'tool_use') {
+      console.error('No tool_use block in response:', response.content)
+      return NextResponse.json({ error: 'Failed to extract role configuration' }, { status: 500 })
     }
 
-    // Extract text content from response
-    const textContent = response.content.find(block => block.type === 'text')
-    if (!textContent || textContent.type !== 'text') {
-      return NextResponse.json({ error: 'No text response from AI' }, { status: 500 })
-    }
-
-    // Parse JSON from response
-    let extracted: ExtractionResult
-    try {
-      // Try to extract JSON from the response (it might have markdown code blocks)
-      let jsonText = textContent.text.trim()
-
-      // Remove markdown code blocks if present
-      if (jsonText.startsWith('```json')) {
-        jsonText = jsonText.slice(7)
-      } else if (jsonText.startsWith('```')) {
-        jsonText = jsonText.slice(3)
-      }
-      if (jsonText.endsWith('```')) {
-        jsonText = jsonText.slice(0, -3)
-      }
-      jsonText = jsonText.trim()
-
-      const parsed = JSON.parse(jsonText)
-
-      // Validate with Zod schema
-      extracted = extractionResultSchema.parse(parsed)
-    } catch (parseError) {
-      console.error('Failed to parse extraction response:', parseError)
-      console.error('Raw response:', textContent.text)
-      return NextResponse.json(
-        { error: 'Failed to parse role configuration. Please try again.' },
-        { status: 500 }
-      )
-    }
+    // Validate with Zod schema (tool_use already returns structured JSON)
+    const extracted: ExtractionResult = extractionResultSchema.parse(toolUseBlock.input)
 
     return NextResponse.json(extracted)
   } catch (error) {
