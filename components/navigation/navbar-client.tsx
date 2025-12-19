@@ -5,7 +5,7 @@ import { useState } from 'react'
 import { usePathname } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { UserMenu } from './user-menu'
-import { Menu, X, Plus, LayoutDashboard } from 'lucide-react'
+import { Menu, X, Plus, LayoutDashboard, Settings } from 'lucide-react'
 
 interface NavbarClientProps {
   variant: 'landing' | 'app'
@@ -33,6 +33,7 @@ export function NavbarClient({ variant, user }: NavbarClientProps) {
   // App nav links (shown for authenticated users)
   const appLinks = [
     { href: '/roles', label: 'Dashboard', icon: LayoutDashboard },
+    { href: '/settings', label: 'Settings', icon: Settings },
   ]
 
   return (

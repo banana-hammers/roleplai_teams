@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { useRoleChat } from '@/lib/hooks/use-role-chat'
 import { getRole, getRoleSkills } from '@/app/actions/roles'
-import { Loader2, Send, ArrowLeft, Wrench } from 'lucide-react'
+import { Loader2, Send, ArrowLeft, Wrench, Settings } from 'lucide-react'
 import { MessageBubble } from '@/components/chat/message-bubble'
 import { TypingIndicator } from '@/components/chat/typing-indicator'
 import type { Role } from '@/types/role'
@@ -118,6 +118,14 @@ export default function RoleChatPage({ params }: RoleChatPageProps) {
               </span>
             </div>
           )}
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => router.push(`/roles/${roleId}/settings`)}
+            title="Role settings"
+          >
+            <Settings className="h-4 w-4" />
+          </Button>
         </div>
       </header>
 

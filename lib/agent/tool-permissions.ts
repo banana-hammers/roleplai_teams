@@ -45,6 +45,33 @@ export const UTILITY_TOOLS = [
 export const DEFAULT_SAFE_TOOLS = ['Read', 'Glob', 'Grep'] as const
 
 /**
+ * SECURITY: Tools that can cause damage and should never run with bypassPermissions
+ */
+export const DANGEROUS_TOOLS = ['Bash', 'Write', 'Edit', 'Task'] as const
+
+/**
+ * Safe Bash command prefixes (read-only or limited scope)
+ */
+export const SAFE_BASH_PREFIXES = [
+  'echo ',
+  'cat ',
+  'head ',
+  'tail ',
+  'ls ',
+  'pwd',
+  'which ',
+  'type ',
+  'git status',
+  'git log',
+  'git diff',
+  'git branch',
+  'npm list',
+  'npm outdated',
+  'node --version',
+  'npm --version',
+] as const
+
+/**
  * Resolve the list of allowed tools for a role
  */
 export function resolveAllowedTools(role: Role): string[] {
@@ -97,17 +124,58 @@ export function shouldRequireApproval(
 }
 
 /**
+ * SECURITY: Validate that tool/permission combinations are safe
+ * Returns an error if dangerous tools are combined with bypassPermissions
+ */
+export function validateToolPermissionCombination(
+  allowedTools: string[],
+  approvalPolicy: ApprovalPolicy
+): { valid: boolean; error?: string; safePolicyOverride?: ApprovalPolicy } {
+  const hasDangerousTools = allowedTools.some(t =>
+    DANGEROUS_TOOLS.includes(t as typeof DANGEROUS_TOOLS[number])
+  )
+
+  if (hasDangerousTools && approvalPolicy === 'never') {
+    return {
+      valid: false,
+      error: `Cannot use approval_policy='never' with dangerous tools: ${
+        allowedTools.filter(t => DANGEROUS_TOOLS.includes(t as typeof DANGEROUS_TOOLS[number])).join(', ')
+      }. Use 'smart' or 'always' instead.`,
+      safePolicyOverride: 'smart' // Suggest a safer alternative
+    }
+  }
+
+  return { valid: true }
+}
+
+/**
  * Map RoleplAI approval policy to SDK permission mode
+ * SECURITY: Automatically upgrades to safer mode if dangerous tools are present
  */
 export function mapApprovalPolicy(
-  policy: ApprovalPolicy
+  policy: ApprovalPolicy,
+  allowedTools?: string[]
 ): 'default' | 'acceptEdits' | 'bypassPermissions' {
+  // SECURITY: If dangerous tools are present and policy is 'never', force 'smart'
+  if (allowedTools && policy === 'never') {
+    const hasDangerousTools = allowedTools.some(t =>
+      DANGEROUS_TOOLS.includes(t as typeof DANGEROUS_TOOLS[number])
+    )
+    if (hasDangerousTools) {
+      console.warn(
+        'SECURITY: Overriding bypassPermissions due to dangerous tools:',
+        allowedTools.filter(t => DANGEROUS_TOOLS.includes(t as typeof DANGEROUS_TOOLS[number]))
+      )
+      return 'acceptEdits' // Force safer mode
+    }
+  }
+
   switch (policy) {
     case 'always':
       // Require approval for everything
       return 'default'
     case 'never':
-      // No approval needed
+      // No approval needed (only if no dangerous tools)
       return 'bypassPermissions'
     case 'smart':
       // Auto-accept safe edits, prompt for dangerous ops
@@ -118,7 +186,15 @@ export function mapApprovalPolicy(
 }
 
 /**
+ * Normalize a string for pattern matching (collapse whitespace, trim)
+ */
+function normalizeForMatching(str: string): string {
+  return str.replace(/\s+/g, ' ').trim().toLowerCase()
+}
+
+/**
  * Check if a tool is in the disallowed list (supports patterns)
+ * SECURITY: Improved pattern matching with normalization and regex support
  */
 export function isToolDisallowed(
   toolName: string,
@@ -128,7 +204,28 @@ export function isToolDisallowed(
   const config = (role.tool_config as ToolConfig) || {}
   const disallowedPatterns = config.disallowedTools || []
 
+  // Normalize the input for matching
+  const inputStr = JSON.stringify(toolInput)
+  const normalizedInput = normalizeForMatching(inputStr)
+
   for (const pattern of disallowedPatterns) {
+    // Support regex patterns prefixed with "regex:"
+    if (pattern.startsWith('regex:')) {
+      try {
+        const regexPattern = pattern.slice(6)
+        const regex = new RegExp(regexPattern, 'i')
+        if (regex.test(inputStr) || regex.test(normalizedInput)) {
+          return {
+            disallowed: true,
+            reason: `Operation matched blocked pattern: ${regexPattern}`
+          }
+        }
+      } catch {
+        console.error(`Invalid regex pattern: ${pattern}`)
+      }
+      continue
+    }
+
     const [tool, ...argPatterns] = pattern.split(':')
 
     // Check tool name match
@@ -139,10 +236,12 @@ export function isToolDisallowed(
       return { disallowed: true, reason: `Tool ${toolName} is not allowed for this role` }
     }
 
-    // Check argument patterns (e.g., "Bash:rm -rf" blocks rm -rf commands)
+    // Check argument patterns with normalization (e.g., "Bash:rm -rf" blocks rm -rf commands)
     const argPattern = argPatterns.join(':')
-    const inputStr = JSON.stringify(toolInput)
-    if (inputStr.includes(argPattern)) {
+    const normalizedPattern = normalizeForMatching(argPattern)
+
+    // Check both original and normalized strings
+    if (inputStr.includes(argPattern) || normalizedInput.includes(normalizedPattern)) {
       return {
         disallowed: true,
         reason: `Operation "${argPattern}" is not allowed for this role`
@@ -151,6 +250,16 @@ export function isToolDisallowed(
   }
 
   return { disallowed: false }
+}
+
+/**
+ * SECURITY: Check if a Bash command is in the safe list
+ */
+export function isSafeBashCommand(command: string): boolean {
+  const normalizedCommand = normalizeForMatching(command)
+  return SAFE_BASH_PREFIXES.some(prefix =>
+    normalizedCommand.startsWith(prefix.toLowerCase())
+  )
 }
 
 /**

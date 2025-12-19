@@ -3,6 +3,31 @@ import type { McpServerConfig, McpServer } from '@/types/mcp'
 import { BUILT_IN_MCP_SERVERS, isStdioServer } from '@/types/mcp'
 
 /**
+ * SECURITY: Whitelist of environment variables that can be accessed via MCP config
+ * This prevents users from extracting sensitive server secrets via ${VAR_NAME} placeholders
+ */
+const ALLOWED_MCP_ENV_VARS = [
+  // User-facing integration tokens (users should configure these themselves)
+  'GITHUB_TOKEN',
+  'GITHUB_PERSONAL_ACCESS_TOKEN',
+  'GITLAB_TOKEN',
+  'SLACK_BOT_TOKEN',
+  'SLACK_USER_TOKEN',
+  'NOTION_API_KEY',
+  'NOTION_TOKEN',
+  'LINEAR_API_KEY',
+  'JIRA_API_TOKEN',
+  'CONFLUENCE_API_TOKEN',
+  'FIGMA_ACCESS_TOKEN',
+  'AIRTABLE_API_KEY',
+  'GOOGLE_API_KEY',
+  // Common dev tool paths
+  'HOME',
+  'PATH',
+  'NODE_ENV',
+] as const
+
+/**
  * Resolve MCP servers for a user/role combination
  *
  * Priority:
@@ -83,6 +108,7 @@ async function resolveConfigVariables(
 
 /**
  * Resolve ${VAR_NAME} placeholders in an object
+ * SECURITY: Only resolves whitelisted environment variables
  */
 async function resolveEnvObject(
   obj: Record<string, string>,
@@ -105,15 +131,24 @@ async function resolveEnvObject(
     if (varMatch) {
       const varName = varMatch[1]
 
-      // Priority: built-in > user secrets > environment
+      // Priority: built-in > user secrets > whitelisted environment
       if (builtInVars[varName]) {
         resolved[key] = builtInVars[varName]
-      } else if (process.env[varName]) {
-        resolved[key] = process.env[varName]!
+      } else if (ALLOWED_MCP_ENV_VARS.includes(varName as typeof ALLOWED_MCP_ENV_VARS[number])) {
+        // SECURITY: Only resolve whitelisted environment variables
+        if (process.env[varName]) {
+          resolved[key] = process.env[varName]!
+        } else {
+          resolved[key] = ''
+          console.warn(`MCP config: whitelisted variable ${varName} not set`)
+        }
       } else {
-        // Variable not found - leave empty to avoid exposing placeholder
+        // SECURITY: Block access to non-whitelisted environment variables
         resolved[key] = ''
-        console.warn(`MCP config variable ${varName} not found`)
+        console.warn(
+          `SECURITY: Blocked access to non-whitelisted env var: ${varName}. ` +
+          `Add to ALLOWED_MCP_ENV_VARS if this is a user-facing integration.`
+        )
       }
     } else {
       resolved[key] = value

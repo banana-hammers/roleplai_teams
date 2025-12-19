@@ -4,78 +4,114 @@ import { skillToMarkdown } from '@/lib/skills/skill-to-markdown'
 import { resolveAllowedTools, mapApprovalPolicy } from '@/lib/agent/tool-permissions'
 import { createTaskRecordingHooks } from '@/lib/agent/task-recording-hooks'
 import { resolveMcpServers } from '@/lib/agent/mcp-resolver'
+import { decryptApiKey, isEncryptionConfigured } from '@/lib/crypto/api-key-encryption'
+import { rateLimit, rateLimitExceededResponse, RATE_LIMITS } from '@/lib/rate-limit'
 import type { Skill } from '@/types/skill'
 
 // SDK requires Node.js runtime (spawns Claude Code as child process)
 // Do NOT use Edge Runtime here
+export const runtime = 'nodejs'
 
 export async function POST(
   req: Request,
   { params }: { params: Promise<{ roleId: string }> }
 ) {
-  try {
-    const { roleId } = await params
-    const { messages, conversationId } = await req.json()
+  // Parse request data first (fast)
+  const { roleId } = await params
+  const { messages, conversationId, resumeSessionId } = await req.json()
+  const userMessage = messages[messages.length - 1]?.content || ''
 
-    // Get the latest user message
-    const userMessage = messages[messages.length - 1]?.content || ''
+  // Quick auth check - required for proper HTTP status codes
+  const supabase = await createClient()
+  const { data: { user }, error: authError } = await supabase.auth.getUser()
 
-    // Authenticate user
-    const supabase = await createClient()
-    const { data: { user }, error: authError } = await supabase.auth.getUser()
+  if (authError || !user) {
+    return new Response('Unauthorized', { status: 401 })
+  }
 
-    if (authError || !user) {
-      return new Response('Unauthorized', { status: 401 })
-    }
+  // SECURITY: Rate limit by user ID (agent is more expensive)
+  const rateLimitResult = await rateLimit(
+    `agent:${user.id}`,
+    RATE_LIMITS.agent.limit,
+    RATE_LIMITS.agent.windowMs
+  )
 
-    // Fetch the role and verify ownership
-    const { data: role, error: roleError } = await supabase
-      .from('roles')
-      .select('*')
-      .eq('id', roleId)
-      .eq('user_id', user.id)
-      .single()
+  if (!rateLimitResult.success) {
+    return rateLimitExceededResponse(rateLimitResult)
+  }
 
-    if (roleError || !role) {
-      return new Response('Role not found', { status: 404 })
-    }
+  // Return streaming response immediately to prevent Vercel 25s timeout
+  // All heavy lifting (DB queries, SDK init) happens inside the stream
+  const encoder = new TextEncoder()
+  const stream = new ReadableStream({
+    async start(controller) {
+      try {
+        // Send immediate heartbeat - this is what prevents the timeout
+        controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'ping' })}\n\n`))
 
-    // Fetch user's identity core
-    const { data: identityCore } = await supabase
-      .from('identity_cores')
-      .select('*')
-      .eq('user_id', user.id)
-      .maybeSingle()
+        // Now do the heavy database fetching inside the stream
+        // Fetch the role and verify ownership
+        const { data: role, error: roleError } = await supabase
+          .from('roles')
+          .select('*')
+          .eq('id', roleId)
+          .eq('user_id', user.id)
+          .single()
 
-    // Fetch context packs linked to this role
-    const { data: contextPacks } = await supabase
-      .from('role_context_packs')
-      .select(`
-        context_pack_id,
-        context_packs (
-          name,
-          content,
-          type
-        )
-      `)
-      .eq('role_id', roleId)
+        if (roleError || !role) {
+          controller.enqueue(encoder.encode(`data: ${JSON.stringify({
+            type: 'error',
+            message: 'Role not found'
+          })}\n\n`))
+          controller.close()
+          return
+        }
 
-    // Fetch skills linked to this role
-    const { data: roleSkills } = await supabase
-      .from('role_skills')
-      .select(`
-        skill_id,
-        config_overrides,
-        skills (*)
-      `)
-      .eq('role_id', roleId)
+        // Fetch all related data in parallel for better performance
+        const [identityCoreResult, contextPacksResult, roleSkillsResult, apiKeysResult] = await Promise.all([
+          supabase
+            .from('identity_cores')
+            .select('*')
+            .eq('user_id', user.id)
+            .maybeSingle(),
+          supabase
+            .from('role_context_packs')
+            .select(`
+              context_pack_id,
+              context_packs (
+                name,
+                content,
+                type
+              )
+            `)
+            .eq('role_id', roleId),
+          supabase
+            .from('role_skills')
+            .select(`
+              skill_id,
+              config_overrides,
+              skills (*)
+            `)
+            .eq('role_id', roleId),
+          supabase
+            .from('user_api_keys')
+            .select('encrypted_key')
+            .eq('user_id', user.id)
+            .eq('provider', 'anthropic')
+            .maybeSingle()
+        ])
 
-    // Build the system prompt with identity + role + context + skills
-    const systemPromptParts: string[] = []
+        const identityCore = identityCoreResult.data
+        const contextPacks = contextPacksResult.data
+        const roleSkills = roleSkillsResult.data
+        const apiKeys = apiKeysResult.data
 
-    // Add identity core if available
-    if (identityCore) {
-      systemPromptParts.push(`# Your Identity Core
+        // Build the system prompt with identity + role + context + skills
+        const systemPromptParts: string[] = []
+
+        // Add identity core if available
+        if (identityCore) {
+          systemPromptParts.push(`# Your Identity Core
 Voice: ${identityCore.voice}
 
 Priorities:
@@ -87,10 +123,10 @@ ${JSON.stringify(identityCore.boundaries, null, 2)}
 Decision Rules:
 ${JSON.stringify(identityCore.decision_rules, null, 2)}
 `)
-    }
+        }
 
-    // Add role instructions
-    systemPromptParts.push(`# Role: ${role.name}
+        // Add role instructions
+        systemPromptParts.push(`# Role: ${role.name}
 ${role.description || ''}
 
 ## Instructions
@@ -103,130 +139,122 @@ ${JSON.stringify(role.identity_facets, null, 2)}
 ${role.approval_policy}
 `)
 
-    // Add context packs
-    if (contextPacks && contextPacks.length > 0) {
-      systemPromptParts.push('# Context Packs')
-      contextPacks.forEach((cp: any) => {
-        const pack = cp.context_packs
-        if (pack) {
-          systemPromptParts.push(`\n## ${pack.name} (${pack.type})
+        // Add context packs
+        if (contextPacks && contextPacks.length > 0) {
+          systemPromptParts.push('# Context Packs')
+          contextPacks.forEach((cp: any) => {
+            const pack = cp.context_packs
+            if (pack) {
+              systemPromptParts.push(`\n## ${pack.name} (${pack.type})
 ${pack.content}`)
+            }
+          })
         }
-      })
-    }
 
-    // Add skills in SKILL.md format for progressive disclosure
-    if (roleSkills && roleSkills.length > 0) {
-      systemPromptParts.push('# Available Skills')
-      systemPromptParts.push('You have access to the following skills. Use them when appropriate:\n')
-      roleSkills.forEach((rs: any) => {
-        const skill = rs.skills as Skill
-        if (skill) {
-          const overrides = rs.config_overrides || {}
-          systemPromptParts.push(skillToMarkdown({ ...skill, ...overrides }))
+        // Add skills in SKILL.md format for progressive disclosure
+        if (roleSkills && roleSkills.length > 0) {
+          systemPromptParts.push('# Available Skills')
+          systemPromptParts.push('You have access to the following skills. Use them when appropriate:\n')
+          roleSkills.forEach((rs: any) => {
+            const skill = rs.skills as Skill
+            if (skill) {
+              const overrides = rs.config_overrides || {}
+              systemPromptParts.push(skillToMarkdown({ ...skill, ...overrides }))
+            }
+          })
         }
-      })
-    }
 
-    const systemPrompt = systemPromptParts.join('\n\n---\n\n')
+        const systemPrompt = systemPromptParts.join('\n\n---\n\n')
 
-    // Get API key (fall back to system key)
-    const { data: apiKeys } = await supabase
-      .from('user_api_keys')
-      .select('encrypted_key')
-      .eq('user_id', user.id)
-      .eq('provider', 'anthropic')
-      .maybeSingle()
+        // Get API key (fall back to system key)
+        let apiKey: string | undefined
 
-    let apiKey: string | undefined
-
-    // TODO: Decrypt the API key when encryption is implemented
-    if (apiKeys?.encrypted_key) {
-      // apiKey = await decryptApiKey(apiKeys.encrypted_key)
-    }
-
-    // Fall back to system key
-    if (!apiKey) {
-      apiKey = process.env.ANTHROPIC_API_KEY
-    }
-
-    if (!apiKey) {
-      return new Response(
-        JSON.stringify({
-          error: 'No API key available. Please add your own API key in settings.'
-        }),
-        { status: 400, headers: { 'Content-Type': 'application/json' } }
-      )
-    }
-
-    // Get model from role preference or use default
-    const modelName = role.model_preference?.split('/')[1] || 'claude-sonnet-4-5-20250929'
-
-    // Create task recording hooks
-    const taskHooks = createTaskRecordingHooks({
-      userId: user.id,
-      roleId,
-      conversationId
-    })
-
-    // Resolve MCP servers for this user/role
-    const mcpServers = await resolveMcpServers(user.id, roleId)
-
-    // Resolve allowed tools based on role configuration
-    const allowedTools = resolveAllowedTools(role)
-
-    // Create streaming response using SSE
-    const encoder = new TextEncoder()
-    const stream = new ReadableStream({
-      async start(controller) {
-        try {
-          // Configure SDK options
-          const options: Options = {
-            model: modelName,
-            systemPrompt,
-            allowedTools,
-            permissionMode: mapApprovalPolicy(role.approval_policy),
-            hooks: taskHooks.hooks,
-            mcpServers: Object.keys(mcpServers).length > 0 ? mcpServers : undefined,
-            includePartialMessages: true,
+        // Decrypt user's API key if available and encryption is configured
+        if (apiKeys?.encrypted_key && isEncryptionConfigured()) {
+          try {
+            apiKey = await decryptApiKey(apiKeys.encrypted_key, user.id)
+          } catch (error) {
+            console.error('Failed to decrypt API key:', error)
+            // Fall through to system key
           }
+        }
 
-          // Set API key via environment for SDK
-          process.env.ANTHROPIC_API_KEY = apiKey
+        // Fall back to system key
+        if (!apiKey) {
+          apiKey = process.env.ANTHROPIC_API_KEY
+        }
 
-          // Run the agent query
-          for await (const message of query({ prompt: userMessage, options })) {
-            handleSdkMessage(message, controller, encoder, supabase, conversationId)
-          }
-
-          // Send done event
-          controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'done' })}\n\n`))
-          controller.close()
-        } catch (error) {
-          console.error('Agent stream error:', error)
+        if (!apiKey) {
           controller.enqueue(encoder.encode(`data: ${JSON.stringify({
             type: 'error',
-            message: error instanceof Error ? error.message : 'An error occurred'
+            message: 'No API key available. Please add your own API key in settings.'
           })}\n\n`))
           controller.close()
+          return
         }
-      }
-    })
 
-    return new Response(stream, {
-      headers: {
-        'Content-Type': 'text/event-stream',
-        'Cache-Control': 'no-cache',
-        'Connection': 'keep-alive',
-      },
-    })
-  } catch (error) {
-    console.error('Agent API error:', error)
-    return new Response(
-      JSON.stringify({ error: 'Internal server error' }),
-      { status: 500, headers: { 'Content-Type': 'application/json' } }
-    )
-  }
+        // Get model from role preference or use default
+        const modelName = role.model_preference?.split('/')[1] || 'claude-sonnet-4-5-20250929'
+
+        // Create task recording hooks
+        const taskHooks = createTaskRecordingHooks({
+          userId: user.id,
+          roleId,
+          conversationId
+        })
+
+        // Resolve MCP servers for this user/role
+        const mcpServers = await resolveMcpServers(user.id, roleId)
+
+        // Resolve allowed tools based on role configuration
+        const allowedTools = resolveAllowedTools(role)
+
+        // Configure SDK options
+        // SECURITY: Pass API key via env option to avoid process.env mutation race conditions
+        const options: Options = {
+          model: modelName,
+          systemPrompt,
+          allowedTools,
+          // SECURITY: Pass allowedTools to force safer mode if dangerous tools present
+          permissionMode: mapApprovalPolicy(role.approval_policy, allowedTools),
+          hooks: taskHooks.hooks,
+          mcpServers: Object.keys(mcpServers).length > 0 ? mcpServers : undefined,
+          includePartialMessages: true,
+          // Pass API key safely via env option (isolated per-request)
+          env: {
+            ...process.env,
+            ANTHROPIC_API_KEY: apiKey,
+          },
+          // Resume from previous session if provided
+          ...(resumeSessionId ? { resume: resumeSessionId } : {}),
+        }
+
+        // Run the agent query
+        for await (const message of query({ prompt: userMessage, options })) {
+          handleSdkMessage(message, controller, encoder, supabase, conversationId)
+        }
+
+        // Send done event
+        controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'done' })}\n\n`))
+        controller.close()
+      } catch (error) {
+        console.error('Agent stream error:', error)
+        controller.enqueue(encoder.encode(`data: ${JSON.stringify({
+          type: 'error',
+          message: error instanceof Error ? error.message : 'An error occurred'
+        })}\n\n`))
+        controller.close()
+      }
+    }
+  })
+
+  return new Response(stream, {
+    headers: {
+      'Content-Type': 'text/event-stream',
+      'Cache-Control': 'no-cache',
+      'Connection': 'keep-alive',
+    },
+  })
 }
 
 /**

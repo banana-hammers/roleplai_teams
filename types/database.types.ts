@@ -77,6 +77,7 @@ export type Database = {
           created_at: string | null
           id: string
           role_id: string
+          sdk_session_id: string | null
           summary: string | null
           title: string | null
           updated_at: string | null
@@ -86,6 +87,7 @@ export type Database = {
           created_at?: string | null
           id?: string
           role_id: string
+          sdk_session_id?: string | null
           summary?: string | null
           title?: string | null
           updated_at?: string | null
@@ -95,6 +97,7 @@ export type Database = {
           created_at?: string | null
           id?: string
           role_id?: string
+          sdk_session_id?: string | null
           summary?: string | null
           title?: string | null
           updated_at?: string | null
@@ -151,6 +154,57 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "identity_cores_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      mcp_servers: {
+        Row: {
+          config: Json
+          created_at: string | null
+          id: string
+          is_enabled: boolean | null
+          name: string
+          role_id: string | null
+          server_type: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          config: Json
+          created_at?: string | null
+          id?: string
+          is_enabled?: boolean | null
+          name: string
+          role_id?: string | null
+          server_type: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          config?: Json
+          created_at?: string | null
+          id?: string
+          is_enabled?: boolean | null
+          name?: string
+          role_id?: string | null
+          server_type?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mcp_servers_role_id_fkey"
+            columns: ["role_id"]
+            isOneToOne: false
+            referencedRelation: "roles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mcp_servers_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
@@ -300,6 +354,7 @@ export type Database = {
           instructions: string
           model_preference: string | null
           name: string
+          tool_config: Json | null
           updated_at: string | null
           user_id: string
         }
@@ -313,6 +368,7 @@ export type Database = {
           instructions: string
           model_preference?: string | null
           name: string
+          tool_config?: Json | null
           updated_at?: string | null
           user_id: string
         }
@@ -326,6 +382,7 @@ export type Database = {
           instructions?: string
           model_preference?: string | null
           name?: string
+          tool_config?: Json | null
           updated_at?: string | null
           user_id?: string
         }

@@ -153,6 +153,7 @@ export function createTaskRecordingHooks(context: TaskContext) {
 
     // Build updated trace
     const trace: Partial<TaskTrace> = {
+      tool_name: toolName,
       completed_at: new Date().toISOString(),
       duration_ms: duration,
       output_preview: truncate(JSON.stringify(toolResponse), 500),
@@ -215,7 +216,7 @@ export function createTaskRecordingHooks(context: TaskContext) {
   }
 
   // Return hooks in SDK-compatible format
-  // HookCallback is a direct function: (input, toolUseID, options) => Promise<HookJSONOutput>
+  // HookCallback signature: (input, toolUseID, options: { signal }) => Promise<HookJSONOutput>
   return {
     preToolUseHook,
     postToolUseHook,
@@ -224,21 +225,45 @@ export function createTaskRecordingHooks(context: TaskContext) {
     hooks: {
       PreToolUse: [{
         hooks: [
-          async (input: any, toolUseId: string | undefined) => {
+          async (input: any, toolUseId: string | undefined, _options: { signal: AbortSignal }) => {
             if (input.hook_event_name === 'PreToolUse') {
-              await preToolUseHook(input.tool_name, input.tool_input as Record<string, unknown>, toolUseId)
+              await preToolUseHook(
+                input.tool_name,
+                input.tool_input as Record<string, unknown>,
+                input.tool_use_id || toolUseId
+              )
             }
-            return {}
+            // Return empty object to continue execution
+            return { continue: true }
           }
         ]
       }],
       PostToolUse: [{
         hooks: [
-          async (input: any, toolUseId: string | undefined) => {
+          async (input: any, toolUseId: string | undefined, _options: { signal: AbortSignal }) => {
             if (input.hook_event_name === 'PostToolUse') {
-              await postToolUseHook(input.tool_name, input.tool_response, toolUseId)
+              await postToolUseHook(
+                input.tool_name,
+                input.tool_response,
+                input.tool_use_id || toolUseId
+              )
             }
-            return {}
+            return { continue: true }
+          }
+        ]
+      }],
+      PostToolUseFailure: [{
+        hooks: [
+          async (input: any, toolUseId: string | undefined, _options: { signal: AbortSignal }) => {
+            if (input.hook_event_name === 'PostToolUseFailure') {
+              await postToolUseHook(
+                input.tool_name,
+                null,
+                input.tool_use_id || toolUseId,
+                new Error(input.error)
+              )
+            }
+            return { continue: true }
           }
         ]
       }]

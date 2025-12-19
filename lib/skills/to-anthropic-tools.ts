@@ -30,8 +30,42 @@ export function findSkillByToolName(skills: Skill[], toolName: string): Skill | 
 }
 
 /**
+ * SECURITY: Maximum length for input values to prevent DoS
+ */
+const MAX_INPUT_LENGTH = 100000
+
+/**
+ * SECURITY: Sanitize input value for template interpolation
+ * - Enforces length limits
+ * - Escapes potentially dangerous patterns
+ */
+function sanitizeTemplateInput(value: unknown): string {
+  if (value === null || value === undefined) {
+    return ''
+  }
+
+  let str = String(value)
+
+  // Enforce length limit
+  if (str.length > MAX_INPUT_LENGTH) {
+    str = str.slice(0, MAX_INPUT_LENGTH) + '... [truncated]'
+  }
+
+  return str
+}
+
+/**
+ * SECURITY: Validate that a key is a safe placeholder name
+ */
+function isValidPlaceholderKey(key: string): boolean {
+  // Only allow alphanumeric and underscore
+  return /^[a-zA-Z_][a-zA-Z0-9_]*$/.test(key)
+}
+
+/**
  * Execute a skill by interpolating inputs into the prompt template.
  * Replaces {{placeholder}} with actual values.
+ * SECURITY: Sanitizes inputs and validates placeholder keys
  */
 export function executeSkillTool(
   skill: Skill,
@@ -40,8 +74,15 @@ export function executeSkillTool(
   let output = skill.prompt_template
 
   for (const [key, value] of Object.entries(inputs)) {
+    // SECURITY: Validate placeholder key to prevent regex injection
+    if (!isValidPlaceholderKey(key)) {
+      console.warn(`SECURITY: Skipping invalid placeholder key: ${key}`)
+      continue
+    }
+
     const placeholder = new RegExp(`\\{\\{${key}\\}\\}`, 'g')
-    output = output.replace(placeholder, String(value ?? ''))
+    const sanitizedValue = sanitizeTemplateInput(value)
+    output = output.replace(placeholder, sanitizedValue)
   }
 
   return output

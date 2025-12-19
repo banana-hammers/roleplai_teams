@@ -1,23 +1,46 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { createClient } from '@/lib/supabase/server'
+import { redirect } from 'next/navigation'
+import { SettingsTabs } from '@/components/settings/settings-tabs'
 
-export default function SettingsPage() {
+export default async function SettingsPage() {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+
+  if (!user) {
+    redirect('/login')
+  }
+
+  // Fetch user profile
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('*')
+    .eq('id', user.id)
+    .single()
+
+  // Fetch user API keys (without decrypting)
+  const { data: apiKeys } = await supabase
+    .from('user_api_keys')
+    .select('id, provider, label, created_at')
+    .eq('user_id', user.id)
+
+  // Fetch user-level MCP servers
+  const { data: mcpServers } = await supabase
+    .from('mcp_servers')
+    .select('*')
+    .eq('user_id', user.id)
+    .is('role_id', null)
+    .order('name')
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-zinc-50 to-white dark:from-zinc-950 dark:to-black">
-      <main className="container px-4 py-8">
+      <main className="container max-w-4xl px-4 py-8">
         <h1 className="mb-6 text-2xl font-semibold">Settings</h1>
-        <Card className="mx-auto max-w-2xl">
-          <CardHeader>
-            <CardTitle>Account Settings</CardTitle>
-            <CardDescription>
-              Manage your account preferences and API keys.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <p className="text-muted-foreground">
-              Settings page coming soon. You&apos;ll be able to manage your profile, API keys, and preferences here.
-            </p>
-          </CardContent>
-        </Card>
+        <SettingsTabs
+          profile={profile}
+          apiKeys={apiKeys || []}
+          mcpServers={mcpServers || []}
+          userEmail={user.email || ''}
+        />
       </main>
     </div>
   )

@@ -2,6 +2,8 @@ import { createClient } from '@/lib/supabase/server'
 import { streamText, convertToModelMessages } from 'ai'
 import { createOpenAI } from '@ai-sdk/openai'
 import { createAnthropic } from '@ai-sdk/anthropic'
+import { decryptApiKey, isEncryptionConfigured } from '@/lib/crypto/api-key-encryption'
+import { rateLimit, rateLimitExceededResponse, rateLimitHeaders, RATE_LIMITS } from '@/lib/rate-limit'
 
 export const runtime = 'edge'
 
@@ -9,26 +11,45 @@ export async function POST(req: Request) {
   try {
     const { messages, provider = 'openai', model } = await req.json()
 
-    // Try to authenticate user (optional for demo)
+    // SECURITY: Require authentication to prevent abuse of system API keys
     const supabase = await createClient()
-    const { data: { user } } = await supabase.auth.getUser()
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
+
+    if (authError || !user) {
+      return new Response(
+        JSON.stringify({ error: 'Unauthorized' }),
+        { status: 401, headers: { 'Content-Type': 'application/json' } }
+      )
+    }
+
+    // SECURITY: Rate limit by user ID
+    const rateLimitResult = await rateLimit(
+      `chat:${user.id}`,
+      RATE_LIMITS.chat.limit,
+      RATE_LIMITS.chat.windowMs
+    )
+
+    if (!rateLimitResult.success) {
+      return rateLimitExceededResponse(rateLimitResult)
+    }
 
     let apiKey: string | undefined
 
-    // If user is authenticated, check for their BYO API keys
-    if (user) {
-      const { data: apiKeys } = await supabase
-        .from('user_api_keys')
-        .select('provider, encrypted_key')
-        .eq('user_id', user.id)
-        .eq('provider', provider)
-        .maybeSingle()
+    // Check for user's BYO API keys
+    const { data: apiKeys } = await supabase
+      .from('user_api_keys')
+      .select('provider, encrypted_key')
+      .eq('user_id', user.id)
+      .eq('provider', provider)
+      .maybeSingle()
 
-      // Use user's BYO key if available
-      if (apiKeys?.encrypted_key) {
-        // TODO: Decrypt the API key using Supabase Vault or encryption service
-        // For now, we'll use system keys as fallback
-        apiKey = undefined
+    // Decrypt user's API key if available
+    if (apiKeys?.encrypted_key && isEncryptionConfigured()) {
+      try {
+        apiKey = await decryptApiKey(apiKeys.encrypted_key, user.id)
+      } catch (error) {
+        console.error('Failed to decrypt API key:', error)
+        // Fall through to system key
       }
     }
 

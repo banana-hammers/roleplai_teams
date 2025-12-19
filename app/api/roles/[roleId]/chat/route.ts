@@ -6,6 +6,7 @@ import {
   executeSkillTool,
   type AnthropicTool
 } from '@/lib/skills/to-anthropic-tools'
+import { decryptApiKey, isEncryptionConfigured } from '@/lib/crypto/api-key-encryption'
 import type { Skill } from '@/types/skill'
 
 export const runtime = 'edge'
@@ -135,9 +136,14 @@ ${pack.content}`)
 
     let apiKey: string | undefined
 
-    // TODO: Decrypt the API key when encryption is implemented
-    if (apiKeys?.encrypted_key) {
-      // apiKey = await decryptApiKey(apiKeys.encrypted_key)
+    // Decrypt user's API key if available
+    if (apiKeys?.encrypted_key && isEncryptionConfigured()) {
+      try {
+        apiKey = await decryptApiKey(apiKeys.encrypted_key, user.id)
+      } catch (error) {
+        console.error('Failed to decrypt API key:', error)
+        // Fall through to system key
+      }
     }
 
     // Fall back to system key
