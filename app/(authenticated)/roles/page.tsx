@@ -2,11 +2,11 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
+import { RoleCard } from '@/components/roles'
 import { getUserRoles } from '@/app/actions/roles'
-import { Loader2, Plus, MessageSquare, Wrench } from 'lucide-react'
+import { Loader2, Plus, MessageSquare } from 'lucide-react'
 import type { Role } from '@/types/role'
 
 export default function RolesPage() {
@@ -60,34 +60,14 @@ export default function RolesPage() {
             </CardContent>
           </Card>
         ) : (
-          /* Roles grid */
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          /* Roles grid - Party Select layout */
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 justify-items-center">
             {roles.map((role) => (
-              <Card
+              <RoleCard
                 key={role.id}
-                className="cursor-pointer transition-colors hover:bg-muted/50"
-                onClick={() => router.push(`/roles/${role.id}`)}
-              >
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-lg">{role.name}</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-sm text-muted-foreground line-clamp-2 mb-3">
-                    {role.description || 'No description'}
-                  </p>
-                  <div className="flex items-center gap-2">
-                    {role.allowed_tools && role.allowed_tools.length > 0 && (
-                      <Badge variant="secondary" className="text-xs">
-                        <Wrench className="mr-1 h-3 w-3" />
-                        {role.allowed_tools.length} skill{role.allowed_tools.length !== 1 ? 's' : ''}
-                      </Badge>
-                    )}
-                    <Badge variant="outline" className="text-xs">
-                      {role.approval_policy}
-                    </Badge>
-                  </div>
-                </CardContent>
-              </Card>
+                role={role}
+                onSelect={() => router.push(`/roles/${role.id}`)}
+              />
             ))}
           </div>
         )}
