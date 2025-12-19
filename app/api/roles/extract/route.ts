@@ -68,7 +68,8 @@ const EXTRACTION_TOOL_SCHEMA: Anthropic.Tool = {
   },
 }
 
-export const runtime = 'edge'
+// Node.js runtime required for Anthropic SDK compatibility on Vercel
+export const runtime = 'nodejs'
 export const maxDuration = 60 // Allow up to 60 seconds for complex extractions
 
 /**
