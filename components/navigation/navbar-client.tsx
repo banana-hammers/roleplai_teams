@@ -26,7 +26,6 @@ export function NavbarClient({ variant, user }: NavbarClientProps) {
   // Landing nav links (only shown on landing/about pages when not authenticated)
   const landingLinks = [
     { href: '#roleplaIrs', label: 'RoleplAIrs' },
-    { href: '#how-it-works', label: 'How It Works' },
     { href: '/about', label: 'About' },
   ]
 

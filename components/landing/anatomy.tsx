@@ -14,7 +14,43 @@ import {
 import { cn } from "@/lib/utils";
 import { useIndustry } from "@/components/landing/industry-context";
 
-const components = [
+// Tailwind requires full class names at build time - can't use dynamic interpolation
+const colorStyles = {
+  "identity-accent": {
+    border: "border-identity-accent/30 hover:border-identity-accent/50",
+    borderLeft: "border-l-identity-accent",
+    bg: "bg-identity-accent/10",
+    text: "text-identity-accent",
+  },
+  "context-accent": {
+    border: "border-context-accent/30 hover:border-context-accent/50",
+    borderLeft: "border-l-context-accent",
+    bg: "bg-context-accent/10",
+    text: "text-context-accent",
+  },
+  "skills-accent": {
+    border: "border-skills-accent/30 hover:border-skills-accent/50",
+    borderLeft: "border-l-skills-accent",
+    bg: "bg-skills-accent/10",
+    text: "text-skills-accent",
+  },
+  muted: {
+    border: "border-border/50",
+    borderLeft: "",
+    bg: "bg-muted",
+    text: "text-muted-foreground",
+  },
+} as const;
+
+type ColorKey = keyof typeof colorStyles;
+
+const components: {
+  icon: typeof Fingerprint;
+  name: string;
+  description: string;
+  color: ColorKey;
+  muted?: boolean;
+}[] = [
   {
     icon: Fingerprint,
     name: "Identity Core",
@@ -41,7 +77,7 @@ const components = [
     name: "Tools",
     description:
       "Integrations that let them take action — send emails, create PRs, update calendars. Coming soon.",
-    color: "muted-foreground",
+    color: "muted",
     muted: true,
   },
 ];
@@ -156,38 +192,37 @@ export function Anatomy() {
 
           {/* Right: Component Cards */}
           <div className="grid gap-4 sm:grid-cols-2">
-            {components.map((component) => (
-              <div
-                key={component.name}
-                className={`rounded-xl border bg-card p-5 transition-colors ${
-                  component.muted
-                    ? "border-border/50"
-                    : `border-${component.color}/30 hover:border-${component.color}/50`
-                }`}
-              >
-                <div className="flex items-start gap-3">
-                  <div
-                    className={`shrink-0 rounded-lg p-2 ${
-                      component.muted ? "bg-muted" : `bg-${component.color}/10`
-                    }`}
-                  >
-                    <component.icon
-                      className={`size-5 ${
-                        component.muted
-                          ? "text-muted-foreground"
-                          : `text-${component.color}`
-                      }`}
-                    />
-                  </div>
-                  <div>
-                    <h4 className="font-semibold">{component.name}</h4>
-                    <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
-                      {component.description}
-                    </p>
+            {components.map((component) => {
+              const styles = colorStyles[component.color];
+              return (
+                <div
+                  key={component.name}
+                  className={cn(
+                    "rounded-xl border bg-card p-5 transition-colors",
+                    styles.border,
+                    !component.muted && "border-l-4",
+                    !component.muted && styles.borderLeft
+                  )}
+                >
+                  <div className="flex items-start gap-3">
+                    <div className={cn("shrink-0 rounded-lg p-2", styles.bg)}>
+                      <component.icon
+                        className={cn(
+                          component.muted ? "size-5" : "size-6",
+                          styles.text
+                        )}
+                      />
+                    </div>
+                    <div>
+                      <h4 className="font-semibold">{component.name}</h4>
+                      <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
+                        {component.description}
+                      </p>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       </div>

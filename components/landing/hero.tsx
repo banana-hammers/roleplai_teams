@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, TrendingUp, Zap } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   useIndustry,
@@ -11,14 +11,15 @@ import {
 } from "@/components/landing/industry-context";
 
 export function Hero() {
-  const { activeIndustry, setActiveIndustry } = useIndustry();
+  const { activeIndustry, setActiveIndustry, current, isTransitioning } = useIndustry();
+  const Icon = current.icon;
 
   return (
     <section className="relative overflow-hidden">
       {/* Background gradient */}
       <div className="absolute inset-0 -z-10 bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(120,80,200,0.15),rgba(255,255,255,0))]" />
 
-      <div className="mx-auto max-w-6xl px-6 py-16 sm:py-20 lg:py-24">
+      <div className="mx-auto max-w-6xl px-6 py-12 sm:py-16 lg:py-20">
         <div className="flex flex-col items-center text-center">
           {/* Badge */}
           <div className="mb-8 inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-4 py-1.5 text-sm font-medium text-primary">
@@ -61,7 +62,7 @@ export function Hero() {
             <div className="flex flex-wrap justify-center gap-2">
               {industryKeys.map((key) => {
                 const industry = industries[key];
-                const Icon = industry.icon;
+                const IndustryIcon = industry.icon;
                 return (
                   <button
                     key={key}
@@ -73,11 +74,42 @@ export function Hero() {
                         : "bg-muted text-muted-foreground hover:bg-muted/80 hover:text-foreground"
                     )}
                   >
-                    <Icon className="size-4" />
+                    <IndustryIcon className="size-4" />
                     {industry.label}
                   </button>
                 );
               })}
+            </div>
+          </div>
+
+          {/* Industry Preview Card */}
+          <div
+            className={cn(
+              "mt-8 w-full max-w-md rounded-xl border border-roles-accent/30 bg-card/80 p-4 shadow-lg backdrop-blur-sm transition-all duration-200",
+              isTransitioning ? "opacity-0 scale-95" : "opacity-100 scale-100"
+            )}
+          >
+            <div className="flex items-center gap-3">
+              <div className="flex size-10 items-center justify-center rounded-lg bg-roles-accent/20">
+                <Icon className="size-5 text-roles-accent" />
+              </div>
+              <div className="flex-1 text-left">
+                <div className="flex items-center gap-2">
+                  <h3 className="font-semibold">{current.roleplAIr.name}</h3>
+                  <span className="flex items-center gap-1 rounded-full bg-skills-accent/10 px-2 py-0.5 text-xs font-medium text-skills-accent">
+                    <TrendingUp className="size-3" />
+                    LVL 4
+                  </span>
+                </div>
+                <div className="mt-1 flex items-center gap-3 text-xs text-muted-foreground">
+                  <span className="flex items-center gap-1">
+                    <Zap className="size-3 text-skills-accent" />
+                    {current.skills.length} Skills
+                  </span>
+                  <span>•</span>
+                  <span>{current.lore.length} Lore packs</span>
+                </div>
+              </div>
             </div>
           </div>
         </div>
