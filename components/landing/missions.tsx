@@ -1,4 +1,8 @@
+"use client";
+
 import { Target, Users2, AtSign, CalendarClock, TrendingUp, ArrowRight } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { useIndustry } from "@/components/landing/industry-context";
 
 const features = [
   {
@@ -23,14 +27,10 @@ const features = [
   },
 ];
 
-const exampleTeam = [
-  { name: "Research", color: "bg-roles-accent" },
-  { name: "Writer", color: "bg-skills-accent" },
-  { name: "Strategist", color: "bg-identity-accent" },
-  { name: "Editor", color: "bg-context-accent" },
-];
-
 export function Missions() {
+  const { current, isTransitioning } = useIndustry();
+  const mission = current.mission;
+
   return (
     <section className="py-12 sm:py-16">
       <div className="mx-auto max-w-6xl px-6">
@@ -55,14 +55,19 @@ export function Missions() {
           <div className="flex flex-col items-center justify-center">
             <div className="relative w-full max-w-sm">
               {/* Mission Goal Card */}
-              <div className="rounded-xl border border-missions-accent/30 bg-card p-6 shadow-lg">
+              <div
+                className={cn(
+                  "rounded-xl border border-missions-accent/30 bg-card p-6 shadow-lg transition-all duration-200",
+                  isTransitioning ? "opacity-0 translate-y-2" : "opacity-100 translate-y-0"
+                )}
+              >
                 <div className="flex items-center gap-3">
                   <div className="rounded-lg bg-missions-accent/20 p-2">
                     <Target className="size-6 text-missions-accent" />
                   </div>
                   <div className="flex-1">
-                    <h3 className="font-semibold">Launch Product Campaign</h3>
-                    <p className="text-sm text-muted-foreground">4 RoleplAIrs working together</p>
+                    <h3 className="font-semibold">{mission.name}</h3>
+                    <p className="text-sm text-muted-foreground">{mission.description}</p>
                   </div>
                 </div>
 
@@ -70,10 +75,13 @@ export function Missions() {
                 <div className="mt-4">
                   <div className="mb-1.5 flex items-center justify-between text-sm">
                     <span className="text-muted-foreground">Progress</span>
-                    <span className="font-medium text-missions-accent">45%</span>
+                    <span className="font-medium text-missions-accent">{mission.progress}%</span>
                   </div>
                   <div className="h-2 w-full overflow-hidden rounded-full bg-missions-accent/20">
-                    <div className="h-full w-[45%] rounded-full bg-missions-accent transition-all" />
+                    <div
+                      className="h-full rounded-full bg-missions-accent transition-all duration-300"
+                      style={{ width: `${mission.progress}%` }}
+                    />
                   </div>
                 </div>
 
@@ -83,7 +91,7 @@ export function Missions() {
                     Mission Team
                   </p>
                   <div className="flex flex-wrap gap-2">
-                    {exampleTeam.map((member) => (
+                    {mission.team.map((member) => (
                       <div
                         key={member.name}
                         className="flex items-center gap-2 rounded-full border border-border bg-muted/50 px-3 py-1.5"
@@ -100,11 +108,11 @@ export function Missions() {
                   <div className="flex items-start gap-2 text-sm">
                     <ArrowRight className="mt-0.5 size-4 shrink-0 text-missions-accent" />
                     <div>
-                      <span className="font-medium">Writer</span>
+                      <span className="font-medium">{mission.handoff.from}</span>
                       <span className="text-muted-foreground"> handing off to </span>
-                      <span className="font-medium">Editor</span>
+                      <span className="font-medium">{mission.handoff.to}</span>
                       <p className="mt-1 text-xs text-muted-foreground">
-                        "Draft complete. Ready for your review!"
+                        "{mission.handoff.message}"
                       </p>
                     </div>
                   </div>

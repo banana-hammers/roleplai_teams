@@ -1,8 +1,18 @@
+"use client";
+
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { ArrowRight } from "lucide-react";
+import { cn } from "@/lib/utils";
+import {
+  useIndustry,
+  industries,
+  industryKeys,
+} from "@/components/landing/industry-context";
 
 export function Hero() {
+  const { activeIndustry, setActiveIndustry } = useIndustry();
+
   return (
     <section className="relative overflow-hidden">
       {/* Background gradient */}
@@ -41,6 +51,34 @@ export function Hero() {
                 <ArrowRight className="size-4" />
               </Link>
             </Button>
+          </div>
+
+          {/* Industry Pills */}
+          <div className="mt-10">
+            <p className="mb-4 text-sm text-muted-foreground">
+              See how it works for your industry
+            </p>
+            <div className="flex flex-wrap justify-center gap-2">
+              {industryKeys.map((key) => {
+                const industry = industries[key];
+                const Icon = industry.icon;
+                return (
+                  <button
+                    key={key}
+                    onClick={() => setActiveIndustry(key)}
+                    className={cn(
+                      "flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium transition-all duration-200",
+                      activeIndustry === key
+                        ? "bg-primary text-primary-foreground shadow-md"
+                        : "bg-muted text-muted-foreground hover:bg-muted/80 hover:text-foreground"
+                    )}
+                  >
+                    <Icon className="size-4" />
+                    {industry.label}
+                  </button>
+                );
+              })}
+            </div>
           </div>
         </div>
       </div>

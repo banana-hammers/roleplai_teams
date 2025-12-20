@@ -1,3 +1,5 @@
+"use client";
+
 import {
   Fingerprint,
   Users,
@@ -9,6 +11,8 @@ import {
   Brain,
   History,
 } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { useIndustry } from "@/components/landing/industry-context";
 
 const components = [
   {
@@ -42,9 +46,10 @@ const components = [
   },
 ];
 
-const exampleLore = ["Brand Voice", "Product Docs", "Sales Playbook"];
-
 export function Anatomy() {
+  const { current, isTransitioning } = useIndustry();
+  const Icon = current.icon;
+
   return (
     <section id="roleplaIrs" className="bg-muted/20 py-12 sm:py-16">
       <div className="mx-auto max-w-6xl px-6">
@@ -63,15 +68,22 @@ export function Anatomy() {
         <div className="mt-10 grid gap-8 lg:grid-cols-2">
           {/* Left: Example RoleplAIr Card */}
           <div className="flex items-center justify-center">
-            <div className="w-full max-w-sm rounded-xl border border-roles-accent/30 bg-card p-6 shadow-lg">
+            <div
+              className={cn(
+                "w-full max-w-sm rounded-xl border border-roles-accent/30 bg-card p-6 shadow-lg transition-all duration-200",
+                isTransitioning ? "opacity-0 translate-y-2" : "opacity-100 translate-y-0"
+              )}
+            >
               {/* Header */}
               <div className="flex items-center gap-3">
                 <div className="flex size-12 items-center justify-center rounded-xl bg-roles-accent/20">
-                  <Users className="size-6 text-roles-accent" />
+                  <Icon className="size-6 text-roles-accent" />
                 </div>
                 <div className="flex-1">
-                  <h3 className="font-semibold">Sales Assistant</h3>
-                  <p className="text-sm text-muted-foreground">Ready to help</p>
+                  <h3 className="font-semibold">{current.roleplAIr.name}</h3>
+                  <p className="text-sm text-muted-foreground">
+                    {current.roleplAIr.description}
+                  </p>
                 </div>
                 <div className="flex items-center gap-1 rounded-full bg-skills-accent/10 px-2 py-1 text-xs font-medium text-skills-accent">
                   <TrendingUp className="size-3" />
@@ -93,7 +105,7 @@ export function Anatomy() {
                   Lore
                 </div>
                 <div className="flex flex-wrap gap-1.5">
-                  {exampleLore.map((item) => (
+                  {current.lore.map((item) => (
                     <span
                       key={item}
                       className="rounded-full border border-context-accent/20 bg-context-accent/10 px-2.5 py-1 text-xs"
@@ -111,24 +123,20 @@ export function Anatomy() {
                   Skills
                 </div>
                 <div className="space-y-2">
-                  <div>
-                    <div className="mb-1 flex items-center justify-between text-xs">
-                      <span>Draft Email</span>
-                      <span className="text-skills-accent">LVL 4</span>
+                  {current.skills.map((skill) => (
+                    <div key={skill.name}>
+                      <div className="mb-1 flex items-center justify-between text-xs">
+                        <span>{skill.name}</span>
+                        <span className="text-skills-accent">LVL {skill.level}</span>
+                      </div>
+                      <div className="h-1.5 w-full overflow-hidden rounded-full bg-skills-accent/20">
+                        <div
+                          className="h-full rounded-full bg-skills-accent transition-all duration-300"
+                          style={{ width: `${skill.progress}%` }}
+                        />
+                      </div>
                     </div>
-                    <div className="h-1.5 w-full overflow-hidden rounded-full bg-skills-accent/20">
-                      <div className="h-full w-4/5 rounded-full bg-skills-accent" />
-                    </div>
-                  </div>
-                  <div>
-                    <div className="mb-1 flex items-center justify-between text-xs">
-                      <span>Research</span>
-                      <span className="text-skills-accent">LVL 2</span>
-                    </div>
-                    <div className="h-1.5 w-full overflow-hidden rounded-full bg-skills-accent/20">
-                      <div className="h-full w-2/5 rounded-full bg-skills-accent" />
-                    </div>
-                  </div>
+                  ))}
                 </div>
               </div>
 
