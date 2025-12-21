@@ -1,24 +1,21 @@
 import type { Skill } from '@/types/skill'
 
 interface SkillMarkdownOptions {
-  includeExamples?: boolean
-  maxExamples?: number
+  // Reserved for future use
 }
 
 /**
- * Convert a database skill to SKILL.md format for progressive disclosure.
+ * Convert a database skill to SKILL.md format.
  *
  * Structure:
  * - YAML frontmatter (name, description, version, tool-constraints)
  * - Instructions section (prompt_template)
  * - Input parameters documentation
- * - Examples for progressive disclosure
  */
 export function skillToMarkdown(
   skill: Skill,
-  options: SkillMarkdownOptions = {}
+  _options: SkillMarkdownOptions = {}
 ): string {
-  const { includeExamples = true, maxExamples = 3 } = options
 
   // Build YAML frontmatter
   const frontmatter = [
@@ -62,25 +59,6 @@ export function skillToMarkdown(
         const required = schema.required?.includes(name) ? ' *(required)*' : ''
         const description = prop.description || prop.type || 'any'
         content.push(`- **${name}**${required}: ${description}`)
-      }
-    }
-  }
-
-  // Add examples for progressive disclosure
-  if (includeExamples && skill.examples && skill.examples.length > 0) {
-    content.push('', '## Examples', '')
-    const examples = skill.examples.slice(0, maxExamples)
-    for (const example of examples) {
-      const title = example.title || example.name || 'Example'
-      content.push(`### ${title}`, '')
-      if (example.input) {
-        content.push('**Input:**', '```json', JSON.stringify(example.input, null, 2), '```', '')
-      }
-      if (example.output) {
-        content.push('**Output:**', '```', String(example.output), '```', '')
-      }
-      if (example.description) {
-        content.push(example.description, '')
       }
     }
   }
