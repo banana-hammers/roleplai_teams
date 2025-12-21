@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef, useEffect, use } from 'react'
+import { useState, useRef, useEffect, use, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -8,9 +8,10 @@ import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { useRoleChat } from '@/lib/hooks/use-role-chat'
 import { getRole, getRoleSkills } from '@/app/actions/roles'
-import { Loader2, Send, ArrowLeft, Wrench, Settings } from 'lucide-react'
+import { Loader2, Send, ArrowLeft, Wrench, Settings, PanelLeftClose, PanelLeft } from 'lucide-react'
 import { MessageBubble } from '@/components/chat/message-bubble'
 import { TypingIndicator } from '@/components/chat/typing-indicator'
+import { ConversationList } from '@/components/chat/conversation-list'
 import type { Role } from '@/types/role'
 import type { Skill } from '@/types/skill'
 
@@ -26,11 +27,36 @@ export default function RoleChatPage({ params }: RoleChatPageProps) {
   const [isLoading, setIsLoading] = useState(true)
   const [input, setInput] = useState('')
   const [lastMessageCount, setLastMessageCount] = useState(0)
+  const [showSidebar, setShowSidebar] = useState(true)
+  const [activeConversationId, setActiveConversationId] = useState<string | null>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
-  const { messages, isLoading: isChatLoading, error, sendMessage, clearMessages } = useRoleChat({
+  const handleConversationCreated = useCallback((id: string) => {
+    setActiveConversationId(id)
+  }, [])
+
+  const { messages, isLoading: isChatLoading, error, conversationId, sendMessage, clearMessages, loadConversation } = useRoleChat({
     roleId,
+    conversationId: activeConversationId || undefined,
+    onConversationCreated: handleConversationCreated,
   })
+
+  // Sync conversationId from hook to state
+  useEffect(() => {
+    if (conversationId && conversationId !== activeConversationId) {
+      setActiveConversationId(conversationId)
+    }
+  }, [conversationId, activeConversationId])
+
+  const handleSelectConversation = useCallback(async (id: string) => {
+    setActiveConversationId(id)
+    await loadConversation(id)
+  }, [loadConversation])
+
+  const handleNewConversation = useCallback(() => {
+    setActiveConversationId(null)
+    clearMessages()
+  }, [clearMessages])
 
   // Load role and skills
   useEffect(() => {
@@ -104,6 +130,15 @@ export default function RoleChatPage({ params }: RoleChatPageProps) {
           >
             <ArrowLeft className="h-4 w-4" />
           </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setShowSidebar(!showSidebar)}
+            title={showSidebar ? 'Hide conversations' : 'Show conversations'}
+            className="hidden md:flex"
+          >
+            {showSidebar ? <PanelLeftClose className="h-4 w-4" /> : <PanelLeft className="h-4 w-4" />}
+          </Button>
           <div className="flex-1">
             <h1 className="font-semibold">{role.name}</h1>
             <p className="text-xs text-muted-foreground truncate max-w-md">
@@ -129,9 +164,23 @@ export default function RoleChatPage({ params }: RoleChatPageProps) {
         </div>
       </header>
 
-      {/* Chat area */}
-      <main className="flex-1 container px-4 py-4">
-        <Card className="h-[calc(100vh-12rem)] flex flex-col">
+      {/* Main content with sidebar */}
+      <div className="flex-1 flex overflow-hidden">
+        {/* Conversation sidebar */}
+        {showSidebar && (
+          <aside className="hidden md:flex w-64 border-r bg-background flex-col">
+            <ConversationList
+              roleId={roleId}
+              activeConversationId={activeConversationId}
+              onSelectConversation={handleSelectConversation}
+              onNewConversation={handleNewConversation}
+            />
+          </aside>
+        )}
+
+        {/* Chat area */}
+        <main className="flex-1 container px-4 py-4 overflow-hidden">
+          <Card className="h-[calc(100vh-8rem)] flex flex-col">
           <CardContent className="flex-1 overflow-hidden p-0">
             {/* Messages */}
             <div className="h-full overflow-y-auto p-4 space-y-4">
@@ -230,7 +279,8 @@ export default function RoleChatPage({ params }: RoleChatPageProps) {
             </form>
           </div>
         </Card>
-      </main>
+        </main>
+      </div>
     </div>
   )
 }

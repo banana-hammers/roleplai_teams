@@ -28,13 +28,6 @@ export default async function RoleSettingsPage({ params }: RoleSettingsPageProps
     notFound()
   }
 
-  // Fetch role-level MCP servers
-  const { data: mcpServers } = await supabase
-    .from('mcp_servers')
-    .select('*')
-    .eq('role_id', roleId)
-    .order('name')
-
   // Fetch role skills
   const { data: roleSkillsData } = await supabase
     .from('role_skills')
@@ -73,7 +66,6 @@ export default async function RoleSettingsPage({ params }: RoleSettingsPageProps
 
         <RoleSettingsForm
           role={role}
-          mcpServers={mcpServers || []}
           roleSkills={roleSkills || []}
           allSkills={allSkills || []}
         />

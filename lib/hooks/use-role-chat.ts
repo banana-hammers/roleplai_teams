@@ -1,6 +1,12 @@
 'use client'
 
 import { useState, useCallback, useRef } from 'react'
+import {
+  createConversation,
+  addMessage as addMessageToDb,
+  getConversationWithMessages,
+  updateConversationTitle,
+} from '@/app/actions/conversations'
 
 export interface Message {
   id: string
@@ -15,31 +21,54 @@ export interface Message {
 
 export interface UseRoleChatOptions {
   roleId: string
+  conversationId?: string
+  onConversationCreated?: (id: string) => void
 }
 
 export interface UseRoleChatReturn {
   messages: Message[]
   isLoading: boolean
   error: string | null
+  conversationId: string | null
   sendMessage: (content: string) => Promise<void>
   clearMessages: () => void
+  loadConversation: (id: string) => Promise<void>
 }
 
 /**
  * Custom hook for role-based chat with web tools support.
  * Handles SSE stream from the chat API endpoint with built-in tools (web_search, web_fetch).
+ * Supports conversation persistence - messages are saved to the database.
  */
-export function useRoleChat({ roleId }: UseRoleChatOptions): UseRoleChatReturn {
+export function useRoleChat({ roleId, conversationId: initialConversationId, onConversationCreated }: UseRoleChatOptions): UseRoleChatReturn {
   const [messages, setMessages] = useState<Message[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [conversationId, setConversationId] = useState<string | null>(initialConversationId || null)
   const abortControllerRef = useRef<AbortController | null>(null)
+  const isFirstMessageRef = useRef(!initialConversationId)
 
   const sendMessage = useCallback(async (content: string) => {
     if (!content.trim() || isLoading) return
 
     setError(null)
     setIsLoading(true)
+
+    let activeConversationId = conversationId
+
+    // Create a new conversation if this is the first message
+    if (!activeConversationId) {
+      const result = await createConversation(roleId)
+      if (!result.success || !result.conversationId) {
+        setError(result.error || 'Failed to create conversation')
+        setIsLoading(false)
+        return
+      }
+      activeConversationId = result.conversationId
+      setConversationId(activeConversationId)
+      isFirstMessageRef.current = true
+      onConversationCreated?.(activeConversationId)
+    }
 
     // Add user message
     const userMessage: Message = {
@@ -48,6 +77,9 @@ export function useRoleChat({ roleId }: UseRoleChatOptions): UseRoleChatReturn {
       content: content.trim()
     }
     setMessages(prev => [...prev, userMessage])
+
+    // Persist user message to database
+    await addMessageToDb(activeConversationId, 'user', userMessage.content)
 
     // Create assistant message placeholder
     const assistantId = `assistant-${Date.now()}`
@@ -65,13 +97,17 @@ export function useRoleChat({ roleId }: UseRoleChatOptions): UseRoleChatReturn {
       content: m.content
     }))
 
+    // Track the full assistant response for persistence
+    let fullAssistantContent = ''
+    let assistantToolCalls: Array<{ id?: string; name: string; result?: string }> = []
+
     try {
       abortControllerRef.current = new AbortController()
 
       const response = await fetch(`/api/roles/${roleId}/chat`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ messages: apiMessages }),
+        body: JSON.stringify({ messages: apiMessages, conversationId: activeConversationId }),
         signal: abortControllerRef.current.signal
       })
 
@@ -106,6 +142,7 @@ export function useRoleChat({ roleId }: UseRoleChatOptions): UseRoleChatReturn {
               const event = JSON.parse(data)
 
               if (event.type === 'text' || event.type === 'text_delta') {
+                fullAssistantContent += event.content
                 setMessages(prev => prev.map(m =>
                   m.id === assistantId
                     ? { ...m, content: m.content + event.content }
@@ -113,6 +150,7 @@ export function useRoleChat({ roleId }: UseRoleChatOptions): UseRoleChatReturn {
                 ))
               } else if (event.type === 'tool_call_start') {
                 currentToolCalls.push({ id: event.id, name: event.tool })
+                assistantToolCalls = [...currentToolCalls]
                 setMessages(prev => prev.map(m =>
                   m.id === assistantId
                     ? { ...m, toolCalls: [...currentToolCalls] }
@@ -126,6 +164,7 @@ export function useRoleChat({ roleId }: UseRoleChatOptions): UseRoleChatReturn {
                 )
                 if (toolIndex !== -1) {
                   currentToolCalls[toolIndex].result = event.result
+                  assistantToolCalls = [...currentToolCalls]
                   setMessages(prev => prev.map(m =>
                     m.id === assistantId
                       ? { ...m, toolCalls: [...currentToolCalls] }
@@ -142,6 +181,19 @@ export function useRoleChat({ roleId }: UseRoleChatOptions): UseRoleChatReturn {
           }
         }
       }
+
+      // Persist assistant message to database after stream completes
+      if (fullAssistantContent && activeConversationId) {
+        const metadata = assistantToolCalls.length > 0 ? { toolCalls: assistantToolCalls } : {}
+        await addMessageToDb(activeConversationId, 'assistant', fullAssistantContent, metadata)
+
+        // Generate title from first user message if this is a new conversation
+        if (isFirstMessageRef.current) {
+          const title = userMessage.content.slice(0, 50) + (userMessage.content.length > 50 ? '...' : '')
+          await updateConversationTitle(activeConversationId, title)
+          isFirstMessageRef.current = false
+        }
+      }
     } catch (err) {
       if (err instanceof Error && err.name === 'AbortError') {
         // Request was aborted, ignore
@@ -154,7 +206,7 @@ export function useRoleChat({ roleId }: UseRoleChatOptions): UseRoleChatReturn {
       setIsLoading(false)
       abortControllerRef.current = null
     }
-  }, [roleId, messages, isLoading])
+  }, [roleId, messages, isLoading, conversationId, onConversationCreated])
 
   const clearMessages = useCallback(() => {
     if (abortControllerRef.current) {
@@ -163,13 +215,45 @@ export function useRoleChat({ roleId }: UseRoleChatOptions): UseRoleChatReturn {
     setMessages([])
     setError(null)
     setIsLoading(false)
+    setConversationId(null)
+    isFirstMessageRef.current = true
+  }, [])
+
+  const loadConversation = useCallback(async (id: string) => {
+    setIsLoading(true)
+    setError(null)
+
+    const result = await getConversationWithMessages(id)
+
+    if (!result.success || !result.conversation) {
+      setError(result.error || 'Failed to load conversation')
+      setIsLoading(false)
+      return
+    }
+
+    // Convert database messages to hook message format
+    const loadedMessages: Message[] = result.conversation.messages
+      .filter(m => m.role !== 'system') // Don't show system messages
+      .map(m => ({
+        id: m.id,
+        role: m.role as 'user' | 'assistant',
+        content: m.content,
+        toolCalls: m.metadata?.toolCalls || undefined,
+      }))
+
+    setMessages(loadedMessages)
+    setConversationId(id)
+    isFirstMessageRef.current = false
+    setIsLoading(false)
   }, [])
 
   return {
     messages,
     isLoading,
     error,
+    conversationId,
     sendMessage,
-    clearMessages
+    clearMessages,
+    loadConversation,
   }
 }
