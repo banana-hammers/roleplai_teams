@@ -2,11 +2,13 @@
 
 import { cn } from '@/lib/utils'
 import { PersonalityTraits } from './personality-traits'
-import { SkillSlots } from './skill-slots'
-import type { Role } from '@/types/role'
+import { TierBadge } from './tier-badge'
+import { SkillList } from './skill-list'
+import { getModelTier, getModelDisplayName } from '@/lib/utils/model-tiers'
+import type { RoleWithSkills } from '@/types/role'
 
 interface RoleCardProps {
-  role: Role
+  role: RoleWithSkills
   isSelected?: boolean
   onSelect?: () => void
   className?: string
@@ -25,18 +27,9 @@ function getApprovalLabel(policy: string): string {
   }
 }
 
-function getModelLabel(preference: string | null): string | null {
-  if (!preference) return null
-  const parts = preference.split('/')
-  const model = parts[1] || parts[0]
-  if (model.length > 16) {
-    return model.slice(0, 16) + '...'
-  }
-  return model
-}
-
 export function RoleCard({ role, isSelected, onSelect, className }: RoleCardProps) {
-  const modelLabel = getModelLabel(role.model_preference)
+  const tierConfig = getModelTier(role.model_preference)
+  const modelLabel = getModelDisplayName(role.model_preference)
 
   return (
     <button
@@ -45,45 +38,64 @@ export function RoleCard({ role, isSelected, onSelect, className }: RoleCardProp
       className={cn(
         // Base structure
         'group relative overflow-hidden',
-        'w-full max-w-[320px]',
-        'rounded-xl border',
+        'w-full max-w-[360px]',
+        'rounded-xl border-2',
         'text-left',
 
-        // Background
-        'bg-card',
+        // Background with subtle gradient
+        'bg-linear-to-b from-card to-card/95',
 
-        // Border
-        'border-border/50',
+        // Border based on tier
+        tierConfig.borderClass,
 
-        // Hover state (transitions only)
+        // Hover state
         'transition-all duration-300 ease-out',
-        'hover:border-primary/50',
-        'hover:shadow-lg hover:shadow-primary/5',
-        'hover:-translate-y-0.5',
+        'hover:shadow-xl hover:-translate-y-1',
+        tierConfig.tier !== 'common' && 'hover:shadow-current/10',
 
         // Focus state
         'focus-visible:outline-none',
         'focus-visible:ring-2 focus-visible:ring-ring',
         'focus-visible:ring-offset-2',
 
-        // Selection state
+        // Selection state with tier glow
         isSelected && [
-          'border-primary',
-          'ring-2 ring-primary/30',
-          'shadow-lg shadow-primary/20',
+          'ring-2 ring-offset-2',
+          tierConfig.glowClass,
         ],
 
         className
       )}
     >
-      {/* Header */}
-      <div className="px-4 pt-4 pb-3">
+      {/* Header: Tier Badge + Model */}
+      <div className="px-4 pt-3 pb-2 border-b border-border/50 flex items-center justify-between">
+        <TierBadge tier={tierConfig} />
+        {modelLabel && (
+          <span className={cn('font-mono text-[10px] font-medium', tierConfig.colorClass)}>
+            {modelLabel}
+          </span>
+        )}
+      </div>
+
+      {/* Name & Description */}
+      <div className="px-4 pt-3 pb-3">
         <h3 className="font-display text-lg font-bold leading-tight">
           {role.name}
         </h3>
         <p className="mt-1 text-sm text-muted-foreground line-clamp-2">
           {role.description || 'No description'}
         </p>
+      </div>
+
+      {/* Skills Section */}
+      <div className="px-4 pb-3 border-t border-border/50 pt-3">
+        <h4 className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-2">
+          Skills
+        </h4>
+        <SkillList
+          skills={role.resolved_skills || []}
+          maxVisible={3}
+        />
       </div>
 
       {/* Traits Section */}
@@ -94,16 +106,8 @@ export function RoleCard({ role, isSelected, onSelect, className }: RoleCardProp
         <PersonalityTraits facets={role.identity_facets || {}} maxVisible={3} />
       </div>
 
-      {/* Tools Section */}
-      <div className="px-4 pb-3">
-        <h4 className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-2">
-          Tools
-        </h4>
-        <SkillSlots tools={role.allowed_tools || []} maxVisible={3} />
-      </div>
-
       {/* Footer */}
-      <div className="px-4 pb-4 pt-2 border-t border-border/50 flex items-center justify-between">
+      <div className="px-4 pb-3 pt-2 border-t border-border/50">
         <span
           className={cn(
             'inline-flex items-center',
@@ -115,11 +119,6 @@ export function RoleCard({ role, isSelected, onSelect, className }: RoleCardProp
         >
           {getApprovalLabel(role.approval_policy)}
         </span>
-        {modelLabel && (
-          <span className="font-mono text-[10px] text-muted-foreground">
-            {modelLabel}
-          </span>
-        )}
       </div>
     </button>
   )

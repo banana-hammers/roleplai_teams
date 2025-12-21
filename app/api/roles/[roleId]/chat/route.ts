@@ -50,12 +50,12 @@ export async function POST(
       .eq('user_id', user.id)
       .maybeSingle()
 
-    // Fetch context packs linked to this role
-    const { data: contextPacks } = await supabase
-      .from('role_context_packs')
+    // Fetch lore linked to this role
+    const { data: roleLore } = await supabase
+      .from('role_lore')
       .select(`
-        context_pack_id,
-        context_packs (
+        lore_id,
+        lore (
           name,
           content,
           type
@@ -63,14 +63,19 @@ export async function POST(
       `)
       .eq('role_id', roleId)
 
-    // Fetch skills based on allowed_tools
-    const allowedToolIds = (role.allowed_tools as string[]) || []
+    // Fetch skills linked to this role via junction table
+    const { data: roleSkillLinks } = await supabase
+      .from('role_skills')
+      .select('skill_id')
+      .eq('role_id', roleId)
+
     let skills: Skill[] = []
-    if (allowedToolIds.length > 0) {
+    if (roleSkillLinks && roleSkillLinks.length > 0) {
+      const skillIds = roleSkillLinks.map(link => link.skill_id)
       const { data: skillData } = await supabase
         .from('skills')
         .select('*')
-        .in('id', allowedToolIds)
+        .in('id', skillIds)
       skills = (skillData as Skill[]) || []
     }
 
@@ -131,13 +136,13 @@ ${tools.map(t => `- ${t.name}: ${t.description}`).join('\n')}
 `)
     }
 
-    // Add context packs
-    if (contextPacks && contextPacks.length > 0) {
-      systemPromptParts.push('# Context Packs')
-      contextPacks.forEach((cp: any) => {
-        const pack = cp.context_packs
-        systemPromptParts.push(`\n## ${pack.name} (${pack.type})
-${pack.content}`)
+    // Add lore
+    if (roleLore && roleLore.length > 0) {
+      systemPromptParts.push('# Lore')
+      roleLore.forEach((rl: any) => {
+        const loreItem = rl.lore
+        systemPromptParts.push(`\n## ${loreItem.name} (${loreItem.type})
+${loreItem.content}`)
       })
     }
 

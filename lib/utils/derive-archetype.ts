@@ -49,27 +49,29 @@ export const archetypeConfigs: Record<ArchetypeType, ArchetypeConfig> = {
 }
 
 export function deriveArchetype(role: {
-  allowed_tools?: string[]
+  resolved_skills?: Array<{ name: string }>
+  skillCount?: number
   approval_policy?: string
   description?: string
   instructions?: string
 }): ArchetypeType {
-  const { allowed_tools = [], approval_policy, description = '', instructions = '' } = role
+  const { resolved_skills = [], skillCount, approval_policy, description = '', instructions = '' } = role
   const text = `${description} ${instructions}`.toLowerCase()
+  const numSkills = skillCount ?? resolved_skills.length
 
   // Guardian: High trust requirements
   if (approval_policy === 'always') {
     return 'guardian'
   }
 
-  // Executor: Many tools, autonomous
-  if (allowed_tools.length >= 3 && approval_policy === 'never') {
+  // Executor: Many skills, autonomous
+  if (numSkills >= 3 && approval_policy === 'never') {
     return 'executor'
   }
 
   // Strategist: Research/analysis focused
   if (
-    allowed_tools.includes('web_search') ||
+    resolved_skills.some(s => s.name.toLowerCase().includes('search')) ||
     text.includes('research') ||
     text.includes('analyz') ||
     text.includes('strateg')

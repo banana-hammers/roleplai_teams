@@ -5,20 +5,20 @@ import { useRouter } from 'next/navigation'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { RoleCard } from '@/components/roles'
-import { getUserRoles } from '@/app/actions/roles'
+import { getUserRolesWithSkills } from '@/app/actions/roles'
 import { Loader2, Plus, MessageSquare } from 'lucide-react'
-import type { Role } from '@/types/role'
+import type { RoleWithSkills } from '@/types/role'
 
 export default function RolesPage() {
   const router = useRouter()
-  const [roles, setRoles] = useState<Role[]>([])
+  const [roles, setRoles] = useState<RoleWithSkills[]>([])
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
     async function loadRoles() {
-      const result = await getUserRoles()
+      const result = await getUserRolesWithSkills()
       if (result.success) {
-        setRoles(result.roles as Role[])
+        setRoles(result.roles as RoleWithSkills[])
       }
       setIsLoading(false)
     }

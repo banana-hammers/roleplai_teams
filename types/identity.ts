@@ -9,14 +9,14 @@ export interface IdentityCore {
   updated_at: string
 }
 
-export type ContextPackType = 'bio' | 'brand' | 'rules' | 'custom'
+export type LoreType = 'bio' | 'brand' | 'rules' | 'custom'
 
-export interface ContextPack {
+export interface Lore {
   id: string
   user_id: string
   name: string
   content: string
-  type: ContextPackType
+  type: LoreType
   created_at: string
   updated_at: string
 }

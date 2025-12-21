@@ -6,7 +6,6 @@ import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
 import {
   Select,
   SelectContent,
@@ -15,8 +14,17 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { ToolConfigSelector } from './tool-config-selector'
+import { IdentityFacetsEditor } from './identity-facets-editor'
+import { ModelSelector } from './model-selector'
+import { SkillsManager } from './skills-manager'
 import { createClient } from '@/lib/supabase/client'
+import { useRouter } from 'next/navigation'
+
+interface IdentityFacets {
+  tone_adjustment?: string
+  priority_override?: string[]
+  special_behaviors?: string[]
+}
 
 interface RoleSettingsFormProps {
   role: {
@@ -24,16 +32,10 @@ interface RoleSettingsFormProps {
     name: string
     description: string | null
     instructions: string
+    identity_facets: IdentityFacets | null
     approval_policy: string
     model_preference: string | null
-    tool_config: Record<string, unknown> | null
   }
-  mcpServers: Array<{
-    id: string
-    name: string
-    server_type: string
-    is_enabled: boolean | null
-  }>
   roleSkills: Array<{
     skill_id: string
     config_overrides: Record<string, unknown> | null
@@ -47,21 +49,19 @@ interface RoleSettingsFormProps {
   }>
 }
 
-const MODELS = [
-  { value: 'anthropic/claude-sonnet-4-5-20250929', label: 'Claude Sonnet 4.5' },
-  { value: 'anthropic/claude-opus-4-20250514', label: 'Claude Opus 4' },
-  { value: 'openai/gpt-4-turbo-preview', label: 'GPT-4 Turbo' },
-  { value: 'openai/gpt-4o', label: 'GPT-4o' },
-]
-
-export function RoleSettingsForm({ role, mcpServers, roleSkills, allSkills }: RoleSettingsFormProps) {
+export function RoleSettingsForm({ role, roleSkills, allSkills }: RoleSettingsFormProps) {
+  const router = useRouter()
   const [formData, setFormData] = useState({
     name: role.name,
     description: role.description || '',
     instructions: role.instructions,
+    identity_facets: role.identity_facets || {
+      tone_adjustment: '',
+      priority_override: [],
+      special_behaviors: [],
+    },
     approval_policy: role.approval_policy,
     model_preference: role.model_preference || 'anthropic/claude-sonnet-4-5-20250929',
-    tool_config: role.tool_config || {},
   })
   const [saving, setSaving] = useState(false)
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
@@ -78,9 +78,9 @@ export function RoleSettingsForm({ role, mcpServers, roleSkills, allSkills }: Ro
           name: formData.name,
           description: formData.description || null,
           instructions: formData.instructions,
+          identity_facets: formData.identity_facets,
           approval_policy: formData.approval_policy,
           model_preference: formData.model_preference,
-          tool_config: formData.tool_config,
         })
         .eq('id', role.id)
 
@@ -98,7 +98,7 @@ export function RoleSettingsForm({ role, mcpServers, roleSkills, allSkills }: Ro
     <Tabs defaultValue="general" className="space-y-6">
       <TabsList className="grid w-full grid-cols-3">
         <TabsTrigger value="general">General</TabsTrigger>
-        <TabsTrigger value="tools">Tools & Permissions</TabsTrigger>
+        <TabsTrigger value="personality">Personality</TabsTrigger>
         <TabsTrigger value="skills">Skills</TabsTrigger>
       </TabsList>
 
@@ -145,21 +145,10 @@ export function RoleSettingsForm({ role, mcpServers, roleSkills, allSkills }: Ro
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
                 <Label>Model</Label>
-                <Select
+                <ModelSelector
                   value={formData.model_preference}
-                  onValueChange={(value) => setFormData({ ...formData, model_preference: value })}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {MODELS.map((model) => (
-                      <SelectItem key={model.value} value={model.value}>
-                        {model.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                  onChange={(value) => setFormData({ ...formData, model_preference: value })}
+                />
               </div>
 
               <div className="space-y-2">
@@ -206,48 +195,40 @@ export function RoleSettingsForm({ role, mcpServers, roleSkills, allSkills }: Ro
         </Card>
       </TabsContent>
 
-      <TabsContent value="tools">
-        <ToolConfigSelector
-          toolConfig={formData.tool_config}
-          onChange={(config) => setFormData({ ...formData, tool_config: config })}
-          onSave={handleSave}
-          saving={saving}
-        />
+      <TabsContent value="personality">
+        <Card>
+          <CardHeader>
+            <CardTitle>Personality</CardTitle>
+            <CardDescription>
+              Define how this role&apos;s personality differs from your identity core.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <IdentityFacetsEditor
+              facets={formData.identity_facets}
+              onChange={(facets) => setFormData({ ...formData, identity_facets: facets })}
+            />
+
+            {message && (
+              <p className={`text-sm ${message.type === 'success' ? 'text-green-600' : 'text-red-600'}`}>
+                {message.text}
+              </p>
+            )}
+
+            <Button onClick={handleSave} disabled={saving}>
+              {saving ? 'Saving...' : 'Save Personality'}
+            </Button>
+          </CardContent>
+        </Card>
       </TabsContent>
 
       <TabsContent value="skills">
-        <Card>
-          <CardHeader>
-            <CardTitle>Skills</CardTitle>
-            <CardDescription>
-              Skills this role can use. Manage skills from the role creation flow.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            {roleSkills.length > 0 ? (
-              <div className="space-y-2">
-                {roleSkills.map((rs) => (
-                  <div
-                    key={rs.skill_id}
-                    className="flex items-center justify-between rounded-lg border p-3"
-                  >
-                    <div>
-                      <p className="font-medium">{rs.skills?.name}</p>
-                      <p className="text-sm text-muted-foreground">
-                        {rs.skills?.description}
-                      </p>
-                    </div>
-                    <Badge variant="secondary">Active</Badge>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <p className="text-sm text-muted-foreground">
-                No skills assigned to this role.
-              </p>
-            )}
-          </CardContent>
-        </Card>
+        <SkillsManager
+          roleId={role.id}
+          roleSkills={roleSkills}
+          allSkills={allSkills}
+          onUpdate={() => router.refresh()}
+        />
       </TabsContent>
     </Tabs>
   )

@@ -25,11 +25,13 @@ Each RoleplAIr combines:
 ✅ **Identity Core** - Your personality shared across all RoleplAIrs
 ✅ **RoleplAIrs** - Specialized AI agents for different tasks
 ✅ **Skills System** - Abilities your RoleplAIrs can perform
-✅ **Lore (Context Packs)** - Reusable knowledge they remember
+✅ **Lore** - Reusable knowledge they remember
 ✅ **Multi-Provider AI** - OpenAI and Anthropic (Claude)
 ✅ **Streaming Chat** - Real-time responses with Vercel AI SDK v5
 ✅ **Supabase Backend** - Authentication, database, and RLS security
 ✅ **Modern UI** - Next.js 16, React 19, Tailwind CSS 4, shadcn/ui
+✅ **RPG-Style Cards** - Model tiers (Legendary/Epic/Rare/Common)
+✅ **API Key Encryption** - BYO API keys with AES-256-GCM encryption
 🚧 **Missions** - Party up 2-5 RoleplAIrs for collaborative long-term goals (coming soon)
 
 ## Quick Start
@@ -173,11 +175,12 @@ npm run start
 Core tables (with UI terminology mapping):
 - `identity_cores` - Your personality (Identity Core)
 - `roles` - AI agents (called **RoleplAIrs** in the UI)
-- `context_packs` - Knowledge snippets (called **Lore** in the UI)
+- `lore` - Knowledge snippets (called **Lore** in the UI)
+- `role_lore` - Junction table linking roles to lore
 - `skills` - Abilities your RoleplAIrs can perform
-- `tasks` - Task execution tracking
-- `task_approvals` - Approval workflow for sensitive actions
-- `user_api_keys` - BYO API keys (encryption TODO)
+- `role_skills` - Junction table linking roles to skills
+- `user_api_keys` - BYO API keys (encrypted)
+- `conversations` - Chat history (schema ready)
 
 All tables use Row-Level Security (RLS) for multi-tenant isolation.
 
@@ -187,7 +190,7 @@ All tables use Row-Level Security (RLS) for multi-tenant isolation.
 - ✅ Authentication required for all API routes
 - ✅ Proxy (middleware) handles session management
 - ✅ Edge Runtime provides request isolation
-- ⚠️ API key encryption - TODO (schema ready)
+- ✅ API key encryption with AES-256-GCM
 
 ## Contributing
 
@@ -214,19 +217,19 @@ Follow [Conventional Commits](https://www.conventionalcommits.org/) for commit m
 **Completed:**
 - [x] Nova (AI interviewer for Identity Core creation)
 - [x] Forge (AI-guided RoleplAIr creation)
-- [x] Skills system infrastructure
-- [x] Task execution with approval workflow
-- [x] Lore (context packs) management
-- [x] Role-Skills many-to-many relationships (schema)
+- [x] Skills system with junction table linking
+- [x] Lore management with role linking
+- [x] API key encryption (AES-256-GCM)
+- [x] RPG-style role cards with model tiers
 
 **In Progress:**
 - [ ] **Missions** - Party system for multi-RoleplAIr collaboration toward shared goals
 - [ ] XP & Leveling for Skills
 - [ ] Chat history persistence (schema ready, API/UI TODO)
 - [ ] Tool integrations (email, Slack, GitHub)
-- [ ] API key encryption
 - [ ] Team collaboration features
 - [ ] Spend tracking and limits
+- [ ] MCP server integration
 
 ---
 

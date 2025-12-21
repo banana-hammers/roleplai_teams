@@ -7,9 +7,7 @@ export interface Skill {
   prompt_template: string
   input_schema: Record<string, any>
   tool_constraints: Record<string, any>
-  examples: any[]
   version: number
-  parent_skill_id: string | null
   created_at: string
   updated_at: string
 }

@@ -63,14 +63,15 @@ roleplai_teams/
 │   │   ├── client.ts             # Browser client
 │   │   ├── server.ts             # Server client (cookies)
 │   │   └── middleware.ts         # Auth session update logic
-│   └── utils.ts                  # Utility functions (cn, etc.)
+│   ├── utils/                    # Domain utilities
+│   │   └── model-tiers.ts        # Model tier config (Legendary/Epic/Rare/Common)
+│   └── utils.ts                  # General utilities (cn, etc.)
 │
 ├── types/                        # TypeScript type definitions
 │   ├── database.types.ts         # Generated from Supabase
-│   ├── identity.ts               # Identity core types
+│   ├── identity.ts               # Identity core, Lore types
 │   ├── role.ts                   # Role types
-│   ├── skill.ts                  # Skill types
-│   └── task.ts                   # Task types
+│   └── skill.ts                  # Skill types
 │
 ├── supabase/                     # Database & migrations
 │   ├── migrations/               # SQL migration files
@@ -106,6 +107,13 @@ roleplai_teams/
 **Key Components:**
 - `chat-interface.tsx`: Streaming chat with Vercel AI SDK v5
 - UI primitives: Button, Input, Card, Dialog, etc.
+- Role cards: RPG-style display components
+
+**Role Card System (`components/roles/`):**
+- `role-card.tsx`: Main card with tier badge, skills, traits
+- `tier-badge.tsx`: Model tier badge (Legendary/Epic/Rare/Common)
+- `skill-list.tsx`: Resolved skill names with contextual icons
+- `personality-traits.tsx`: Identity facets display
 
 **Patterns:**
 - Server Components by default (faster initial load)
@@ -147,10 +155,13 @@ POST /api/roles/{roleId}/chat
 **Core Tables:**
 - `profiles`: User metadata
 - `identity_cores`: User's base AI personality
-- `roles`: AI agent configurations
-- `context_packs`: Reusable context snippets
+- `roles`: AI agent configurations (RoleplAIrs)
+- `lore`: Reusable knowledge snippets
+- `role_lore`: Junction table linking roles to lore
+- `skills`: Skill definitions with prompt templates
+- `role_skills`: Junction table linking roles to skills
 - `user_api_keys`: Encrypted BYO API keys
-- `tasks`: Task tracking (future)
+- `conversations`: Chat history (schema ready)
 
 **Security:**
 - Row-Level Security (RLS) on all tables
@@ -193,12 +204,13 @@ POST /api/roles/{roleId}/chat
     │
     ├─► Fetch identity_core
     │
-    ├─► Fetch context_packs
+    ├─► Fetch lore and skills
     │
     ├─► Compose system prompt
     │   ├─ Identity Core (voice, priorities, boundaries)
     │   ├─ Role instructions
-    │   └─ Context packs
+    │   ├─ Available skills
+    │   └─ Lore
     │
     ├─► Get user's API key or use system fallback
     │
@@ -261,9 +273,9 @@ npx supabase gen types typescript --local > types/database.types.ts
 ```
 
 ### Custom Types
-- `types/identity.ts`: Identity core interfaces
+- `types/identity.ts`: Identity core, Lore interfaces
 - `types/role.ts`: Role configuration
-- `types/skill.ts`, `types/task.ts`: Future features
+- `types/skill.ts`: Skill definitions
 
 ### TypeScript Config
 - Strict mode enabled
@@ -317,6 +329,8 @@ ANTHROPIC_API_KEY=sk-ant-...
 - [x] Web tools (search, fetch) with agentic loop
 - [x] Prompt caching (90% cost savings)
 - [x] Rate limiting per user
+- [x] RPG-style role cards with model tiers (Legendary/Epic/Rare/Common)
+- [x] Resolved skill names in role display
 
 ### Planned Features
 - [ ] Chat history persistence
@@ -324,6 +338,7 @@ ANTHROPIC_API_KEY=sk-ant-...
 - [ ] Spend tracking and limits
 - [ ] Advanced analytics
 - [ ] Message batching API (50% cost savings)
+- [ ] Engagement-based leveling (retraining with good/bad examples)
 
 ### Potential Improvements
 - Redis caching for frequently accessed data

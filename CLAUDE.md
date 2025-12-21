@@ -4,7 +4,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-RoleplayAI Teams is an AI-powered identity management and chat platform that enables users to create AI agents with personalized, consistent identities across different contexts. Built with Next.js 16, Supabase, and Vercel AI SDK v5, it combines identity cores, role-based agents, and reusable context packs to create sophisticated AI interactions.
+RoleplayAI Teams is an AI-powered identity management and chat platform that enables users to create AI agents called **RoleplAIrs** with personalized, consistent identities across different contexts. Built with Next.js 16, Supabase, and Vercel AI SDK v5, it combines identity cores, role-based agents, and reusable **Lore** (knowledge packs) to create sophisticated AI interactions.
+
+### AI Assistant Characters
+- **Nova** - AI interviewer that captures your personality during onboarding
+- **Forge** - AI assistant that helps build your RoleplAIrs with starter skills
 
 ## Development Commands
 
@@ -81,7 +85,7 @@ This project uses **AI SDK v5**, which has breaking changes from v4:
    - Falls back to system API keys
 
 2. **[app/api/roles/[roleId]/chat/route.ts](app/api/roles/[roleId]/chat/route.ts)** - Production role-based chat
-   - Fetches user's identity core, role, and context packs
+   - Fetches user's identity core, role, and lore
    - Composes system prompt from all sources
    - Enforces role ownership via RLS
    - **Built-in tools**: `web_search` (Brave/Serper API), `web_fetch` (URL fetching)
@@ -109,11 +113,11 @@ For role-based chat, the system prompt is composed in this order:
 1. **Identity Core** - User's base personality (voice, priorities, boundaries, decision rules)
 2. **Role Definition** - Name, description, and role-specific instructions
 3. **Identity Facets** - Role-specific personality adjustments
-4. **Allowed Tools** - Functions the role can execute (JSONB array)
+4. **Available Skills** - Functions the role can execute (from `role_skills` junction table)
 5. **Approval Policy** - `always`, `never`, or `smart`
-6. **Context Packs** - Linked context snippets (bio, brand, rules, custom)
+6. **Lore** - Linked knowledge snippets (bio, brand, rules, custom)
 
-See [app/api/roles/[roleId]/chat/route.ts:56-102](app/api/roles/[roleId]/chat/route.ts#L56-L102) for implementation.
+See [app/api/roles/[roleId]/chat/route.ts](app/api/roles/[roleId]/chat/route.ts) for implementation.
 
 ## Core Concepts
 
@@ -126,26 +130,25 @@ The foundational personality shared across all of a user's AI agents:
 
 One identity core per user, fetched from `identity_cores` table.
 
-### Roles
+### Roles (RoleplAIrs)
 Specific AI agent configurations linked to an identity core:
 - **instructions**: Role-specific behavior (TEXT)
 - **identity_facets**: Role-specific personality adjustments (JSONB)
-- **allowed_tools**: Functions the role can execute (JSONB array)
 - **approval_policy**: ENUM (`always`, `never`, `smart`)
-- **model_preference**: Format: `provider/model` (e.g., `anthropic/claude-3-5-sonnet-20241022`)
+- **model_preference**: Format: `provider/model` (e.g., `anthropic/claude-sonnet-4-5-20250929`)
 
-Many roles per user, stored in `roles` table.
+Skills are linked via `role_skills` junction table. Many roles per user, stored in `roles` table.
 
-### Context Packs
-Reusable context snippets that can be attached to multiple roles:
+### Lore
+Reusable knowledge snippets that can be attached to multiple roles:
 - **Type**: ENUM (`bio`, `brand`, `rules`, `custom`)
 - **Content**: Markdown or plain text
-- Linked to roles via `role_context_packs` junction table
+- Linked to roles via `role_lore` junction table
 
 ### BYO API Keys
 Users can bring their own OpenAI/Anthropic API keys:
 - Stored in `user_api_keys` table
-- **TODO**: Encryption/decryption not yet implemented (schema ready)
+- **Fully implemented** with AES-256-GCM encryption
 - Falls back to system keys from environment variables
 
 ## Database Schema
@@ -155,15 +158,16 @@ All tables use **Row-Level Security (RLS)** for multi-tenant isolation. Policies
 **Core tables**:
 - `profiles` - Extends `auth.users` with metadata
 - `identity_cores` - User's base AI personality
-- `roles` - AI agent configurations
-- `context_packs` - Reusable context snippets
-- `role_context_packs` - Junction table (many-to-many)
-- `user_api_keys` - Encrypted BYO API keys (encryption TODO)
-- `skills` - Skill definitions (future feature)
-- `tasks` - Task tracking with approval workflow
-- `task_approvals` - Approval requests for sensitive actions
+- `roles` - AI agent configurations (RoleplAIrs)
+- `lore` - Reusable knowledge snippets
+- `role_lore` - Junction table linking roles to lore
+- `skills` - Skill definitions with prompt templates
+- `role_skills` - Junction table linking roles to skills
+- `user_api_keys` - Encrypted BYO API keys
+- `conversations` - Chat history (schema ready, implementation pending)
+- `mcp_servers` - MCP server configurations (partial implementation)
 
-**Indexes**: All `user_id` columns are indexed. Additional indexes on `tasks.status`.
+**Indexes**: All `user_id` columns are indexed.
 
 **Schema file**: [supabase/migrations/20250101000000_initial_schema.sql](supabase/migrations/20250101000000_initial_schema.sql)
 
@@ -261,20 +265,56 @@ import type { Role } from '@/types/role'
 - Requires `ENCRYPTION_MASTER_KEY` environment variable (min 32 chars)
 - Falls back to system keys if user has no BYO keys
 
+### Skills System
+Skills are linked to roles via the `role_skills` junction table:
+- Created during role creation (via Forge) or manually added
+- Each skill has a `prompt_template` for execution
+- Skills are fetched via junction table query in chat endpoint
+- Server actions in [app/actions/roles.ts](app/actions/roles.ts) handle CRUD
+
 ### Model Preference Format
 Stored in `roles.model_preference` as `provider/model`:
-- Example: `anthropic/claude-3-5-sonnet-20241022`
+- Example: `anthropic/claude-sonnet-4-5-20250929`
 - Example: `openai/gpt-4-turbo-preview`
 - Parsed with `split('/')` in [app/api/roles/[roleId]/chat/route.ts:105-106](app/api/roles/[roleId]/chat/route.ts#L105-L106)
 
-### Context Pack Fetching
+### Model Tier System
+
+Models are categorized into tiers based on cost/capability for the RPG-style UI:
+
+| Tier | Color | Models |
+|------|-------|--------|
+| **Legendary** | Gold (amber-500) | claude-opus-4, gpt-4o, o1 |
+| **Epic** | Purple (violet-500) | gpt-4-turbo, claude-3-opus |
+| **Rare** | Blue (blue-500) | claude-sonnet-4.5, gpt-4o-mini |
+| **Common** | Gray | claude-haiku, gpt-3.5-turbo |
+
+**Implementation**: [lib/utils/model-tiers.ts](lib/utils/model-tiers.ts)
+```typescript
+import { getModelTier, getModelDisplayName } from '@/lib/utils/model-tiers'
+
+const tierConfig = getModelTier(role.model_preference)  // Returns tier config with colors, icon
+const modelLabel = getModelDisplayName(role.model_preference)  // "Sonnet 4.5", "GPT-4o", etc.
+```
+
+### Role Leveling (Future)
+
+Leveling will be based on engagement and retraining:
+- Users engage with RoleplAIrs through conversations
+- Good/bad examples can be used to improve skills
+- Personality and memories can be refined over time
+- Level reflects how much the RoleplAIr has been trained
+
+This feature is planned but not yet implemented.
+
+### Lore Fetching
 Uses nested select with junction table:
 ```typescript
-const { data: contextPacks } = await supabase
-  .from('role_context_packs')
+const { data: roleLore } = await supabase
+  .from('role_lore')
   .select(`
-    context_pack_id,
-    context_packs (
+    lore_id,
+    lore (
       name,
       content,
       type
@@ -288,7 +328,7 @@ const { data: contextPacks } = await supabase
 - **RLS Policies**: All tables enforce `auth.uid() = user_id`
 - **Auth Flow**: Proxy updates session on every request, redirects to `/login` for protected routes
 - **Edge Runtime**: Provides request isolation and security boundaries
-- **API Key Storage**: Encrypted column ready, decryption logic TODO
+- **API Key Storage**: Fully encrypted with AES-256-GCM
 - **HTTPS**: Enforced by Vercel and Supabase in production
 
 ## File Locations Reference
@@ -300,6 +340,14 @@ const { data: contextPacks } = await supabase
 **Components**:
 - Chat UI: [components/chat/chat-interface.tsx](components/chat/chat-interface.tsx)
 - UI primitives: [components/ui/](components/ui/)
+- Role cards: [components/roles/](components/roles/)
+  - `role-card.tsx` - Main card with tier badge, skills, traits
+  - `tier-badge.tsx` - Model tier badge (Legendary/Epic/Rare/Common)
+  - `skill-list.tsx` - Resolved skill names with icons
+  - `personality-traits.tsx` - Identity facets display
+
+**Utilities**:
+- Model tiers: [lib/utils/model-tiers.ts](lib/utils/model-tiers.ts)
 
 **Supabase Clients**:
 - Server: [lib/supabase/server.ts](lib/supabase/server.ts)
@@ -310,6 +358,11 @@ const { data: contextPacks } = await supabase
 **Types**:
 - Generated DB types: [types/database.types.ts](types/database.types.ts)
 - Custom types: [types/identity.ts](types/identity.ts), [types/role.ts](types/role.ts), etc.
+- Key role types:
+  - `Role` - Base role interface
+  - `RoleWithSkills` - Extended with `resolved_skills[]` and `lore_count`
+  - `ResolvedSkill` - Skill with id, name, description (for display)
+  - `Lore` - Lore item with id, name, content, type
 
 **Database**:
 - Schema: [supabase/migrations/20250101000000_initial_schema.sql](supabase/migrations/20250101000000_initial_schema.sql)
@@ -342,18 +395,22 @@ SERPER_API_KEY=...     # https://serper.dev/
 
 ## Current Status
 
-**Phase 1 & 2 Complete**:
+**Completed**:
 - ✅ Next.js 16 + Supabase foundation
 - ✅ Database schema with RLS
 - ✅ Chat streaming (OpenAI, Anthropic)
 - ✅ Role-based chat with identity injection
-- ✅ Context pack composition
+- ✅ Lore composition in system prompts
 - ✅ shadcn/ui components
 - ✅ API key encryption/decryption
 - ✅ Web tools (search, fetch) with agentic loop
 - ✅ Prompt caching for cost savings
+- ✅ RPG-style role cards with model tiers (Legendary/Epic/Rare/Common)
+- ✅ Skills system with junction table linking
+- ✅ Nova (personality interview) and Forge (role creation) AI assistants
 
 **TODO**:
-- 🚧 Chat history persistence
-- 🚧 Task tracking UI
+- 🚧 Chat history persistence (schema ready)
 - 🚧 Spend tracking and limits
+- 🚧 Engagement-based leveling (skill improvement through use)
+- 🚧 MCP server integration (schema ready, partial UI)
