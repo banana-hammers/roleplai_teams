@@ -11,6 +11,7 @@ import {
   FileText,
   MessageSquare,
   Wrench,
+  Plus,
   type LucideIcon,
 } from 'lucide-react'
 import type { ResolvedSkill } from '@/types/role'
@@ -42,6 +43,7 @@ interface SkillListProps {
   className?: string
 }
 
+// Legacy vertical list layout (kept for backwards compatibility)
 export function SkillList({
   skills,
   builtInTools = [],
@@ -106,6 +108,113 @@ export function SkillList({
         <div className="text-[10px] text-muted-foreground pl-5">
           +{remainingCount} more
         </div>
+      )}
+    </div>
+  )
+}
+
+interface SkillPillsProps {
+  skills: ResolvedSkill[]
+  builtInTools?: string[]
+  maxVisible?: number
+  showEmptyAction?: boolean
+  onAddSkill?: () => void
+  className?: string
+}
+
+// New horizontal pills layout
+export function SkillPills({
+  skills,
+  builtInTools = [],
+  maxVisible = 3,
+  showEmptyAction = true,
+  onAddSkill,
+  className,
+}: SkillPillsProps) {
+  // Combine built-in tools and custom skills
+  const allItems: { id: string; name: string; icon: LucideIcon; isBuiltIn: boolean }[] = []
+
+  // Add built-in tools first
+  for (const toolId of builtInTools) {
+    const tool = BUILTIN_TOOLS[toolId]
+    if (tool) {
+      allItems.push({
+        id: toolId,
+        name: tool.name,
+        icon: tool.icon,
+        isBuiltIn: true,
+      })
+    }
+  }
+
+  // Add custom skills
+  for (const skill of skills) {
+    allItems.push({
+      id: skill.id,
+      name: skill.name,
+      icon: getSkillIcon(skill.name),
+      isBuiltIn: false,
+    })
+  }
+
+  const visibleItems = allItems.slice(0, maxVisible)
+  const remainingCount = allItems.length - maxVisible
+
+  if (allItems.length === 0) {
+    if (!showEmptyAction) {
+      return (
+        <span className={cn('text-xs text-muted-foreground', className)}>
+          No skills
+        </span>
+      )
+    }
+
+    return (
+      <button
+        type="button"
+        onClick={onAddSkill}
+        className={cn(
+          'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full',
+          'border-2 border-dashed border-muted-foreground/30',
+          'text-xs text-muted-foreground',
+          'hover:border-skills-accent hover:text-skills-accent',
+          'transition-colors duration-200',
+          'active:scale-95',
+          className
+        )}
+      >
+        <Plus className="h-3 w-3" />
+        <span>Add skills</span>
+      </button>
+    )
+  }
+
+  return (
+    <div className={cn('flex flex-wrap gap-2', className)}>
+      {visibleItems.map((item) => {
+        const Icon = item.icon
+        return (
+          <span
+            key={item.id}
+            className={cn(
+              'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full',
+              'text-xs font-medium',
+              'transition-all duration-200',
+              'hover:scale-105 active:scale-95',
+              item.isBuiltIn
+                ? 'bg-skills-accent/15 text-skills-accent border border-skills-accent/20'
+                : 'bg-muted text-muted-foreground border border-border'
+            )}
+          >
+            <Icon className="h-3 w-3" />
+            <span className="truncate max-w-[100px]">{item.name}</span>
+          </span>
+        )
+      })}
+      {remainingCount > 0 && (
+        <span className="inline-flex items-center px-2.5 py-1 rounded-full bg-muted/50 text-muted-foreground text-xs">
+          +{remainingCount}
+        </span>
       )}
     </div>
   )

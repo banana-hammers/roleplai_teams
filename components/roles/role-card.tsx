@@ -1,9 +1,8 @@
 'use client'
 
 import { cn } from '@/lib/utils'
-import { PersonalityTraits } from './personality-traits'
-import { TierBadge } from './tier-badge'
-import { SkillList } from './skill-list'
+import { TierAvatar } from './tier-avatar'
+import { SkillPills } from './skill-list'
 import { getModelTier, getModelDisplayName } from '@/lib/utils/model-tiers'
 import type { RoleWithSkills } from '@/types/role'
 
@@ -12,19 +11,6 @@ interface RoleCardProps {
   isSelected?: boolean
   onSelect?: () => void
   className?: string
-}
-
-function getApprovalLabel(policy: string): string {
-  switch (policy) {
-    case 'always':
-      return 'High Trust'
-    case 'never':
-      return 'Autonomous'
-    case 'smart':
-      return 'Adaptive'
-    default:
-      return policy
-  }
 }
 
 export function RoleCard({ role, isSelected, onSelect, className }: RoleCardProps) {
@@ -38,20 +24,23 @@ export function RoleCard({ role, isSelected, onSelect, className }: RoleCardProp
       className={cn(
         // Base structure
         'group relative overflow-hidden',
-        'w-full max-w-[360px]',
-        'rounded-xl border-2',
+        'w-full',
+        'rounded-2xl border',
         'text-left',
 
         // Background with subtle gradient
-        'bg-linear-to-b from-card to-card/95',
+        'bg-card/80 backdrop-blur-sm',
 
         // Border based on tier
         tierConfig.borderClass,
 
-        // Hover state
+        // Hover state with lift and glow
         'transition-all duration-300 ease-out',
-        'hover:shadow-xl hover:-translate-y-1',
+        'hover:scale-[1.02] hover:shadow-xl',
         tierConfig.tier !== 'common' && 'hover:shadow-current/10',
+
+        // Press feedback for mobile
+        'active:scale-[0.98]',
 
         // Focus state
         'focus-visible:outline-none',
@@ -62,63 +51,53 @@ export function RoleCard({ role, isSelected, onSelect, className }: RoleCardProp
         isSelected && [
           'ring-2 ring-offset-2',
           tierConfig.glowClass,
+          'animate-bounce-in',
         ],
 
         className
       )}
     >
-      {/* Header: Tier Badge + Model */}
-      <div className="px-4 pt-3 pb-2 border-b border-border/50 flex items-center justify-between">
-        <TierBadge tier={tierConfig} />
-        {modelLabel && (
-          <span className={cn('font-mono text-[10px] font-medium', tierConfig.colorClass)}>
-            {modelLabel}
-          </span>
-        )}
+      {/* Ambient glow effect based on tier */}
+      <div className={cn(
+        'absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500',
+        'pointer-events-none',
+        tierConfig.tier === 'legendary' && 'bg-linear-to-br from-amber-500/10 via-transparent to-transparent',
+        tierConfig.tier === 'epic' && 'bg-linear-to-br from-violet-500/10 via-transparent to-transparent',
+        tierConfig.tier === 'rare' && 'bg-linear-to-br from-blue-500/10 via-transparent to-transparent',
+      )} />
+
+      {/* Header: Avatar + Name + Model */}
+      <div className="relative flex items-center gap-3 p-4 pb-3">
+        <TierAvatar tier={tierConfig} size="lg" />
+        <div className="flex-1 min-w-0">
+          <h3 className="font-display text-lg font-bold leading-tight truncate">
+            {role.name}
+          </h3>
+          {modelLabel && (
+            <span className={cn(
+              'text-xs font-medium',
+              tierConfig.colorClass
+            )}>
+              {modelLabel}
+            </span>
+          )}
+        </div>
       </div>
 
-      {/* Name & Description */}
-      <div className="px-4 pt-3 pb-3">
-        <h3 className="font-display text-lg font-bold leading-tight">
-          {role.name}
-        </h3>
-        <p className="mt-1 text-sm text-muted-foreground line-clamp-2">
-          {role.description || 'No description'}
+      {/* Description */}
+      <div className="px-4 pb-3">
+        <p className="text-sm text-muted-foreground line-clamp-2">
+          {role.description || 'Ready to assist you'}
         </p>
       </div>
 
-      {/* Skills Section */}
-      <div className="px-4 pb-3 border-t border-border/50 pt-3">
-        <h4 className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-2">
-          Skills
-        </h4>
-        <SkillList
+      {/* Skills as horizontal pills */}
+      <div className="px-4 pb-4">
+        <SkillPills
           skills={role.resolved_skills || []}
           maxVisible={3}
+          showEmptyAction={false}
         />
-      </div>
-
-      {/* Traits Section */}
-      <div className="px-4 pb-3">
-        <h4 className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-2">
-          Traits
-        </h4>
-        <PersonalityTraits facets={role.identity_facets || {}} maxVisible={3} />
-      </div>
-
-      {/* Footer */}
-      <div className="px-4 pb-3 pt-2 border-t border-border/50">
-        <span
-          className={cn(
-            'inline-flex items-center',
-            'px-2 py-0.5 rounded-full',
-            'text-[10px] font-medium uppercase tracking-wide',
-            'bg-muted text-muted-foreground',
-            'border border-border'
-          )}
-        >
-          {getApprovalLabel(role.approval_policy)}
-        </span>
       </div>
     </button>
   )

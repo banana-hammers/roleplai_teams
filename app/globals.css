@@ -52,91 +52,93 @@
 
 :root {
   --radius: 0.625rem;
-  --background: oklch(0.99 0.01 285);
-  --foreground: oklch(0.145 0.02 285);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0.02 285);
+  /* Light Mode - Clean & Professional B2B SaaS */
+  --background: oklch(0.98 0.005 260);     /* Off-white slate */
+  --foreground: oklch(0.18 0.02 260);      /* Dark slate */
+  --card: oklch(1 0 0);                    /* Pure white */
+  --card-foreground: oklch(0.18 0.02 260);
   --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0.02 285);
-  /* Primary - Vibrant Purple */
-  --primary: oklch(0.55 0.22 285);
-  --primary-foreground: oklch(0.98 0.01 285);
-  /* Secondary - Soft lavender */
-  --secondary: oklch(0.96 0.02 285);
-  --secondary-foreground: oklch(0.25 0.05 285);
-  /* Muted - Light purple tint */
-  --muted: oklch(0.96 0.02 285);
-  --muted-foreground: oklch(0.45 0.03 285);
-  /* Accent - Electric Cyan */
-  --accent: oklch(0.70 0.15 195);
-  --accent-foreground: oklch(0.15 0.02 195);
+  --popover-foreground: oklch(0.18 0.02 260);
+  /* Primary - Refined Indigo */
+  --primary: oklch(0.50 0.18 265);
+  --primary-foreground: oklch(0.98 0 0);
+  /* Secondary - Light slate */
+  --secondary: oklch(0.96 0.01 260);
+  --secondary-foreground: oklch(0.25 0.03 260);
+  /* Muted - Soft slate */
+  --muted: oklch(0.96 0.01 260);
+  --muted-foreground: oklch(0.45 0.02 260);
+  /* Accent - Modern Teal */
+  --accent: oklch(0.55 0.14 185);
+  --accent-foreground: oklch(0.98 0 0);
   --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.92 0.01 285);
-  --input: oklch(0.92 0.01 285);
-  --ring: oklch(0.55 0.15 285);
-  /* Feature card accents */
-  --identity-accent: oklch(0.65 0.20 285);
-  --roles-accent: oklch(0.65 0.18 195);
-  --skills-accent: oklch(0.70 0.18 145);
-  --context-accent: oklch(0.70 0.16 45);
-  --missions-accent: oklch(0.70 0.18 75);
-  --chart-1: oklch(0.646 0.222 41.116);
-  --chart-2: oklch(0.6 0.118 184.704);
-  --chart-3: oklch(0.398 0.07 227.392);
-  --chart-4: oklch(0.828 0.189 84.429);
-  --chart-5: oklch(0.769 0.188 70.08);
-  --sidebar: oklch(0.985 0.01 285);
-  --sidebar-foreground: oklch(0.145 0.02 285);
-  --sidebar-primary: oklch(0.55 0.22 285);
-  --sidebar-primary-foreground: oklch(0.98 0.01 285);
-  --sidebar-accent: oklch(0.96 0.02 285);
-  --sidebar-accent-foreground: oklch(0.25 0.05 285);
-  --sidebar-border: oklch(0.92 0.01 285);
-  --sidebar-ring: oklch(0.55 0.15 285);
+  --border: oklch(0.90 0.01 260);
+  --input: oklch(0.92 0.01 260);
+  --ring: oklch(0.50 0.15 265);
+  /* Feature card accents - B2B Professional */
+  --identity-accent: oklch(0.55 0.16 265); /* Indigo */
+  --roles-accent: oklch(0.50 0.14 185);    /* Teal */
+  --skills-accent: oklch(0.55 0.14 155);   /* Sage green */
+  --context-accent: oklch(0.60 0.16 85);   /* Warm amber */
+  --missions-accent: oklch(0.55 0.12 45);  /* Muted coral */
+  --chart-1: oklch(0.55 0.16 265);
+  --chart-2: oklch(0.55 0.14 185);
+  --chart-3: oklch(0.55 0.14 155);
+  --chart-4: oklch(0.60 0.16 85);
+  --chart-5: oklch(0.55 0.12 45);
+  --sidebar: oklch(0.98 0.005 260);
+  --sidebar-foreground: oklch(0.18 0.02 260);
+  --sidebar-primary: oklch(0.50 0.18 265);
+  --sidebar-primary-foreground: oklch(0.98 0 0);
+  --sidebar-accent: oklch(0.96 0.01 260);
+  --sidebar-accent-foreground: oklch(0.25 0.03 260);
+  --sidebar-border: oklch(0.90 0.01 260);
+  --sidebar-ring: oklch(0.50 0.15 265);
 }
 
 .dark {
-  --background: oklch(0.14 0.02 285);
-  --foreground: oklch(0.985 0.01 285);
-  --card: oklch(0.20 0.03 285);
-  --card-foreground: oklch(0.985 0.01 285);
-  --popover: oklch(0.20 0.03 285);
-  --popover-foreground: oklch(0.985 0.01 285);
-  /* Primary - Brighter purple in dark mode */
-  --primary: oklch(0.72 0.20 285);
-  --primary-foreground: oklch(0.15 0.02 285);
-  /* Secondary - Dark purple-tinted */
-  --secondary: oklch(0.25 0.04 285);
-  --secondary-foreground: oklch(0.95 0.01 285);
-  /* Muted - Dark purple-gray */
-  --muted: oklch(0.22 0.03 285);
-  --muted-foreground: oklch(0.65 0.04 285);
-  /* Accent - Bright cyan */
-  --accent: oklch(0.75 0.18 195);
-  --accent-foreground: oklch(0.15 0.02 195);
+  /* Dark Mode - B2B SaaS Professional */
+  --background: oklch(0.13 0.01 260);      /* Deep slate */
+  --foreground: oklch(0.95 0.01 260);      /* Near white */
+  --card: oklch(0.18 0.015 260);           /* Elevated slate */
+  --card-foreground: oklch(0.95 0.01 260);
+  --popover: oklch(0.18 0.015 260);
+  --popover-foreground: oklch(0.95 0.01 260);
+  /* Primary - Refined Indigo (brighter for dark mode) */
+  --primary: oklch(0.65 0.18 265);
+  --primary-foreground: oklch(0.98 0 0);
+  /* Secondary - Dark slate */
+  --secondary: oklch(0.25 0.02 260);
+  --secondary-foreground: oklch(0.95 0.01 260);
+  /* Muted - Subtle slate */
+  --muted: oklch(0.22 0.02 260);
+  --muted-foreground: oklch(0.60 0.02 260);
+  /* Accent - Modern Teal (brighter for dark mode) */
+  --accent: oklch(0.70 0.14 185);
+  --accent-foreground: oklch(0.15 0.02 185);
   --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.72 0.15 285);
-  /* Feature card accents - brighter in dark mode */
-  --identity-accent: oklch(0.72 0.18 285);
-  --roles-accent: oklch(0.72 0.16 195);
-  --skills-accent: oklch(0.75 0.16 145);
-  --context-accent: oklch(0.75 0.14 45);
-  --missions-accent: oklch(0.75 0.16 75);
-  --chart-1: oklch(0.488 0.243 264.376);
-  --chart-2: oklch(0.696 0.17 162.48);
-  --chart-3: oklch(0.769 0.188 70.08);
-  --chart-4: oklch(0.627 0.265 303.9);
-  --chart-5: oklch(0.645 0.246 16.439);
-  --sidebar: oklch(0.20 0.03 285);
-  --sidebar-foreground: oklch(0.985 0.01 285);
-  --sidebar-primary: oklch(0.72 0.20 285);
-  --sidebar-primary-foreground: oklch(0.15 0.02 285);
-  --sidebar-accent: oklch(0.25 0.04 285);
-  --sidebar-accent-foreground: oklch(0.95 0.01 285);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.72 0.15 285);
+  --border: oklch(1 0 0 / 12%);
+  --input: oklch(1 0 0 / 10%);
+  --ring: oklch(0.65 0.15 265);
+  /* Feature card accents - B2B Professional (brighter for dark mode) */
+  --identity-accent: oklch(0.65 0.14 265); /* Indigo */
+  --roles-accent: oklch(0.68 0.12 185);    /* Teal */
+  --skills-accent: oklch(0.65 0.12 155);   /* Sage green */
+  --context-accent: oklch(0.72 0.14 85);   /* Warm amber */
+  --missions-accent: oklch(0.68 0.10 45);  /* Muted coral */
+  --chart-1: oklch(0.65 0.14 265);
+  --chart-2: oklch(0.68 0.12 185);
+  --chart-3: oklch(0.65 0.12 155);
+  --chart-4: oklch(0.72 0.14 85);
+  --chart-5: oklch(0.68 0.10 45);
+  --sidebar: oklch(0.16 0.01 260);
+  --sidebar-foreground: oklch(0.95 0.01 260);
+  --sidebar-primary: oklch(0.65 0.18 265);
+  --sidebar-primary-foreground: oklch(0.98 0 0);
+  --sidebar-accent: oklch(0.25 0.02 260);
+  --sidebar-accent-foreground: oklch(0.95 0.01 260);
+  --sidebar-border: oklch(1 0 0 / 12%);
+  --sidebar-ring: oklch(0.65 0.15 265);
 }
 
 @layer base {
@@ -145,6 +147,20 @@
   }
   body {
     @apply bg-background text-foreground;
+    /* Safe area insets for notched devices */
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
+  }
+  /* Fluid typography - slightly smaller on mobile */
+  html {
+    font-size: 15px;
+  }
+  @media (min-width: 640px) {
+    html {
+      font-size: 16px;
+    }
   }
 }
 
@@ -188,4 +204,85 @@
   30% {
     transform: translateY(-4px);
   }
+}
+
+/* Floating particle animation */
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0);
+    opacity: 0.6;
+  }
+  50% {
+    transform: translateY(-8px);
+    opacity: 1;
+  }
+}
+
+/* Slow spin for decorative elements */
+@keyframes spin-slow {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Bounce in for new elements */
+@keyframes bounce-in {
+  0% {
+    transform: scale(0.95);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.02);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* Shimmer effect for loading states */
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+/* Slide up and fade for staggered lists */
+@keyframes slide-up-fade {
+  from {
+    transform: translateY(10px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/* Animation utilities */
+.animate-float {
+  animation: float 3s ease-in-out infinite;
+}
+
+.animate-spin-slow {
+  animation: spin-slow 8s linear infinite;
+}
+
+.animate-bounce-in {
+  animation: bounce-in 0.3s ease-out forwards;
+}
+
+.animate-shimmer {
+  animation: shimmer 2s linear infinite;
+  background-size: 200% 100%;
+}
+
+.animate-slide-up-fade {
+  animation: slide-up-fade 0.3s ease-out forwards;
 }
