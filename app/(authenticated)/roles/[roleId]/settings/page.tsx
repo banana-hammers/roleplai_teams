@@ -52,7 +52,7 @@ export default async function RoleSettingsPage({ params }: RoleSettingsPageProps
     .order('name')
 
   return (
-    <div className="min-h-screen bg-linear-to-b from-zinc-50 to-white dark:from-zinc-950 dark:to-black">
+    <div className="min-h-screen bg-background">
       <main className="container max-w-4xl px-4 py-8">
         <div className="mb-6">
           <a

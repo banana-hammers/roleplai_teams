@@ -112,7 +112,7 @@ export default function RoleCreationPage() {
   // Show loading state until hydrated to avoid hydration mismatch
   if (!isHydrated) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-gradient-to-b from-zinc-50 to-white dark:from-zinc-950 dark:to-black px-4 py-8">
+      <div className="flex min-h-screen items-center justify-center bg-background px-4 py-8">
         <Card className="w-full max-w-2xl">
           <CardContent className="pt-6">
             <div className="flex items-center justify-center py-12">
@@ -125,7 +125,7 @@ export default function RoleCreationPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gradient-to-b from-zinc-50 to-white dark:from-zinc-950 dark:to-black px-4 py-8">
+    <div className="flex min-h-screen items-center justify-center bg-background px-4 py-8">
       <Card className="w-full max-w-2xl">
         <CardContent className="pt-6">
           {state.currentStep < 3 && (

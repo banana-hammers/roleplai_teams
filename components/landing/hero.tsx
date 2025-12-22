@@ -17,7 +17,7 @@ export function Hero() {
   return (
     <section className="relative overflow-hidden">
       {/* Background gradient */}
-      <div className="absolute inset-0 -z-10 bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(120,80,200,0.15),rgba(255,255,255,0))]" />
+      <div className="absolute inset-0 -z-10 bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(99,102,241,0.15),rgba(255,255,255,0))]" />
 
       <div className="mx-auto max-w-6xl px-6 py-12 sm:py-16 lg:py-20">
         <div className="flex flex-col items-center text-center">
@@ -32,7 +32,7 @@ export function Hero() {
 
           {/* Headline */}
           <h1 className="max-w-4xl font-display text-5xl font-bold tracking-tight sm:text-6xl lg:text-7xl">
-            <span className="bg-gradient-to-r from-primary via-purple-500 to-accent bg-clip-text text-transparent">
+            <span className="bg-gradient-to-r from-primary via-indigo-400 to-accent bg-clip-text text-transparent">
               Level Up Together
             </span>{" "}
             With Your RoleplAIrs

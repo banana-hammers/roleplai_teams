@@ -65,12 +65,12 @@ export default function AboutPage() {
       <main>
         {/* Hero Section */}
         <section className="relative overflow-hidden">
-          <div className="absolute inset-0 -z-10 bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(120,80,200,0.15),rgba(255,255,255,0))]" />
+          <div className="absolute inset-0 -z-10 bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(99,102,241,0.15),rgba(255,255,255,0))]" />
 
           <div className="mx-auto max-w-4xl px-6 py-24 text-center sm:py-32">
             <h1 className="font-display text-4xl font-bold tracking-tight sm:text-5xl lg:text-6xl">
               Technology Should{" "}
-              <span className="bg-gradient-to-r from-primary via-purple-500 to-accent bg-clip-text text-transparent">
+              <span className="bg-gradient-to-r from-primary via-indigo-400 to-accent bg-clip-text text-transparent">
                 Amplify Humanity,
               </span>{" "}
               Not Replace It.

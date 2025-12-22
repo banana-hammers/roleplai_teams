@@ -62,8 +62,8 @@ export function RoleCard({ role, isSelected, onSelect, className }: RoleCardProp
         'absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500',
         'pointer-events-none',
         tierConfig.tier === 'legendary' && 'bg-linear-to-br from-amber-500/10 via-transparent to-transparent',
-        tierConfig.tier === 'epic' && 'bg-linear-to-br from-violet-500/10 via-transparent to-transparent',
-        tierConfig.tier === 'rare' && 'bg-linear-to-br from-blue-500/10 via-transparent to-transparent',
+        tierConfig.tier === 'epic' && 'bg-linear-to-br from-indigo-400/10 via-transparent to-transparent',
+        tierConfig.tier === 'rare' && 'bg-linear-to-br from-teal-500/10 via-transparent to-transparent',
       )} />
 
       {/* Header: Avatar + Name + Model */}

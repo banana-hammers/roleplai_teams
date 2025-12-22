@@ -7,7 +7,7 @@ export function CTASection() {
     <section className="relative overflow-hidden py-16 sm:py-24">
       {/* Background gradient - stronger */}
       <div className="absolute inset-0 -z-10 bg-gradient-to-br from-primary/15 via-background to-accent/15" />
-      <div className="absolute inset-0 -z-10 bg-[radial-gradient(ellipse_at_center,rgba(120,80,200,0.15),transparent_60%)]" />
+      <div className="absolute inset-0 -z-10 bg-[radial-gradient(ellipse_at_center,rgba(99,102,241,0.15),transparent_60%)]" />
 
       {/* Decorative elements */}
       <div className="absolute left-1/4 top-1/4 -z-10 size-64 rounded-full bg-primary/10 blur-3xl" />

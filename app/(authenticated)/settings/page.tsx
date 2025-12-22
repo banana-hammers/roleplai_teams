@@ -32,7 +32,7 @@ export default async function SettingsPage() {
     .order('name')
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-zinc-50 to-white dark:from-zinc-950 dark:to-black">
+    <div className="min-h-screen bg-background">
       <main className="container max-w-4xl px-4 py-8">
         <h1 className="mb-6 text-2xl font-semibold">Settings</h1>
         <SettingsTabs
