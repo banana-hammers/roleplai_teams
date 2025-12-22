@@ -8,6 +8,15 @@ import {
   updateConversationTitle,
 } from '@/app/actions/conversations'
 
+export interface MessageUsage {
+  inputTokens: number
+  outputTokens: number
+  cacheCreationTokens?: number
+  cacheReadTokens?: number
+  cost: number
+  formattedCost: string
+}
+
 export interface Message {
   id: string
   role: 'user' | 'assistant'
@@ -15,8 +24,10 @@ export interface Message {
   toolCalls?: Array<{
     id?: string
     name: string
+    input?: Record<string, unknown>
     result?: string
   }>
+  usage?: MessageUsage
 }
 
 export interface McpServerError {
@@ -107,7 +118,8 @@ export function useRoleChat({ roleId, conversationId: initialConversationId, onC
 
     // Track the full assistant response for persistence
     let fullAssistantContent = ''
-    let assistantToolCalls: Array<{ id?: string; name: string; result?: string }> = []
+    let assistantToolCalls: Array<{ id?: string; name: string; input?: Record<string, unknown>; result?: string }> = []
+    let assistantUsage: MessageUsage | undefined
 
     try {
       abortControllerRef.current = new AbortController()
@@ -131,7 +143,7 @@ export function useRoleChat({ roleId, conversationId: initialConversationId, onC
       const reader = response.body.getReader()
       const decoder = new TextDecoder()
       let buffer = ''
-      let currentToolCalls: Array<{ id?: string; name: string; result?: string }> = []
+      let currentToolCalls: Array<{ id?: string; name: string; input?: Record<string, unknown>; result?: string }> = []
 
       while (true) {
         const { done, value } = await reader.read()
@@ -171,6 +183,7 @@ export function useRoleChat({ roleId, conversationId: initialConversationId, onC
                   (event.tool && t.name === event.tool && !t.result)
                 )
                 if (toolIndex !== -1) {
+                  currentToolCalls[toolIndex].input = event.input
                   currentToolCalls[toolIndex].result = event.result
                   assistantToolCalls = [...currentToolCalls]
                   setMessages(prev => prev.map(m =>
@@ -184,6 +197,23 @@ export function useRoleChat({ roleId, conversationId: initialConversationId, onC
               } else if (event.type === 'mcp_error') {
                 // MCP server connection errors
                 setMcpErrors(event.errors || [])
+              } else if (event.type === 'usage') {
+                // Token usage and cost data
+                console.log('[Chat] Received usage event:', event)
+                assistantUsage = {
+                  inputTokens: event.inputTokens,
+                  outputTokens: event.outputTokens,
+                  cacheCreationTokens: event.cacheCreationTokens,
+                  cacheReadTokens: event.cacheReadTokens,
+                  cost: event.cost,
+                  formattedCost: event.formattedCost,
+                }
+                // Update the message with usage data
+                setMessages(prev => prev.map(m =>
+                  m.id === assistantId
+                    ? { ...m, usage: assistantUsage }
+                    : m
+                ))
               }
               // 'done' type is handled implicitly when stream ends
             } catch {
@@ -195,7 +225,13 @@ export function useRoleChat({ roleId, conversationId: initialConversationId, onC
 
       // Persist assistant message to database after stream completes
       if (fullAssistantContent && activeConversationId) {
-        const metadata = assistantToolCalls.length > 0 ? { toolCalls: assistantToolCalls } : {}
+        const metadata: Record<string, unknown> = {}
+        if (assistantToolCalls.length > 0) {
+          metadata.toolCalls = assistantToolCalls
+        }
+        if (assistantUsage) {
+          metadata.usage = assistantUsage
+        }
         await addMessageToDb(activeConversationId, 'assistant', fullAssistantContent, metadata)
 
         // Generate title from first user message if this is a new conversation
@@ -255,6 +291,7 @@ export function useRoleChat({ roleId, conversationId: initialConversationId, onC
         role: m.role as 'user' | 'assistant',
         content: m.content,
         toolCalls: m.metadata?.toolCalls || undefined,
+        usage: m.metadata?.usage as MessageUsage | undefined,
       }))
 
     setMessages(loadedMessages)

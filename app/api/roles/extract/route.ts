@@ -133,7 +133,7 @@ Decision Rules: ${JSON.stringify(identityCore.decision_rules)}`
     const anthropic = new Anthropic({ apiKey })
 
     const response = await anthropic.messages.create({
-      model: 'claude-sonnet-4-5-20250929',
+      model: 'claude-haiku-4-5',
       max_tokens: 4096,
       tools: [EXTRACTION_TOOL_SCHEMA],
       tool_choice: { type: 'tool', name: 'extract_role' },

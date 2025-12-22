@@ -81,7 +81,7 @@ export async function POST(req: Request) {
       aiProvider = openai(modelName)
     } else if (provider === 'anthropic') {
       const anthropic = createAnthropic({ apiKey })
-      modelName = model || 'claude-sonnet-4-5-20250929'
+      modelName = model || 'claude-haiku-4-5'
       aiProvider = anthropic(modelName)
     } else {
       return new Response(

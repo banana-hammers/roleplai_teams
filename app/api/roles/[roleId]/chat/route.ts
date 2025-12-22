@@ -21,6 +21,7 @@ import {
 import { decryptApiKey, isEncryptionConfigured } from '@/lib/crypto/api-key-encryption'
 import type { McpServer } from '@/types/mcp'
 import { buildRoleSystemPrompt } from '@/lib/prompts/system-prompt-builder'
+import { calculateMessageCost, formatCost } from '@/lib/pricing/model-pricing'
 import type { Skill } from '@/types/skill'
 import type { IdentityCore, Lore } from '@/types/identity'
 import type { Role, ResolvedSkill } from '@/types/role'
@@ -169,7 +170,7 @@ export async function POST(
     const anthropic = new Anthropic({ apiKey })
 
     // Get model from role preference or use default
-    const modelName = role.model_preference?.split('/')[1] || 'claude-sonnet-4-5-20250929'
+    const modelName = role.model_preference?.split('/')[1] || 'claude-haiku-4-5'
 
     // Convert messages to Anthropic format
     const anthropicMessages: Anthropic.MessageParam[] = messages.map((m: any) => ({
@@ -193,6 +194,12 @@ export async function POST(
           // Agentic loop: keep going until no more tool calls
           let currentMessages = [...anthropicMessages]
           let continueLoop = true
+
+          // Track total usage across all iterations
+          let totalInputTokens = 0
+          let totalOutputTokens = 0
+          let totalCacheCreationTokens = 0
+          let totalCacheReadTokens = 0
 
           while (continueLoop) {
             const response = await anthropic.messages.create({
@@ -253,6 +260,22 @@ export async function POST(
                     // Invalid JSON, skip this tool call
                   }
                   currentToolCall = null
+                }
+              } else if (event.type === 'message_delta') {
+                // Capture usage data from the message delta event
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                const deltaEvent = event as any
+                if (deltaEvent.usage) {
+                  totalOutputTokens += deltaEvent.usage.output_tokens || 0
+                }
+              } else if (event.type === 'message_start') {
+                // Capture initial usage (input tokens, cache tokens)
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                const startEvent = event as any
+                if (startEvent.message?.usage) {
+                  totalInputTokens += startEvent.message.usage.input_tokens || 0
+                  totalCacheCreationTokens += startEvent.message.usage.cache_creation_input_tokens || 0
+                  totalCacheReadTokens += startEvent.message.usage.cache_read_input_tokens || 0
                 }
               } else if (event.type === 'message_stop') {
                 // Message complete
@@ -347,10 +370,11 @@ export async function POST(
                   }
                 }
 
-                // Send tool result event
+                // Send tool result event (includes input for UI display)
                 controller.enqueue(encoder.encode(`data: ${JSON.stringify({
                   type: 'tool_result',
                   tool: tc.name,
+                  input: tc.input,
                   result
                 })}\n\n`))
 
@@ -370,6 +394,22 @@ export async function POST(
               continueLoop = false
             }
           }
+
+          // Calculate and send usage/cost data
+          const usage = {
+            inputTokens: totalInputTokens,
+            outputTokens: totalOutputTokens,
+            cacheCreationTokens: totalCacheCreationTokens,
+            cacheReadTokens: totalCacheReadTokens,
+          }
+          const cost = calculateMessageCost(modelName, usage)
+          console.log('[Chat] Usage data:', { model: modelName, usage, cost, formattedCost: formatCost(cost) })
+          controller.enqueue(encoder.encode(`data: ${JSON.stringify({
+            type: 'usage',
+            ...usage,
+            cost,
+            formattedCost: formatCost(cost),
+          })}\n\n`))
 
           // Send done event
           controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'done' })}\n\n`))

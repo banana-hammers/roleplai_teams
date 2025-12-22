@@ -12,33 +12,34 @@ export function TypingIndicator({ senderName = 'Assistant', className }: TypingI
   return (
     <div
       className={cn(
-        'flex gap-3 justify-start',
+        'flex gap-4 py-3',
         'animate-in fade-in-0 slide-in-from-bottom-2 duration-200',
         className
       )}
     >
-      {/* Animated avatar in typing state */}
-      <AIAvatar state="typing" size="sm" className="mt-1" />
+      {/* Avatar column - matches message bubble */}
+      <div className="shrink-0 w-8">
+        <AIAvatar state="typing" size="sm" />
+      </div>
 
-      <div className="rounded-2xl px-4 py-3 bg-gradient-to-br from-background via-muted/30 to-muted/50 border shadow-md">
-        <div className="flex items-center gap-3">
-          {/* Wave dots */}
-          <div className="flex items-center gap-1">
-            <div
-              className="h-2 w-2 rounded-full bg-foreground/50 animate-[typing-wave_1s_ease-in-out_infinite]"
-            />
-            <div
-              className="h-2 w-2 rounded-full bg-foreground/50 animate-[typing-wave_1s_ease-in-out_infinite_0.15s]"
-            />
-            <div
-              className="h-2 w-2 rounded-full bg-foreground/50 animate-[typing-wave_1s_ease-in-out_infinite_0.3s]"
-            />
-          </div>
+      {/* Content column */}
+      <div className="flex-1 min-w-0">
+        {/* Sender name */}
+        <div className="text-sm font-medium mb-1.5 text-foreground">
+          {senderName}
+        </div>
 
-          {/* Typing label */}
-          <span className="text-xs text-muted-foreground animate-pulse">
-            {senderName} is typing...
-          </span>
+        {/* Typing dots */}
+        <div className="flex items-center gap-1.5">
+          <div
+            className="h-2 w-2 rounded-full bg-muted-foreground/60 animate-[typing-wave_1s_ease-in-out_infinite]"
+          />
+          <div
+            className="h-2 w-2 rounded-full bg-muted-foreground/60 animate-[typing-wave_1s_ease-in-out_infinite_0.15s]"
+          />
+          <div
+            className="h-2 w-2 rounded-full bg-muted-foreground/60 animate-[typing-wave_1s_ease-in-out_infinite_0.3s]"
+          />
         </div>
       </div>
     </div>

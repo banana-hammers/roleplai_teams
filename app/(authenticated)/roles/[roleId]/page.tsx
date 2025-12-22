@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect, use, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
-import { Card, CardContent } from '@/components/ui/card'
+// Card removed - using direct flex layout for better mobile experience
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { useRoleChat } from '@/lib/hooks/use-role-chat'
@@ -12,6 +12,7 @@ import { Loader2, Send, ArrowLeft, Wrench, Settings, Menu, AlertTriangle, X } fr
 import { MessageBubble } from '@/components/chat/message-bubble'
 import { TypingIndicator } from '@/components/chat/typing-indicator'
 import { ConversationList } from '@/components/chat/conversation-list'
+import { ToolResultCard } from '@/components/chat/tool-result-card'
 import { TierAvatar } from '@/components/roles/tier-avatar'
 import { cn } from '@/lib/utils'
 import type { Role } from '@/types/role'
@@ -193,7 +194,7 @@ export default function RoleChatPage({ params }: RoleChatPageProps) {
                 <Menu className="h-4 w-4" />
               </Button>
             </SheetTrigger>
-            <SheetContent side="left" className="w-80 p-0">
+            <SheetContent side="left" className="w-full sm:w-80 p-0">
               <ConversationList
                 roleId={roleId}
                 activeConversationId={activeConversationId}
@@ -245,183 +246,169 @@ export default function RoleChatPage({ params }: RoleChatPageProps) {
         </aside>
 
         {/* Chat area */}
-        <main className="flex-1 flex flex-col overflow-hidden">
-          <Card className="flex-1 flex flex-col m-4 overflow-hidden">
-            <CardContent className="flex-1 overflow-hidden p-0 flex flex-col">
-              {/* MCP Server Errors Banner */}
-              {mcpErrors.length > 0 && (
-                <div className="flex items-start gap-2 bg-yellow-500/10 border-b border-yellow-500/20 px-4 py-2">
-                  <AlertTriangle className="h-4 w-4 text-yellow-500 mt-0.5 shrink-0" />
-                  <div className="flex-1 text-sm">
-                    <span className="font-medium text-yellow-600 dark:text-yellow-400">
-                      Some MCP servers unavailable:
-                    </span>
-                    <span className="text-yellow-600/80 dark:text-yellow-400/80 ml-1">
-                      {mcpErrors.map(e => e.server).join(', ')}
-                    </span>
-                  </div>
-                  <button
-                    onClick={clearMcpErrors}
-                    className="text-yellow-500 hover:text-yellow-600 p-0.5"
-                  >
-                    <X className="h-4 w-4" />
-                  </button>
-                </div>
-              )}
-
-              {/* Messages area */}
-              <div className="flex-1 overflow-y-auto p-4 space-y-4">
-                {/* Empty state with conversation starters */}
-                {messages.length === 0 && (
-                  <div className="flex flex-col items-center justify-center h-full py-8 px-4">
-                    {/* Animated role avatar */}
-                    <div className="relative mb-6">
-                      <TierAvatar tier={tierConfig} size="xl" />
-                    </div>
-
-                    <h3 className="font-display text-xl font-semibold text-center mb-2">
-                      Start chatting with {role.name}
-                    </h3>
-                    <p className="text-sm text-muted-foreground text-center max-w-xs mb-6">
-                      {role.description || 'Ready to help you with anything you need.'}
-                    </p>
-
-                    {/* Conversation starters */}
-                    <div className="w-full max-w-sm space-y-2">
-                      <p className="text-xs text-muted-foreground uppercase tracking-wide mb-3 text-center">
-                        Try asking
-                      </p>
-                      {conversationStarters.map((starter, i) => (
-                        <button
-                          key={i}
-                          onClick={() => handleStarterClick(starter)}
-                          className={cn(
-                            'w-full p-3 rounded-xl text-left',
-                            'bg-muted/50 hover:bg-muted',
-                            'border border-transparent hover:border-border',
-                            'text-sm transition-all duration-200',
-                            'hover:translate-x-1',
-                            'animate-slide-up-fade',
-                          )}
-                          style={{ animationDelay: `${i * 100}ms` }}
-                        >
-                          <span className="text-primary mr-2">→</span>
-                          {starter}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* Messages */}
-                {messages.map((message, index) => {
-                  const isNew = index >= lastMessageCount
-
-                  return (
-                    <div key={message.id}>
-                      <MessageBubble
-                        role={message.role as 'user' | 'assistant'}
-                        content={message.content}
-                        senderName={message.role === 'assistant' ? role.name : undefined}
-                        isNew={isNew}
-                      />
-
-                      {/* Tool calls */}
-                      {message.toolCalls && message.toolCalls.length > 0 && (
-                        <div className="ml-12 mt-2 space-y-1">
-                          {message.toolCalls.map((tc, i) => (
-                            <div
-                              key={i}
-                              className="text-xs bg-blue-500/10 rounded-lg p-2 border-l-2 border-blue-500"
-                            >
-                              <div className="flex items-center gap-1 font-medium text-blue-400">
-                                <Wrench className="h-3 w-3" />
-                                {tc.name}
-                              </div>
-                              {tc.result && (
-                                <div className="mt-1 text-muted-foreground truncate">
-                                  {tc.result.slice(0, 100)}...
-                                </div>
-                              )}
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  )
-                })}
-
-                {isChatLoading && <TypingIndicator senderName={role.name} />}
-
-                {error && (
-                  <div className="flex justify-center">
-                    <div className="rounded-lg border border-destructive/50 bg-destructive/10 px-4 py-2 text-sm text-destructive">
-                      {error}
-                    </div>
-                  </div>
-                )}
-
-                <div ref={messagesEndRef} />
+        <main className="flex-1 flex flex-col min-w-0">
+          {/* MCP Server Errors Banner */}
+          {mcpErrors.length > 0 && (
+            <div className="flex-shrink-0 flex items-start gap-2 bg-yellow-500/10 border-b border-yellow-500/20 px-4 py-2">
+              <AlertTriangle className="h-4 w-4 text-yellow-500 mt-0.5 shrink-0" />
+              <div className="flex-1 text-sm">
+                <span className="font-medium text-yellow-600 dark:text-yellow-400">
+                  Some MCP servers unavailable:
+                </span>
+                <span className="text-yellow-600/80 dark:text-yellow-400/80 ml-1">
+                  {mcpErrors.map(e => e.server).join(', ')}
+                </span>
               </div>
+              <button
+                onClick={clearMcpErrors}
+                className="text-yellow-500 hover:text-yellow-600 p-0.5"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+          )}
 
-              {/* Floating input area */}
-              <div className={cn(
-                'border-t p-4',
-                'bg-linear-to-t from-background via-background to-transparent',
-              )}>
-                {/* Skill suggestions when input is empty */}
-                {!input && skills.length > 0 && messages.length > 0 && (
-                  <div className="flex flex-wrap gap-2 mb-3 justify-center">
-                    {skills.slice(0, 3).map((skill) => (
+          {/* Messages scroll area */}
+          <div className="flex-1 overflow-y-auto">
+            <div className="mx-auto max-w-3xl px-4 py-6 space-y-4">
+              {/* Empty state with conversation starters */}
+              {messages.length === 0 && (
+                <div className="flex flex-col items-center justify-center min-h-[60vh] py-8">
+                  {/* Animated role avatar */}
+                  <div className="relative mb-6">
+                    <TierAvatar tier={tierConfig} size="xl" />
+                  </div>
+
+                  <h3 className="font-display text-xl font-semibold text-center mb-2">
+                    How can I help you today?
+                  </h3>
+                  <p className="text-sm text-muted-foreground text-center max-w-sm mb-8">
+                    I&apos;m {role.name}. {role.description || 'Ask me anything.'}
+                  </p>
+
+                  {/* Conversation starters */}
+                  <div className="w-full max-w-md space-y-3">
+                    {conversationStarters.map((starter, i) => (
                       <button
-                        key={skill.id}
-                        onClick={() => handleSkillClick(skill.name)}
+                        key={i}
+                        onClick={() => handleStarterClick(starter)}
                         className={cn(
-                          'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full',
-                          'bg-skills-accent/10 text-skills-accent',
-                          'text-xs font-medium',
-                          'hover:bg-skills-accent/20 transition-colors',
-                          'border border-skills-accent/20',
+                          'w-full p-4 rounded-xl text-left',
+                          'bg-muted/50 hover:bg-muted',
+                          'border border-transparent hover:border-border',
+                          'text-sm transition-all duration-200',
+                          'animate-slide-up-fade',
                         )}
+                        style={{ animationDelay: `${i * 100}ms` }}
                       >
-                        <Wrench className="h-3 w-3" />
-                        {skill.name}
+                        <span className="text-primary mr-2">→</span>
+                        {starter}
                       </button>
                     ))}
                   </div>
-                )}
+                </div>
+              )}
 
-                {/* Input form */}
-                <form onSubmit={handleSubmit} className="relative">
-                  <Input
-                    value={input}
-                    onChange={(e) => setInput(e.target.value)}
-                    placeholder="Type a message..."
-                    disabled={isChatLoading}
-                    className={cn(
-                      'pr-12 h-12 rounded-2xl',
-                      'bg-muted/50 border-muted',
-                      'focus:bg-background focus:border-primary',
-                      'transition-all duration-200',
+              {/* Messages */}
+              {messages.map((message, index) => {
+                const isNew = index >= lastMessageCount
+
+                return (
+                  <div key={message.id}>
+                    <MessageBubble
+                      role={message.role as 'user' | 'assistant'}
+                      content={message.content}
+                      senderName={message.role === 'assistant' ? role.name : undefined}
+                      isNew={isNew}
+                      formattedCost={message.usage?.formattedCost}
+                    />
+
+                    {/* Tool calls */}
+                    {message.toolCalls && message.toolCalls.length > 0 && (
+                      <div className="ml-12 mt-2 space-y-2">
+                        {message.toolCalls.map((tc, i) => (
+                          <ToolResultCard
+                            key={i}
+                            name={tc.name}
+                            input={tc.input}
+                            result={tc.result}
+                          />
+                        ))}
+                      </div>
                     )}
-                    autoFocus
-                  />
-                  <Button
-                    type="submit"
-                    disabled={!input.trim() || isChatLoading}
-                    size="icon"
-                    className={cn(
-                      'absolute right-2 top-1/2 -translate-y-1/2',
-                      'h-8 w-8 rounded-xl',
-                      'transition-all duration-200',
-                    )}
-                  >
-                    <Send className="h-4 w-4" />
-                  </Button>
-                </form>
-              </div>
-            </CardContent>
-          </Card>
+                  </div>
+                )
+              })}
+
+              {isChatLoading && <TypingIndicator senderName={role.name} />}
+
+              {error && (
+                <div className="flex justify-center">
+                  <div className="rounded-lg border border-destructive/50 bg-destructive/10 px-4 py-2 text-sm text-destructive">
+                    {error}
+                  </div>
+                </div>
+              )}
+
+              <div ref={messagesEndRef} />
+            </div>
+          </div>
+
+          {/* Sticky input area with backdrop blur */}
+          <div className="flex-shrink-0 border-t bg-background/80 backdrop-blur-lg pb-safe">
+            <div className="mx-auto max-w-3xl px-4 py-3">
+              {/* Skill suggestions when input is empty */}
+              {!input && skills.length > 0 && messages.length > 0 && (
+                <div className="flex gap-2 mb-3 overflow-x-auto scrollbar-hide -mx-4 px-4 pb-1">
+                  {skills.slice(0, 4).map((skill) => (
+                    <button
+                      key={skill.id}
+                      onClick={() => handleSkillClick(skill.name)}
+                      className={cn(
+                        'flex-shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full',
+                        'bg-muted text-muted-foreground',
+                        'text-xs font-medium',
+                        'hover:bg-muted/80 transition-colors',
+                      )}
+                    >
+                      <Wrench className="h-3 w-3" />
+                      {skill.name}
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              {/* Input form */}
+              <form onSubmit={handleSubmit} className="relative">
+                <Input
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  placeholder="Message..."
+                  disabled={isChatLoading}
+                  className={cn(
+                    'pr-12 h-12 rounded-2xl',
+                    'bg-muted border-0',
+                    'focus:ring-2 focus:ring-primary/20',
+                    'transition-all duration-200',
+                  )}
+                  autoFocus
+                />
+                <Button
+                  type="submit"
+                  disabled={!input.trim() || isChatLoading}
+                  size="icon"
+                  variant={input.trim() ? 'default' : 'ghost'}
+                  className={cn(
+                    'absolute right-2 top-1/2 -translate-y-1/2',
+                    'h-8 w-8 rounded-lg',
+                    'transition-all duration-200',
+                  )}
+                >
+                  <Send className="h-4 w-4" />
+                </Button>
+              </form>
+            </div>
+          </div>
         </main>
       </div>
     </div>

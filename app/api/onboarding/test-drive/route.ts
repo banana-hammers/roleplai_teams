@@ -73,7 +73,7 @@ export async function POST(req: NextRequest) {
 
   if (anthropicKey) {
     const anthropic = createAnthropic({ apiKey: anthropicKey })
-    model = anthropic('claude-sonnet-4-5-20250929')
+    model = anthropic('claude-haiku-4-5')
   } else if (openaiKey) {
     const openai = createOpenAI({ apiKey: openaiKey })
     model = openai('gpt-4-turbo-preview')

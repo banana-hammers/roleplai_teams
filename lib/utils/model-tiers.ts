@@ -73,6 +73,7 @@ const modelTierMap: Record<string, ModelTier> = {
   'openai/gpt-4o-mini': 'rare',
 
   // Common tier (default/base)
+  'anthropic/claude-haiku-4-5': 'common',
   'anthropic/claude-3-haiku': 'common',
   'anthropic/claude-3-haiku-20240307': 'common',
   'openai/gpt-3.5-turbo': 'common',
@@ -94,6 +95,7 @@ const friendlyNames: Record<string, string> = {
   'claude-sonnet-4-5-20250929': 'Sonnet 4.5',
   'claude-3-5-sonnet-20241022': 'Sonnet 3.5',
   'claude-3-opus-20240229': 'Opus 3',
+  'claude-haiku-4-5': 'Haiku 4.5',
   'claude-3-haiku-20240307': 'Haiku 3',
   'gpt-4o': 'GPT-4o',
   'gpt-4-turbo-preview': 'GPT-4 Turbo',
@@ -119,5 +121,6 @@ export const CLAUDE_MODELS: Array<{ value: string; label: string; tier: ModelTie
   { value: 'anthropic/claude-opus-4-20250514', label: 'Claude Opus 4', tier: 'legendary' },
   { value: 'anthropic/claude-sonnet-4-5-20250929', label: 'Claude Sonnet 4.5', tier: 'rare' },
   { value: 'anthropic/claude-3-5-sonnet-20241022', label: 'Claude 3.5 Sonnet', tier: 'rare' },
+  { value: 'anthropic/claude-haiku-4-5', label: 'Claude Haiku 4.5', tier: 'common' },
   { value: 'anthropic/claude-3-haiku-20240307', label: 'Claude 3 Haiku', tier: 'common' },
 ]

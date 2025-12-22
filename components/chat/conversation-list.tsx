@@ -177,11 +177,19 @@ export function ConversationList({
                 {/* Conversations in group */}
                 <div className="px-2 space-y-0.5">
                   {convs.map((conv) => (
-                    <button
+                    <div
                       key={conv.id}
+                      role="button"
+                      tabIndex={0}
                       onClick={() => onSelectConversation(conv.id)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault()
+                          onSelectConversation(conv.id)
+                        }
+                      }}
                       className={cn(
-                        'w-full px-3 py-2.5 text-left rounded-lg transition-colors group',
+                        'w-full px-3 py-2.5 text-left rounded-lg transition-colors group cursor-pointer',
                         'hover:bg-muted/50',
                         'min-h-[52px]', // Touch target
                         activeConversationId === conv.id && 'bg-muted'
@@ -213,7 +221,7 @@ export function ConversationList({
                           )}
                         </button>
                       </div>
-                    </button>
+                    </div>
                   ))}
                 </div>
               </div>

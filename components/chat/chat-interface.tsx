@@ -11,6 +11,7 @@ import { Badge } from '@/components/ui/badge'
 import { useState, useEffect } from 'react'
 import { MessageBubble } from '@/components/chat/message-bubble'
 import { TypingIndicator } from '@/components/chat/typing-indicator'
+import { ToolResultCard } from '@/components/chat/tool-result-card'
 
 interface ChatInterfaceProps {
   roleId?: string
@@ -99,6 +100,7 @@ export function ChatInterface({ roleId, roleName }: ChatInterfaceProps) {
 
           const isNew = index >= lastMessageCount
           const senderName = message.role === 'user' ? undefined : (roleName || 'Assistant')
+          const formattedCost = isRoleChat ? (message as RoleMessage).usage?.formattedCost : undefined
 
           return (
             <div key={message.id}>
@@ -107,25 +109,19 @@ export function ChatInterface({ roleId, roleName }: ChatInterfaceProps) {
                 content={content}
                 senderName={senderName}
                 isNew={isNew}
+                formattedCost={formattedCost}
               />
 
               {/* Tool calls display (role chat only) */}
               {isRoleChat && (message as RoleMessage).toolCalls && (message as RoleMessage).toolCalls!.length > 0 && (
                 <div className="ml-12 mt-2 space-y-2">
                   {(message as RoleMessage).toolCalls!.map((tool, toolIndex) => (
-                    <div
+                    <ToolResultCard
                       key={toolIndex}
-                      className="border-l-2 border-blue-500 pl-3 py-1 text-xs bg-blue-50/50 dark:bg-blue-950/20 rounded-r"
-                    >
-                      <div className="font-medium text-blue-600 dark:text-blue-400">
-                        Skill: {tool.name}
-                      </div>
-                      {tool.result && (
-                        <div className="mt-1 text-muted-foreground">
-                          {tool.result}
-                        </div>
-                      )}
-                    </div>
+                      name={tool.name}
+                      input={tool.input}
+                      result={tool.result}
+                    />
                   ))}
                 </div>
               )}
