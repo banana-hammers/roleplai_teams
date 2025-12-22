@@ -109,9 +109,9 @@ export function ApiKeysSettings({ apiKeys: initialKeys }: ApiKeysSettingsProps) 
             {apiKeys.map((key) => (
               <div
                 key={key.id}
-                className="flex items-center justify-between rounded-lg border p-3"
+                className="flex flex-col gap-2 rounded-lg border p-3 sm:flex-row sm:items-center sm:justify-between"
               >
-                <div className="flex items-center gap-3">
+                <div className="flex flex-wrap items-center gap-2">
                   <Badge variant="secondary">
                     {key.provider}
                   </Badge>
@@ -126,6 +126,7 @@ export function ApiKeysSettings({ apiKeys: initialKeys }: ApiKeysSettingsProps) 
                   variant="ghost"
                   size="icon"
                   onClick={() => handleDeleteKey(key.id)}
+                  className="self-end sm:self-auto"
                 >
                   <Trash2 className="h-4 w-4 text-destructive" />
                 </Button>

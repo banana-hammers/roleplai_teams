@@ -172,18 +172,18 @@ export function RoleMcpManager({ roleId, mcpServers, onUpdate }: RoleMcpManagerP
                 return (
                   <div
                     key={server.id}
-                    className="flex items-center justify-between rounded-lg border p-3"
+                    className="flex flex-col gap-3 rounded-lg border p-3 sm:flex-row sm:items-center sm:justify-between"
                   >
-                    <div className="flex items-center gap-3">
-                      <Server className="h-5 w-5 text-muted-foreground" />
-                      <div>
+                    <div className="flex items-center gap-3 min-w-0 flex-1">
+                      <Server className="h-5 w-5 text-muted-foreground shrink-0" />
+                      <div className="min-w-0 flex-1">
                         <p className="font-medium">{server.name}</p>
-                        <p className="text-xs text-muted-foreground truncate max-w-[300px]">
+                        <p className="text-xs text-muted-foreground truncate">
                           {config.url}
                         </p>
                       </div>
                     </div>
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-3 justify-end">
                       <Badge variant={server.is_enabled ? 'default' : 'secondary'}>
                         {server.is_enabled ? 'Active' : 'Disabled'}
                       </Badge>

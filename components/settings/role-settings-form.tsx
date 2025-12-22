@@ -28,6 +28,16 @@ interface IdentityFacets {
   special_behaviors?: string[]
 }
 
+interface FullSkill {
+  id: string
+  name: string
+  description: string
+  prompt_template?: string
+  short_description?: string
+  detailed_instructions?: string
+  allowed_tools?: string[]
+}
+
 interface RoleSettingsFormProps {
   role: {
     id: string
@@ -40,15 +50,10 @@ interface RoleSettingsFormProps {
   }
   roleSkills: Array<{
     skill_id: string
-    config_overrides: Record<string, unknown> | null
-    skills: { id: string; name: string; description: string } | null
+    config_overrides?: Record<string, unknown> | null
+    skills: FullSkill | null
   }>
-  allSkills: Array<{
-    id: string
-    name: string
-    description: string
-    input_schema: Record<string, unknown> | null
-  }>
+  allSkills: Array<FullSkill>
   mcpServers: McpServer[]
 }
 
@@ -99,12 +104,14 @@ export function RoleSettingsForm({ role, roleSkills, allSkills, mcpServers }: Ro
 
   return (
     <Tabs defaultValue="general" className="space-y-6">
-      <TabsList className="grid w-full grid-cols-4">
-        <TabsTrigger value="general">General</TabsTrigger>
-        <TabsTrigger value="personality">Personality</TabsTrigger>
-        <TabsTrigger value="skills">Skills</TabsTrigger>
-        <TabsTrigger value="mcp">MCP Servers</TabsTrigger>
-      </TabsList>
+      <div className="overflow-x-auto scrollbar-hide -mx-4 px-4 md:mx-0 md:px-0 md:overflow-visible">
+        <TabsList className="inline-flex w-max gap-1 md:grid md:w-full md:grid-cols-4">
+          <TabsTrigger value="general" className="min-w-fit px-4">General</TabsTrigger>
+          <TabsTrigger value="personality" className="min-w-fit px-4">Personality</TabsTrigger>
+          <TabsTrigger value="skills" className="min-w-fit px-4">Skills</TabsTrigger>
+          <TabsTrigger value="mcp" className="min-w-fit px-4">MCP Servers</TabsTrigger>
+        </TabsList>
+      </div>
 
       <TabsContent value="general">
         <Card>

@@ -7,7 +7,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { Plus, Pencil, Trash2, X, Check, Zap, Wrench } from 'lucide-react'
+import { Plus, Pencil, Trash2, X, Check, Zap, Wrench, Search } from 'lucide-react'
 import {
   createSkill,
   updateSkill,
@@ -32,18 +32,23 @@ interface Skill {
   allowed_tools?: string[]
 }
 
+interface FullSkill {
+  id: string
+  name: string
+  description: string
+  prompt_template?: string
+  short_description?: string
+  detailed_instructions?: string
+  allowed_tools?: string[]
+}
+
 interface SkillsManagerProps {
   roleId: string
   roleSkills: Array<{
     skill_id: string
-    skills: { id: string; name: string; description: string } | null
+    skills: FullSkill | null
   }>
-  allSkills: Array<{
-    id: string
-    name: string
-    description: string
-    role_id?: string | null
-  }>
+  allSkills: Array<FullSkill>
   onUpdate?: () => void
 }
 
@@ -52,6 +57,7 @@ export function SkillsManager({ roleId, roleSkills, allSkills, onUpdate }: Skill
   const [showCreateForm, setShowCreateForm] = useState(false)
   const [editingSkill, setEditingSkill] = useState<Skill | null>(null)
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
+  const [searchQuery, setSearchQuery] = useState('')
 
   // Form state for creating new skill
   const [newSkill, setNewSkill] = useState({
@@ -66,8 +72,35 @@ export function SkillsManager({ roleId, roleSkills, allSkills, onUpdate }: Skill
   // Get linked skill IDs for filtering
   const linkedSkillIds = new Set(roleSkills.map(rs => rs.skill_id))
 
-  // Available skills (not yet linked to this role)
-  const availableSkills = allSkills.filter(skill => !linkedSkillIds.has(skill.id))
+  // Combine all skills into a unified list with status
+  const unifiedSkills = [
+    // Active skills (linked to this role)
+    ...roleSkills
+      .filter(rs => rs.skills)
+      .map(rs => ({
+        ...rs.skills!,
+        isActive: true,
+        skill_id: rs.skill_id,
+      })),
+    // Available skills (not linked)
+    ...allSkills
+      .filter(skill => !linkedSkillIds.has(skill.id))
+      .map(skill => ({
+        ...skill,
+        isActive: false,
+        skill_id: skill.id,
+      })),
+  ]
+
+  // Filter by search query
+  const filteredSkills = unifiedSkills.filter(skill => {
+    if (!searchQuery.trim()) return true
+    const query = searchQuery.toLowerCase()
+    return (
+      skill.name.toLowerCase().includes(query) ||
+      skill.description.toLowerCase().includes(query)
+    )
+  })
 
   const handleCreateSkill = async () => {
     if (!newSkill.name.trim() || !newSkill.description.trim() || !newSkill.prompt_template.trim()) {
@@ -200,162 +233,33 @@ export function SkillsManager({ roleId, roleSkills, allSkills, onUpdate }: Skill
         </div>
       )}
 
-      {/* Active Skills */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Zap className="h-5 w-5" />
-            Active Skills
-          </CardTitle>
-          <CardDescription>
-            Skills this role can use during conversations.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {roleSkills.length > 0 ? (
-            <div className="space-y-2">
-              {roleSkills.map((rs) => (
-                <div
-                  key={rs.skill_id}
-                  className="flex items-center justify-between rounded-lg border p-3"
-                >
-                  {editingSkill?.id === rs.skill_id ? (
-                    // Edit mode
-                    <div className="flex-1 space-y-3">
-                      <Input
-                        value={editingSkill.name}
-                        onChange={(e) => setEditingSkill({ ...editingSkill, name: e.target.value })}
-                        placeholder="Skill name"
-                      />
-                      <Input
-                        value={editingSkill.description}
-                        onChange={(e) => setEditingSkill({ ...editingSkill, description: e.target.value })}
-                        placeholder="Skill description"
-                      />
-                      <Textarea
-                        value={editingSkill.prompt_template || ''}
-                        onChange={(e) => setEditingSkill({ ...editingSkill, prompt_template: e.target.value })}
-                        placeholder="Prompt template"
-                        rows={3}
-                      />
-                      <div className="flex gap-2">
-                        <Button size="sm" onClick={handleUpdateSkill} disabled={isPending}>
-                          <Check className="mr-1 h-4 w-4" />
-                          Save
-                        </Button>
-                        <Button size="sm" variant="outline" onClick={() => setEditingSkill(null)}>
-                          <X className="mr-1 h-4 w-4" />
-                          Cancel
-                        </Button>
-                      </div>
-                    </div>
-                  ) : (
-                    // View mode
-                    <>
-                      <div>
-                        <p className="font-medium">{rs.skills?.name}</p>
-                        <p className="text-sm text-muted-foreground">
-                          {rs.skills?.description}
-                        </p>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Badge variant="secondary">Active</Badge>
-                        {(rs.skills as any)?.allowed_tools?.length > 0 && (
-                          <Badge variant="outline" className="text-amber-600 border-amber-600">
-                            <Wrench className="mr-1 h-3 w-3" />
-                            Agentic
-                          </Badge>
-                        )}
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => setEditingSkill({
-                            id: rs.skill_id,
-                            name: rs.skills?.name || '',
-                            description: rs.skills?.description || '',
-                            short_description: (rs.skills as any)?.short_description || '',
-                            detailed_instructions: (rs.skills as any)?.detailed_instructions || '',
-                            allowed_tools: (rs.skills as any)?.allowed_tools || [],
-                          })}
-                        >
-                          <Pencil className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleUnlinkSkill(rs.skill_id)}
-                          disabled={isPending}
-                        >
-                          <X className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleDeleteSkill(rs.skill_id)}
-                          disabled={isPending}
-                        >
-                          <Trash2 className="h-4 w-4 text-destructive" />
-                        </Button>
-                      </div>
-                    </>
-                  )}
-                </div>
-              ))}
-            </div>
-          ) : (
-            <p className="text-sm text-muted-foreground">
-              No skills assigned to this role. Create a new skill or add an existing one.
-            </p>
-          )}
-        </CardContent>
-      </Card>
+      {/* Search and Create Header */}
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            placeholder="Search skills..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-9"
+          />
+        </div>
+        <Button onClick={() => setShowCreateForm(true)} disabled={showCreateForm} className="w-full sm:w-auto">
+          <Plus className="mr-2 h-4 w-4" />
+          New Skill
+        </Button>
+      </div>
 
-      {/* Available Skills to Add */}
-      {availableSkills.length > 0 && (
+      {/* Create New Skill Form */}
+      {showCreateForm && (
         <Card>
           <CardHeader>
-            <CardTitle>Available Skills</CardTitle>
+            <CardTitle>Create New Skill</CardTitle>
             <CardDescription>
-              Your other skills that can be added to this role.
+              Define a new skill for this role.
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="space-y-2">
-              {availableSkills.map((skill) => (
-                <div
-                  key={skill.id}
-                  className="flex items-center justify-between rounded-lg border p-3"
-                >
-                  <div>
-                    <p className="font-medium">{skill.name}</p>
-                    <p className="text-sm text-muted-foreground">{skill.description}</p>
-                  </div>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleLinkSkill(skill.id)}
-                    disabled={isPending}
-                  >
-                    <Plus className="mr-1 h-4 w-4" />
-                    Add
-                  </Button>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Create New Skill */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Create New Skill</CardTitle>
-          <CardDescription>
-            Define a new skill for this role.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {showCreateForm ? (
             <div className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="skill-name">Name *</Label>
@@ -458,11 +362,192 @@ export function SkillsManager({ roleId, roleSkills, allSkills, onUpdate }: Skill
                 </Button>
               </div>
             </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Skills List */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Zap className="h-5 w-5" />
+            Skills
+          </CardTitle>
+          <CardDescription>
+            Manage skills for this role. Active skills are used during conversations.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {filteredSkills.length > 0 ? (
+            <div className="space-y-2">
+              {filteredSkills.map((skill) => (
+                <div key={skill.skill_id}>
+                  {editingSkill?.id === skill.id ? (
+                    // Edit mode - expanded card
+                    <Card className="border-primary">
+                      <CardContent className="pt-4 space-y-4">
+                        <div className="space-y-2">
+                          <Label>Name *</Label>
+                          <Input
+                            value={editingSkill.name}
+                            onChange={(e) => setEditingSkill({ ...editingSkill, name: e.target.value })}
+                            placeholder="Skill name"
+                          />
+                        </div>
+
+                        <div className="space-y-2">
+                          <Label>Short Description</Label>
+                          <Input
+                            value={editingSkill.short_description || ''}
+                            onChange={(e) => setEditingSkill({ ...editingSkill, short_description: e.target.value })}
+                            placeholder="~50 chars: Concise description for system prompt"
+                            maxLength={100}
+                          />
+                        </div>
+
+                        <div className="space-y-2">
+                          <Label>Full Description *</Label>
+                          <Input
+                            value={editingSkill.description}
+                            onChange={(e) => setEditingSkill({ ...editingSkill, description: e.target.value })}
+                            placeholder="Complete description"
+                          />
+                        </div>
+
+                        <div className="space-y-2">
+                          <Label>Prompt Template</Label>
+                          <Textarea
+                            value={editingSkill.prompt_template || ''}
+                            onChange={(e) => setEditingSkill({ ...editingSkill, prompt_template: e.target.value })}
+                            placeholder="The task template. Use {{placeholder}} for inputs."
+                            rows={3}
+                          />
+                        </div>
+
+                        <div className="space-y-2">
+                          <Label>Detailed Instructions</Label>
+                          <Textarea
+                            value={editingSkill.detailed_instructions || ''}
+                            onChange={(e) => setEditingSkill({ ...editingSkill, detailed_instructions: e.target.value })}
+                            placeholder="Detailed guidance loaded when this skill is invoked..."
+                            rows={4}
+                          />
+                        </div>
+
+                        <div className="space-y-2">
+                          <Label className="flex items-center gap-2">
+                            <Wrench className="h-4 w-4" />
+                            Allowed Tools
+                          </Label>
+                          <div className="flex flex-wrap gap-2">
+                            {AVAILABLE_TOOLS.map((tool) => (
+                              <Badge
+                                key={tool.id}
+                                variant={(editingSkill.allowed_tools || []).includes(tool.id) ? 'default' : 'outline'}
+                                className="cursor-pointer"
+                                onClick={() => toggleTool(tool.id, false)}
+                              >
+                                {(editingSkill.allowed_tools || []).includes(tool.id) && <Check className="mr-1 h-3 w-3" />}
+                                {tool.name}
+                              </Badge>
+                            ))}
+                          </div>
+                        </div>
+
+                        <div className="flex gap-2 pt-2">
+                          <Button onClick={handleUpdateSkill} disabled={isPending}>
+                            <Check className="mr-1 h-4 w-4" />
+                            {isPending ? 'Saving...' : 'Save Changes'}
+                          </Button>
+                          <Button variant="outline" onClick={() => setEditingSkill(null)}>
+                            <X className="mr-1 h-4 w-4" />
+                            Cancel
+                          </Button>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ) : (
+                    // View mode
+                    <div className="flex flex-col gap-3 rounded-lg border p-3 sm:flex-row sm:items-center sm:justify-between">
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium truncate">{skill.name}</p>
+                        <p className="text-sm text-muted-foreground line-clamp-2 sm:truncate">
+                          {skill.description}
+                        </p>
+                      </div>
+                      <div className="flex flex-wrap items-center gap-2 sm:ml-4 sm:flex-nowrap">
+                        {skill.isActive ? (
+                          <Badge variant="secondary">Active</Badge>
+                        ) : (
+                          <Badge variant="outline">Available</Badge>
+                        )}
+                        {(skill.allowed_tools?.length ?? 0) > 0 && (
+                          <Badge variant="outline" className="text-amber-600 border-amber-600">
+                            <Wrench className="mr-1 h-3 w-3" />
+                            Agentic
+                          </Badge>
+                        )}
+                        <div className="flex items-center gap-1 ml-auto sm:ml-0">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => setEditingSkill({
+                              id: skill.id,
+                              name: skill.name,
+                              description: skill.description,
+                              prompt_template: skill.prompt_template,
+                              short_description: skill.short_description || '',
+                              detailed_instructions: skill.detailed_instructions || '',
+                              allowed_tools: skill.allowed_tools || [],
+                            })}
+                          >
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                          {skill.isActive ? (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => handleUnlinkSkill(skill.skill_id)}
+                              disabled={isPending}
+                              title="Remove from role"
+                            >
+                              <X className="h-4 w-4" />
+                            </Button>
+                          ) : (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => handleLinkSkill(skill.id)}
+                              disabled={isPending}
+                              title="Add to role"
+                            >
+                              <Plus className="h-4 w-4" />
+                            </Button>
+                          )}
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleDeleteSkill(skill.id)}
+                            disabled={isPending}
+                            title="Delete skill"
+                          >
+                            <Trash2 className="h-4 w-4 text-destructive" />
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          ) : searchQuery ? (
+            <p className="text-sm text-muted-foreground">
+              No skills matching &quot;{searchQuery}&quot;
+            </p>
           ) : (
-            <Button variant="outline" onClick={() => setShowCreateForm(true)}>
-              <Plus className="mr-2 h-4 w-4" />
-              Create New Skill
-            </Button>
+            <p className="text-sm text-muted-foreground">
+              No skills yet. Create your first skill above.
+            </p>
           )}
         </CardContent>
       </Card>

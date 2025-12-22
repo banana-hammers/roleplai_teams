@@ -31,12 +31,14 @@ interface SettingsTabsProps {
 export function SettingsTabs({ profile, apiKeys, mcpServers, userEmail }: SettingsTabsProps) {
   return (
     <Tabs defaultValue="profile" className="space-y-6">
-      <TabsList className="grid w-full grid-cols-4">
-        <TabsTrigger value="profile">Profile</TabsTrigger>
-        <TabsTrigger value="api-keys">API Keys</TabsTrigger>
-        <TabsTrigger value="mcp-servers">MCP Servers</TabsTrigger>
-        <TabsTrigger value="preferences">Preferences</TabsTrigger>
-      </TabsList>
+      <div className="overflow-x-auto scrollbar-hide -mx-4 px-4 md:mx-0 md:px-0 md:overflow-visible">
+        <TabsList className="inline-flex w-max gap-1 md:grid md:w-full md:grid-cols-4">
+          <TabsTrigger value="profile" className="min-w-fit px-4">Profile</TabsTrigger>
+          <TabsTrigger value="api-keys" className="min-w-fit px-4">API Keys</TabsTrigger>
+          <TabsTrigger value="mcp-servers" className="min-w-fit px-4">MCP Servers</TabsTrigger>
+          <TabsTrigger value="preferences" className="min-w-fit px-4">Preferences</TabsTrigger>
+        </TabsList>
+      </div>
 
       <TabsContent value="profile">
         <ProfileSettings profile={profile} userEmail={userEmail} />

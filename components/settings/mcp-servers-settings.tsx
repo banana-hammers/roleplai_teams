@@ -132,20 +132,20 @@ export function McpServersSettings({ mcpServers: initialServers }: McpServersSet
               return (
                 <div
                   key={name}
-                  className="flex items-center justify-between rounded-lg border p-3"
+                  className="flex flex-col gap-3 rounded-lg border p-3 sm:flex-row sm:items-center sm:justify-between"
                 >
                   <div className="flex items-center gap-3">
-                    <div className="flex h-8 w-8 items-center justify-center rounded-md bg-muted">
+                    <div className="flex h-8 w-8 items-center justify-center rounded-md bg-muted shrink-0">
                       {SERVER_ICONS[name] || <Server className="h-4 w-4" />}
                     </div>
-                    <div>
+                    <div className="min-w-0">
                       <p className="font-medium capitalize">{name}</p>
                       <p className="text-xs text-muted-foreground">
                         {getMcpServerDescription(name)}
                       </p>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 justify-end">
                     <Label htmlFor={`toggle-${name}`} className="sr-only">
                       Enable {name}
                     </Label>
@@ -170,13 +170,13 @@ export function McpServersSettings({ mcpServers: initialServers }: McpServersSet
               {customServers.map((server) => (
                 <div
                   key={server.id}
-                  className="flex items-center justify-between rounded-lg border p-3"
+                  className="flex flex-col gap-3 rounded-lg border p-3 sm:flex-row sm:items-center sm:justify-between"
                 >
                   <div className="flex items-center gap-3">
-                    <div className="flex h-8 w-8 items-center justify-center rounded-md bg-muted">
+                    <div className="flex h-8 w-8 items-center justify-center rounded-md bg-muted shrink-0">
                       <Server className="h-4 w-4" />
                     </div>
-                    <div>
+                    <div className="min-w-0">
                       <p className="font-medium">{server.name}</p>
                       <Badge variant="outline" className="text-xs">
                         {server.server_type}
@@ -187,6 +187,7 @@ export function McpServersSettings({ mcpServers: initialServers }: McpServersSet
                     variant="ghost"
                     size="icon"
                     onClick={() => handleDeleteCustom(server.id, server.name)}
+                    className="self-end sm:self-auto"
                   >
                     <Trash2 className="h-4 w-4 text-destructive" />
                   </Button>

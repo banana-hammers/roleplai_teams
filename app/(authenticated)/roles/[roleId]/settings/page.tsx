@@ -29,13 +29,13 @@ export default async function RoleSettingsPage({ params }: RoleSettingsPageProps
     notFound()
   }
 
-  // Fetch role skills
+  // Fetch role skills with all fields needed for editing
   const { data: roleSkillsData } = await supabase
     .from('role_skills')
     .select(`
       skill_id,
       config_overrides,
-      skills (id, name, description)
+      skills (id, name, description, prompt_template, short_description, detailed_instructions, allowed_tools)
     `)
     .eq('role_id', roleId)
 
@@ -43,13 +43,21 @@ export default async function RoleSettingsPage({ params }: RoleSettingsPageProps
   const roleSkills = (roleSkillsData || []).map((rs: any) => ({
     skill_id: rs.skill_id,
     config_overrides: rs.config_overrides,
-    skills: rs.skills as { id: string; name: string; description: string } | null,
+    skills: rs.skills as {
+      id: string
+      name: string
+      description: string
+      prompt_template?: string
+      short_description?: string
+      detailed_instructions?: string
+      allowed_tools?: string[]
+    } | null,
   }))
 
-  // Fetch all available skills
+  // Fetch all available skills with all fields needed for editing
   const { data: allSkills } = await supabase
     .from('skills')
-    .select('id, name, description, input_schema')
+    .select('id, name, description, prompt_template, short_description, detailed_instructions, allowed_tools')
     .order('name')
 
   // Fetch MCP servers for this role
@@ -64,7 +72,7 @@ export default async function RoleSettingsPage({ params }: RoleSettingsPageProps
 
   return (
     <div className="min-h-screen bg-background">
-      <main className="container max-w-4xl px-4 py-8">
+      <main className="mx-auto max-w-4xl px-4 py-8">
         <div className="mb-6">
           <a
             href={`/roles/${roleId}`}
