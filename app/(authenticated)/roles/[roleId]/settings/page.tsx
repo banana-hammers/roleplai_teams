@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect, notFound } from 'next/navigation'
 import { RoleSettingsForm } from '@/components/settings/role-settings-form'
+import type { McpServer } from '@/types/mcp'
 
 interface RoleSettingsPageProps {
   params: Promise<{ roleId: string }>
@@ -51,6 +52,16 @@ export default async function RoleSettingsPage({ params }: RoleSettingsPageProps
     .select('id, name, description, input_schema')
     .order('name')
 
+  // Fetch MCP servers for this role
+  const { data: mcpServersData } = await supabase
+    .from('mcp_servers')
+    .select('*')
+    .eq('role_id', roleId)
+    .eq('user_id', user.id)
+    .order('name')
+
+  const mcpServers = (mcpServersData || []) as McpServer[]
+
   return (
     <div className="min-h-screen bg-background">
       <main className="container max-w-4xl px-4 py-8">
@@ -68,6 +79,7 @@ export default async function RoleSettingsPage({ params }: RoleSettingsPageProps
           role={role}
           roleSkills={roleSkills || []}
           allSkills={allSkills || []}
+          mcpServers={mcpServers}
         />
       </main>
     </div>

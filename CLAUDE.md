@@ -85,10 +85,11 @@ This project uses **AI SDK v5**, which has breaking changes from v4:
    - Falls back to system API keys
 
 2. **[app/api/roles/[roleId]/chat/route.ts](app/api/roles/[roleId]/chat/route.ts)** - Production role-based chat
-   - Fetches user's identity core, role, and lore
+   - Fetches user's identity core, role, lore, skills, and MCP servers
    - Composes system prompt from all sources
    - Enforces role ownership via RLS
    - **Built-in tools**: `web_search` (Brave/Serper API), `web_fetch` (URL fetching)
+   - **MCP tools**: External tools from user-hosted SSE servers
    - **Prompt caching**: 90% cost savings on repeated system prompts
    - **Agentic loop**: Automatic tool execution with streaming
 
@@ -104,6 +105,45 @@ Requires environment variables:
 BRAVE_API_KEY=...      # https://brave.com/search/api/
 # OR
 SERPER_API_KEY=...     # https://serper.dev/
+```
+
+### MCP Server Integration
+
+Roles can connect to user-hosted MCP (Model Context Protocol) servers to access external tools:
+
+**Transport**: SSE only (Edge runtime compatible, no subprocess spawning)
+**Assignment**: Role-level (each role has its own MCP servers)
+
+**Architecture**:
+```
+lib/mcp/
+├── types.ts      - MCP JSON-RPC protocol types
+├── client.ts     - Edge-compatible SSE client (no SDK dependency)
+└── errors.ts     - Error classes and formatting
+
+lib/tools/
+└── mcp-tools.ts  - Tool registry integration
+```
+
+**How it works**:
+1. At chat start, role's MCP servers are fetched from `mcp_servers` table
+2. For each SSE server, we initialize and list available tools
+3. MCP tools are prefixed: `mcp_{serverName}_{toolName}` to avoid conflicts
+4. Tool calls are routed to the appropriate MCP server
+5. Errors are returned to AI (so it can explain) AND shown to user via warning banner
+
+**Adding MCP Servers** (UI):
+1. Role Settings → MCP Servers tab
+2. Add server name, URL, optional auth headers (JSON)
+3. "Test Connection" button verifies and shows available tools
+4. Toggle enable/disable per server
+
+**Server Actions**: [app/actions/mcp.ts](app/actions/mcp.ts)
+```typescript
+createMcpServer(roleId, { name, url, headers })
+deleteMcpServer(serverId)
+toggleMcpServer(serverId, enabled)
+testMcpServerConnection(url, headers)
 ```
 
 ### System Prompt Composition
@@ -164,8 +204,8 @@ All tables use **Row-Level Security (RLS)** for multi-tenant isolation. Policies
 - `skills` - Skill definitions with prompt templates
 - `role_skills` - Junction table linking roles to skills
 - `user_api_keys` - Encrypted BYO API keys
-- `conversations` - Chat history (schema ready, implementation pending)
-- `mcp_servers` - MCP server configurations (partial implementation)
+- `conversations` - Chat history with messages
+- `mcp_servers` - MCP server configurations (SSE transport, role-level)
 
 **Indexes**: All `user_id` columns are indexed.
 
@@ -266,11 +306,35 @@ import type { Role } from '@/types/role'
 - Falls back to system keys if user has no BYO keys
 
 ### Skills System
+
 Skills are linked to roles via the `role_skills` junction table:
 - Created during role creation (via Forge) or manually added
 - Each skill has a `prompt_template` for execution
 - Skills are fetched via junction table query in chat endpoint
 - Server actions in [app/actions/roles.ts](app/actions/roles.ts) handle CRUD
+
+**Progressive Disclosure Architecture** (3-level system):
+
+| Level | Field | Purpose | When Loaded |
+|-------|-------|---------|-------------|
+| 1 | `short_description` | Brief description (~50 chars) | System prompt (always) |
+| 2 | `detailed_instructions` | Rich guidance for execution | When skill is invoked |
+| 2 | `examples` | Input/output examples (JSONB) | When skill is invoked |
+| 3 | `linked_lore_ids` | Related lore for context | When skill is invoked |
+
+**Agentic Skills** can call tools via `allowed_tools` array:
+- Built-in tools: `web_search`, `web_fetch`
+- MCP tools: `mcp_{serverName}_{toolName}`
+- Nested execution with max 5 iterations
+
+**Skill Execution**: [lib/skills/execute-skill.ts](lib/skills/execute-skill.ts)
+```typescript
+// Simple skill (no tools)
+const result = await executeSkillSimple(skill, inputs, context)
+
+// Agentic skill (with tools)
+const result = await executeSkillWithTools(skill, inputs, context)
+```
 
 ### Model Preference Format
 Stored in `roles.model_preference` as `provider/model`:
@@ -349,6 +413,19 @@ const { data: roleLore } = await supabase
 **Utilities**:
 - Model tiers: [lib/utils/model-tiers.ts](lib/utils/model-tiers.ts)
 
+**MCP Integration**:
+- Protocol types: [lib/mcp/types.ts](lib/mcp/types.ts)
+- SSE client: [lib/mcp/client.ts](lib/mcp/client.ts)
+- Error handling: [lib/mcp/errors.ts](lib/mcp/errors.ts)
+- URL validation: [lib/mcp/url-validation.ts](lib/mcp/url-validation.ts)
+- Tool integration: [lib/tools/mcp-tools.ts](lib/tools/mcp-tools.ts)
+- Server actions: [app/actions/mcp.ts](app/actions/mcp.ts)
+- Settings UI: [components/settings/role-mcp-manager.tsx](components/settings/role-mcp-manager.tsx)
+
+**Skills & Prompts**:
+- Skill execution: [lib/skills/execute-skill.ts](lib/skills/execute-skill.ts)
+- System prompt builder: [lib/prompts/system-prompt-builder.ts](lib/prompts/system-prompt-builder.ts)
+
 **Supabase Clients**:
 - Server: [lib/supabase/server.ts](lib/supabase/server.ts)
 - Browser: [lib/supabase/client.ts](lib/supabase/client.ts)
@@ -408,9 +485,10 @@ SERPER_API_KEY=...     # https://serper.dev/
 - ✅ RPG-style role cards with model tiers (Legendary/Epic/Rare/Common)
 - ✅ Skills system with junction table linking
 - ✅ Nova (personality interview) and Forge (role creation) AI assistants
+- ✅ Chat history persistence with conversation list
+- ✅ MCP server integration (SSE transport, role-level, test connection UI)
+- ✅ Progressive disclosure skills (3-level architecture with agentic tool execution)
 
 **TODO**:
-- 🚧 Chat history persistence (schema ready)
 - 🚧 Spend tracking and limits
 - 🚧 Engagement-based leveling (skill improvement through use)
-- 🚧 MCP server integration (schema ready, partial UI)

@@ -273,7 +273,12 @@ export async function createSkill(
     description: string
     prompt_template: string
     input_schema?: Record<string, unknown>
-    examples?: Array<{ input: Record<string, unknown>; expected_output: string }>
+    // Progressive disclosure fields
+    short_description?: string | null
+    detailed_instructions?: string | null
+    examples?: Array<{ input: string; output: string }>
+    linked_lore_ids?: string[]
+    allowed_tools?: string[]
   }
 ): Promise<{ success: boolean; skillId?: string; error?: string }> {
   const supabase = await createClient()
@@ -297,7 +302,7 @@ export async function createSkill(
   }
 
   try {
-    // Create the skill
+    // Create the skill with progressive disclosure fields
     const { data: createdSkill, error: skillError } = await supabase
       .from('skills')
       .insert({
@@ -309,6 +314,12 @@ export async function createSkill(
         input_schema: skill.input_schema || {},
         tool_constraints: {},
         version: 1,
+        // Progressive disclosure fields
+        short_description: skill.short_description || null,
+        detailed_instructions: skill.detailed_instructions || null,
+        examples: skill.examples || [],
+        linked_lore_ids: skill.linked_lore_ids || [],
+        allowed_tools: skill.allowed_tools || [],
       })
       .select('id')
       .single()
@@ -343,6 +354,12 @@ export async function updateSkill(
     description?: string
     prompt_template?: string
     input_schema?: Record<string, unknown>
+    // Progressive disclosure fields
+    short_description?: string | null
+    detailed_instructions?: string | null
+    examples?: Array<{ input: string; output: string }>
+    linked_lore_ids?: string[]
+    allowed_tools?: string[]
   }
 ): Promise<{ success: boolean; error?: string }> {
   const supabase = await createClient()

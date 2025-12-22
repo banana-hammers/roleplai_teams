@@ -32,6 +32,7 @@ export interface ResolvedSkill {
   id: string
   name: string
   description: string | null
+  short_description: string | null  // Level 1: Brief description for system prompt
 }
 
 /**

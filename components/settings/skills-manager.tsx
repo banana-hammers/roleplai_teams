@@ -7,7 +7,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { Plus, Pencil, Trash2, X, Check, Zap } from 'lucide-react'
+import { Plus, Pencil, Trash2, X, Check, Zap, Wrench } from 'lucide-react'
 import {
   createSkill,
   updateSkill,
@@ -16,11 +16,20 @@ import {
   unlinkSkillFromRole,
 } from '@/app/actions/roles'
 
+// Available built-in tools that skills can use
+const AVAILABLE_TOOLS = [
+  { id: 'web_search', name: 'Web Search', description: 'Search the web for information' },
+  { id: 'web_fetch', name: 'Web Fetch', description: 'Fetch and parse web page content' },
+]
+
 interface Skill {
   id: string
   name: string
   description: string
   prompt_template?: string
+  short_description?: string
+  detailed_instructions?: string
+  allowed_tools?: string[]
 }
 
 interface SkillsManagerProps {
@@ -49,6 +58,9 @@ export function SkillsManager({ roleId, roleSkills, allSkills, onUpdate }: Skill
     name: '',
     description: '',
     prompt_template: '',
+    short_description: '',
+    detailed_instructions: '',
+    allowed_tools: [] as string[],
   })
 
   // Get linked skill IDs for filtering
@@ -68,11 +80,21 @@ export function SkillsManager({ roleId, roleSkills, allSkills, onUpdate }: Skill
         name: newSkill.name.trim(),
         description: newSkill.description.trim(),
         prompt_template: newSkill.prompt_template.trim(),
+        short_description: newSkill.short_description.trim() || null,
+        detailed_instructions: newSkill.detailed_instructions.trim() || null,
+        allowed_tools: newSkill.allowed_tools,
       })
 
       if (result.success) {
         setMessage({ type: 'success', text: 'Skill created successfully' })
-        setNewSkill({ name: '', description: '', prompt_template: '' })
+        setNewSkill({
+          name: '',
+          description: '',
+          prompt_template: '',
+          short_description: '',
+          detailed_instructions: '',
+          allowed_tools: [],
+        })
         setShowCreateForm(false)
         onUpdate?.()
       } else {
@@ -89,6 +111,9 @@ export function SkillsManager({ roleId, roleSkills, allSkills, onUpdate }: Skill
         name: editingSkill.name,
         description: editingSkill.description,
         prompt_template: editingSkill.prompt_template,
+        short_description: editingSkill.short_description || null,
+        detailed_instructions: editingSkill.detailed_instructions || null,
+        allowed_tools: editingSkill.allowed_tools || [],
       })
 
       if (result.success) {
@@ -99,6 +124,24 @@ export function SkillsManager({ roleId, roleSkills, allSkills, onUpdate }: Skill
         setMessage({ type: 'error', text: result.error || 'Failed to update skill' })
       }
     })
+  }
+
+  const toggleTool = (toolId: string, isNewSkill: boolean) => {
+    if (isNewSkill) {
+      const current = newSkill.allowed_tools
+      if (current.includes(toolId)) {
+        setNewSkill({ ...newSkill, allowed_tools: current.filter(t => t !== toolId) })
+      } else {
+        setNewSkill({ ...newSkill, allowed_tools: [...current, toolId] })
+      }
+    } else if (editingSkill) {
+      const current = editingSkill.allowed_tools || []
+      if (current.includes(toolId)) {
+        setEditingSkill({ ...editingSkill, allowed_tools: current.filter(t => t !== toolId) })
+      } else {
+        setEditingSkill({ ...editingSkill, allowed_tools: [...current, toolId] })
+      }
+    }
   }
 
   const handleDeleteSkill = async (skillId: string) => {
@@ -217,6 +260,12 @@ export function SkillsManager({ roleId, roleSkills, allSkills, onUpdate }: Skill
                       </div>
                       <div className="flex items-center gap-2">
                         <Badge variant="secondary">Active</Badge>
+                        {(rs.skills as any)?.allowed_tools?.length > 0 && (
+                          <Badge variant="outline" className="text-amber-600 border-amber-600">
+                            <Wrench className="mr-1 h-3 w-3" />
+                            Agentic
+                          </Badge>
+                        )}
                         <Button
                           variant="ghost"
                           size="icon"
@@ -224,6 +273,9 @@ export function SkillsManager({ roleId, roleSkills, allSkills, onUpdate }: Skill
                             id: rs.skill_id,
                             name: rs.skills?.name || '',
                             description: rs.skills?.description || '',
+                            short_description: (rs.skills as any)?.short_description || '',
+                            detailed_instructions: (rs.skills as any)?.detailed_instructions || '',
+                            allowed_tools: (rs.skills as any)?.allowed_tools || [],
                           })}
                         >
                           <Pencil className="h-4 w-4" />
@@ -306,7 +358,7 @@ export function SkillsManager({ roleId, roleSkills, allSkills, onUpdate }: Skill
           {showCreateForm ? (
             <div className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="skill-name">Name</Label>
+                <Label htmlFor="skill-name">Name *</Label>
                 <Input
                   id="skill-name"
                   value={newSkill.name}
@@ -316,27 +368,75 @@ export function SkillsManager({ roleId, roleSkills, allSkills, onUpdate }: Skill
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="skill-description">Description</Label>
+                <Label htmlFor="skill-short-desc">Short Description (for system prompt)</Label>
+                <Input
+                  id="skill-short-desc"
+                  value={newSkill.short_description}
+                  onChange={(e) => setNewSkill({ ...newSkill, short_description: e.target.value })}
+                  placeholder="~50 chars: Concise description shown to the AI"
+                  maxLength={100}
+                />
+                <p className="text-xs text-muted-foreground">
+                  Brief description that appears in the system prompt. Keep it short.
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="skill-description">Full Description *</Label>
                 <Input
                   id="skill-description"
                   value={newSkill.description}
                   onChange={(e) => setNewSkill({ ...newSkill, description: e.target.value })}
-                  placeholder="Brief description of what this skill does"
+                  placeholder="Complete description of what this skill does"
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="skill-prompt">Prompt Template</Label>
+                <Label htmlFor="skill-prompt">Prompt Template *</Label>
                 <Textarea
                   id="skill-prompt"
                   value={newSkill.prompt_template}
                   onChange={(e) => setNewSkill({ ...newSkill, prompt_template: e.target.value })}
-                  placeholder="The system prompt or instructions for this skill..."
+                  placeholder="The task template. Use {{placeholder}} for inputs."
+                  rows={3}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="skill-instructions">Detailed Instructions</Label>
+                <Textarea
+                  id="skill-instructions"
+                  value={newSkill.detailed_instructions}
+                  onChange={(e) => setNewSkill({ ...newSkill, detailed_instructions: e.target.value })}
+                  placeholder="Detailed guidance loaded when this skill is invoked..."
                   rows={4}
                 />
                 <p className="text-xs text-muted-foreground">
-                  This template defines how the AI should behave when using this skill.
+                  Rich instructions loaded only when the skill is used (not in system prompt).
                 </p>
+              </div>
+
+              <div className="space-y-2">
+                <Label className="flex items-center gap-2">
+                  <Wrench className="h-4 w-4" />
+                  Allowed Tools
+                </Label>
+                <p className="text-xs text-muted-foreground mb-2">
+                  Enable tools this skill can use. Skills with tools run in agentic mode.
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {AVAILABLE_TOOLS.map((tool) => (
+                    <Badge
+                      key={tool.id}
+                      variant={newSkill.allowed_tools.includes(tool.id) ? 'default' : 'outline'}
+                      className="cursor-pointer"
+                      onClick={() => toggleTool(tool.id, true)}
+                    >
+                      {newSkill.allowed_tools.includes(tool.id) && <Check className="mr-1 h-3 w-3" />}
+                      {tool.name}
+                    </Badge>
+                  ))}
+                </div>
               </div>
 
               <div className="flex gap-2">
@@ -345,7 +445,14 @@ export function SkillsManager({ roleId, roleSkills, allSkills, onUpdate }: Skill
                 </Button>
                 <Button variant="outline" onClick={() => {
                   setShowCreateForm(false)
-                  setNewSkill({ name: '', description: '', prompt_template: '' })
+                  setNewSkill({
+                    name: '',
+                    description: '',
+                    prompt_template: '',
+                    short_description: '',
+                    detailed_instructions: '',
+                    allowed_tools: [],
+                  })
                 }}>
                   Cancel
                 </Button>

@@ -17,10 +17,10 @@ Transform RoleplayAI Teams from a single-user AI identity platform into a produc
 | Layer | Score | Status |
 |-------|-------|--------|
 | Agent Definition | 7/10 | Missing versioning, memory settings |
-| Tool Orchestration | 8/10 | Solid, just needs MCP wiring |
-| Memory System | 4/10 | Schema ready, no retrieval layer |
+| Tool Orchestration | 9/10 | MCP SSE integration complete |
+| Memory System | 6/10 | Chat history complete, no RAG yet |
 | Multi-Tenant | 5/10 | Good isolation, no teams/metering |
-| Builder UI | 6/10 | Functional, lacks polish/versioning |
+| Builder UI | 7/10 | MCP management UI, skills, lore |
 
 ---
 
@@ -28,12 +28,12 @@ Transform RoleplayAI Teams from a single-user AI identity platform into a produc
 
 ```
 Phase 1: Core Stability (Current)
-├── EPIC-002: Chat History Persistence
+├── EPIC-002: Chat History Persistence ✅
+├── EPIC-003: MCP Server Integration ✅
 ├── EPIC-004: Usage Metering & Spend Limits
 └── EPIC-008: Advanced Model Parameters
 
 Phase 2: Power Features
-├── EPIC-003: MCP Server Integration
 ├── EPIC-005: Persistent Memory (RAG)
 └── EPIC-007: Role Version History
 
@@ -48,41 +48,50 @@ Phase 3: B2B Scale
 ## Feature Epics
 
 ### EPIC-002: Chat History Persistence
-**Priority:** High | **Effort:** Low | **Status:** Not Started
+**Priority:** High | **Effort:** Low | **Status:** ✅ Complete
 
 #### User Story
 As a user, I want my conversations with RoleplAIrs to be saved so I can continue where I left off and review past interactions.
 
 #### Acceptance Criteria
-- [ ] Messages persisted to `messages` table on send/receive
-- [ ] Conversations created/resumed automatically
-- [ ] Conversation list shows recent chats per role
-- [ ] Chat loads previous messages on resume
-- [ ] Title auto-generated from first message
+- [x] Messages persisted to `messages` table on send/receive
+- [x] Conversations created/resumed automatically
+- [x] Conversation list shows recent chats per role
+- [x] Chat loads previous messages on resume
+- [x] Title auto-generated from first message
 
 #### Key Files
-- `app/api/roles/[roleId]/chat/route.ts` - Wire up persistence
-- `supabase/migrations/20250117000000_add_conversations_and_role_skills.sql` - Schema exists
+- [lib/hooks/use-role-chat.ts](../lib/hooks/use-role-chat.ts) - Conversation creation & message persistence
+- [app/actions/conversations.ts](../app/actions/conversations.ts) - Server actions for CRUD
+- [components/chat/conversation-list.tsx](../components/chat/conversation-list.tsx) - Sidebar UI
+- [app/(authenticated)/roles/[roleId]/page.tsx](../app/(authenticated)/roles/[roleId]/page.tsx) - Integrated chat page
 
 ---
 
 ### EPIC-003: MCP Server Integration
-**Priority:** High | **Effort:** Medium | **Status:** Not Started
+**Priority:** High | **Effort:** Medium | **Status:** Complete
 
 #### User Story
 As a power user, I want to connect my own MCP servers to give my RoleplAIrs access to custom tools and data sources.
 
 #### Acceptance Criteria
-- [ ] MCP servers linked to roles fetched at chat start
-- [ ] MCP tool definitions merged into tool list for Claude
-- [ ] MCP tool calls routed to appropriate server
-- [ ] Support for stdio, SSE, and HTTP transport types
-- [ ] Built-in MCP servers work when enabled
+- [x] MCP servers linked to roles fetched at chat start
+- [x] MCP tool definitions merged into tool list for Claude
+- [x] MCP tool calls routed to appropriate server
+- [x] SSE transport support (Edge-compatible)
+- [x] User-hosted servers only (users provide URLs)
+- [x] Role-level MCP server assignment
+- [x] Error handling returns to AI + displays to user
 
 #### Key Files
-- `types/mcp.ts` - Types exist
-- `components/settings/mcp-servers-settings.tsx` - UI exists
-- `app/api/roles/[roleId]/chat/route.ts` - Connect MCP client
+- [lib/mcp/types.ts](../lib/mcp/types.ts) - MCP protocol types
+- [lib/mcp/client.ts](../lib/mcp/client.ts) - Edge-compatible SSE client
+- [lib/mcp/errors.ts](../lib/mcp/errors.ts) - Error types and formatting
+- [lib/tools/mcp-tools.ts](../lib/tools/mcp-tools.ts) - Tool registry integration
+- [app/api/roles/[roleId]/chat/route.ts](../app/api/roles/[roleId]/chat/route.ts) - MCP tools in agentic loop
+- [app/actions/mcp.ts](../app/actions/mcp.ts) - Server actions for CRUD
+- [components/settings/role-mcp-manager.tsx](../components/settings/role-mcp-manager.tsx) - Role MCP management UI
+- [components/settings/role-settings-form.tsx](../components/settings/role-settings-form.tsx) - Added MCP tab
 
 ---
 
@@ -201,7 +210,7 @@ User
  ├── Lore (1:many)
  │    └── content, type (bio/brand/rules/custom)
  │
- ├── Conversations (1:many) [schema ready]
+ ├── Conversations (1:many) [✅ implemented]
  │    └── Messages (1:many)
  │
  └── User API Keys (1:many)
@@ -241,3 +250,5 @@ Role
 | Date | Update |
 |------|--------|
 | 2024-12-20 | Epic created, architecture analysis complete |
+| 2025-12-21 | **EPIC-002 Complete**: Chat history persistence with conversation list, message save/load, auto-generated titles |
+| 2025-12-21 | **EPIC-003 Complete**: MCP Server Integration - SSE transport, role-level servers, Edge-compatible client, test connection UI |

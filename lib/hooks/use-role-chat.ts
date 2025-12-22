@@ -19,6 +19,11 @@ export interface Message {
   }>
 }
 
+export interface McpServerError {
+  server: string
+  message: string
+}
+
 export interface UseRoleChatOptions {
   roleId: string
   conversationId?: string
@@ -29,10 +34,12 @@ export interface UseRoleChatReturn {
   messages: Message[]
   isLoading: boolean
   error: string | null
+  mcpErrors: McpServerError[]
   conversationId: string | null
   sendMessage: (content: string) => Promise<void>
   clearMessages: () => void
   loadConversation: (id: string) => Promise<void>
+  clearMcpErrors: () => void
 }
 
 /**
@@ -44,6 +51,7 @@ export function useRoleChat({ roleId, conversationId: initialConversationId, onC
   const [messages, setMessages] = useState<Message[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [mcpErrors, setMcpErrors] = useState<McpServerError[]>([])
   const [conversationId, setConversationId] = useState<string | null>(initialConversationId || null)
   const abortControllerRef = useRef<AbortController | null>(null)
   const isFirstMessageRef = useRef(!initialConversationId)
@@ -173,6 +181,9 @@ export function useRoleChat({ roleId, conversationId: initialConversationId, onC
                 }
               } else if (event.type === 'error') {
                 setError(event.message)
+              } else if (event.type === 'mcp_error') {
+                // MCP server connection errors
+                setMcpErrors(event.errors || [])
               }
               // 'done' type is handled implicitly when stream ends
             } catch {
@@ -214,9 +225,14 @@ export function useRoleChat({ roleId, conversationId: initialConversationId, onC
     }
     setMessages([])
     setError(null)
+    setMcpErrors([])
     setIsLoading(false)
     setConversationId(null)
     isFirstMessageRef.current = true
+  }, [])
+
+  const clearMcpErrors = useCallback(() => {
+    setMcpErrors([])
   }, [])
 
   const loadConversation = useCallback(async (id: string) => {
@@ -251,9 +267,11 @@ export function useRoleChat({ roleId, conversationId: initialConversationId, onC
     messages,
     isLoading,
     error,
+    mcpErrors,
     conversationId,
     sendMessage,
     clearMessages,
     loadConversation,
+    clearMcpErrors,
   }
 }

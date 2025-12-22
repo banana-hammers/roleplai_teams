@@ -3,15 +3,27 @@ import Anthropic from '@anthropic-ai/sdk'
 import {
   skillsToAnthropicTools,
   findSkillByToolName,
-  executeSkillTool
 } from '@/lib/skills/to-anthropic-tools'
+import {
+  executeSkillWithTools,
+  executeSkillSimple,
+} from '@/lib/skills/execute-skill'
 import {
   getAvailableBuiltinTools,
   isBuiltinTool,
   executeBuiltinTool
 } from '@/lib/tools/builtin-tools'
+import {
+  getMcpToolsFromServers,
+  isMcpTool,
+  executeMcpTool
+} from '@/lib/tools/mcp-tools'
 import { decryptApiKey, isEncryptionConfigured } from '@/lib/crypto/api-key-encryption'
+import type { McpServer } from '@/types/mcp'
+import { buildRoleSystemPrompt } from '@/lib/prompts/system-prompt-builder'
 import type { Skill } from '@/types/skill'
+import type { IdentityCore, Lore } from '@/types/identity'
+import type { Role, ResolvedSkill } from '@/types/role'
 
 export const runtime = 'edge'
 
@@ -43,35 +55,34 @@ export async function POST(
       return new Response('Role not found', { status: 404 })
     }
 
-    // Fetch user's identity core
-    const { data: identityCore } = await supabase
-      .from('identity_cores')
-      .select('*')
-      .eq('user_id', user.id)
-      .maybeSingle()
-
-    // Fetch lore linked to this role
-    const { data: roleLore } = await supabase
-      .from('role_lore')
-      .select(`
+    // Fetch user profile, identity core, lore, skills, and MCP servers in parallel
+    const [profileResult, identityCoreResult, roleLoreResult, roleSkillLinksResult, mcpServersResult] = await Promise.all([
+      supabase.from('profiles').select('full_name').eq('id', user.id).maybeSingle(),
+      supabase.from('identity_cores').select('*').eq('user_id', user.id).maybeSingle(),
+      supabase.from('role_lore').select(`
         lore_id,
         lore (
+          id,
+          user_id,
           name,
           content,
-          type
+          type,
+          created_at,
+          updated_at
         )
-      `)
-      .eq('role_id', roleId)
+      `).eq('role_id', roleId),
+      supabase.from('role_skills').select('skill_id').eq('role_id', roleId),
+      supabase.from('mcp_servers').select('*').eq('role_id', roleId).eq('user_id', user.id).eq('is_enabled', true),
+    ])
 
-    // Fetch skills linked to this role via junction table
-    const { data: roleSkillLinks } = await supabase
-      .from('role_skills')
-      .select('skill_id')
-      .eq('role_id', roleId)
+    const userName = profileResult.data?.full_name || undefined
+    const identityCore = identityCoreResult.data as IdentityCore | null
+    const roleLore = roleLoreResult.data
 
+    // Fetch skills if there are skill links
     let skills: Skill[] = []
-    if (roleSkillLinks && roleSkillLinks.length > 0) {
-      const skillIds = roleSkillLinks.map(link => link.skill_id)
+    if (roleSkillLinksResult.data && roleSkillLinksResult.data.length > 0) {
+      const skillIds = roleSkillLinksResult.data.map(link => link.skill_id)
       const { data: skillData } = await supabase
         .from('skills')
         .select('*')
@@ -85,6 +96,10 @@ export async function POST(
     // Get built-in tools (web_search, web_fetch)
     const builtinTools = getAvailableBuiltinTools()
 
+    // Get MCP tools from enabled servers
+    const mcpServers = (mcpServersResult.data || []) as McpServer[]
+    const { tools: mcpTools, toolMappings: mcpToolMappings, errors: mcpErrors } = await getMcpToolsFromServers(mcpServers)
+
     // Combine all tools (cast skill tools to match Anthropic.Tool type)
     const tools: Anthropic.Tool[] = [
       ...builtinTools,
@@ -92,61 +107,29 @@ export async function POST(
         name: t.name,
         description: t.description,
         input_schema: t.input_schema as Anthropic.Tool['input_schema']
-      }))
+      })),
+      ...mcpTools
     ]
 
-    // Build the system prompt with identity + role + context
-    const systemPromptParts: string[] = []
+    // Convert lore to proper format
+    const loreItems: Lore[] = roleLore?.map((rl: any) => rl.lore as Lore).filter(Boolean) || []
 
-    // Add identity core if available
-    if (identityCore) {
-      systemPromptParts.push(`# Your Identity Core
-Voice: ${identityCore.voice}
+    // Convert skills to resolved format for prompt (with short_description for Level 1)
+    const resolvedSkills: ResolvedSkill[] = skills.map(s => ({
+      id: s.id,
+      name: s.name,
+      description: s.description || null,
+      short_description: s.short_description || null,
+    }))
 
-Priorities:
-${JSON.stringify(identityCore.priorities, null, 2)}
-
-Boundaries:
-${JSON.stringify(identityCore.boundaries, null, 2)}
-
-Decision Rules:
-${JSON.stringify(identityCore.decision_rules, null, 2)}
-`)
-    }
-
-    // Add role instructions
-    systemPromptParts.push(`# Role: ${role.name}
-${role.description || ''}
-
-## Instructions
-${role.instructions}
-
-## Identity Facets
-${JSON.stringify(role.identity_facets, null, 2)}
-
-## Approval Policy
-${role.approval_policy}
-`)
-
-    // Add available tools info to system prompt
-    if (tools.length > 0) {
-      systemPromptParts.push(`## Available Skills
-You have access to the following skills. Use them when appropriate:
-${tools.map(t => `- ${t.name}: ${t.description}`).join('\n')}
-`)
-    }
-
-    // Add lore
-    if (roleLore && roleLore.length > 0) {
-      systemPromptParts.push('# Lore')
-      roleLore.forEach((rl: any) => {
-        const loreItem = rl.lore
-        systemPromptParts.push(`\n## ${loreItem.name} (${loreItem.type})
-${loreItem.content}`)
-      })
-    }
-
-    const systemPrompt = systemPromptParts.join('\n\n---\n\n')
+    // Build the system prompt using the new character-aware builder
+    const systemPrompt = buildRoleSystemPrompt({
+      role: role as Role,
+      identityCore,
+      lore: loreItems,
+      skills: resolvedSkills,
+      userName,
+    })
 
     // Get API key (fall back to system key)
     const { data: apiKeys } = await supabase
@@ -199,6 +182,14 @@ ${loreItem.content}`)
     const stream = new ReadableStream({
       async start(controller) {
         try {
+          // Notify client of any MCP server errors
+          if (mcpErrors.length > 0) {
+            controller.enqueue(encoder.encode(`data: ${JSON.stringify({
+              type: 'mcp_error',
+              errors: mcpErrors.map(e => ({ server: e.serverName, message: e.message }))
+            })}\n\n`))
+          }
+
           // Agentic loop: keep going until no more tool calls
           let currentMessages = [...anthropicMessages]
           let continueLoop = true
@@ -296,11 +287,61 @@ ${loreItem.content}`)
                 // Check if it's a built-in tool first
                 if (isBuiltinTool(tc.name)) {
                   result = await executeBuiltinTool(tc.name, tc.input)
+                } else if (isMcpTool(tc.name, mcpToolMappings)) {
+                  // Execute MCP tool
+                  result = await executeMcpTool(tc.name, tc.input, mcpToolMappings)
                 } else {
                   // Try to find a matching skill
                   const skill = findSkillByToolName(skills, tc.name)
                   if (skill) {
-                    result = executeSkillTool(skill, tc.input)
+                    // Fetch linked lore for Level 3 context
+                    let linkedLore: Lore[] = []
+                    if (skill.linked_lore_ids?.length > 0) {
+                      const { data: loreData } = await supabase
+                        .from('lore')
+                        .select('*')
+                        .in('id', skill.linked_lore_ids)
+                      linkedLore = (loreData as Lore[]) || []
+                    }
+
+                    // Check if skill has allowed tools (agentic mode)
+                    if (skill.allowed_tools?.length > 0) {
+                      // Create tool execution function for nested calls
+                      const executeToolCall = async (name: string, input: Record<string, unknown>): Promise<string> => {
+                        if (isBuiltinTool(name)) {
+                          return executeBuiltinTool(name, input)
+                        } else if (isMcpTool(name, mcpToolMappings)) {
+                          return executeMcpTool(name, input, mcpToolMappings)
+                        } else {
+                          // Could be chaining to another skill
+                          const chainedSkill = findSkillByToolName(skills, name)
+                          if (chainedSkill) {
+                            return executeSkillSimple(chainedSkill, input)
+                          }
+                          return `Error: Unknown tool "${name}"`
+                        }
+                      }
+
+                      // Agentic execution with nested tool loop
+                      result = await executeSkillWithTools(skill, tc.input, {
+                        anthropic,
+                        availableTools: tools,
+                        linkedLore,
+                        executeToolCall,
+                        onToolCall: (name, toolResult) => {
+                          // Stream nested tool calls to client
+                          controller.enqueue(encoder.encode(`data: ${JSON.stringify({
+                            type: 'skill_tool_call',
+                            skill: skill.name,
+                            tool: name,
+                            result: toolResult.slice(0, 200) // Truncate for UI
+                          })}\n\n`))
+                        }
+                      })
+                    } else {
+                      // Simple execution with Level 2+3 context
+                      result = executeSkillSimple(skill, tc.input, linkedLore)
+                    }
                   } else {
                     result = `Error: Unknown tool "${tc.name}"`
                   }

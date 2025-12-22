@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input'
 import { useRoleChat } from '@/lib/hooks/use-role-chat'
 import { getRole, getRoleSkills } from '@/app/actions/roles'
 import { getModelTier, getModelDisplayName } from '@/lib/utils/model-tiers'
-import { Loader2, Send, ArrowLeft, Wrench, Settings, Menu } from 'lucide-react'
+import { Loader2, Send, ArrowLeft, Wrench, Settings, Menu, AlertTriangle, X } from 'lucide-react'
 import { MessageBubble } from '@/components/chat/message-bubble'
 import { TypingIndicator } from '@/components/chat/typing-indicator'
 import { ConversationList } from '@/components/chat/conversation-list'
@@ -68,7 +68,7 @@ export default function RoleChatPage({ params }: RoleChatPageProps) {
     setActiveConversationId(id)
   }, [])
 
-  const { messages, isLoading: isChatLoading, error, conversationId, sendMessage, clearMessages, loadConversation } = useRoleChat({
+  const { messages, isLoading: isChatLoading, error, mcpErrors, conversationId, sendMessage, clearMessages, loadConversation, clearMcpErrors } = useRoleChat({
     roleId,
     conversationId: activeConversationId || undefined,
     onConversationCreated: handleConversationCreated,
@@ -248,6 +248,27 @@ export default function RoleChatPage({ params }: RoleChatPageProps) {
         <main className="flex-1 flex flex-col overflow-hidden">
           <Card className="flex-1 flex flex-col m-4 overflow-hidden">
             <CardContent className="flex-1 overflow-hidden p-0 flex flex-col">
+              {/* MCP Server Errors Banner */}
+              {mcpErrors.length > 0 && (
+                <div className="flex items-start gap-2 bg-yellow-500/10 border-b border-yellow-500/20 px-4 py-2">
+                  <AlertTriangle className="h-4 w-4 text-yellow-500 mt-0.5 shrink-0" />
+                  <div className="flex-1 text-sm">
+                    <span className="font-medium text-yellow-600 dark:text-yellow-400">
+                      Some MCP servers unavailable:
+                    </span>
+                    <span className="text-yellow-600/80 dark:text-yellow-400/80 ml-1">
+                      {mcpErrors.map(e => e.server).join(', ')}
+                    </span>
+                  </div>
+                  <button
+                    onClick={clearMcpErrors}
+                    className="text-yellow-500 hover:text-yellow-600 p-0.5"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
+              )}
+
               {/* Messages area */}
               <div className="flex-1 overflow-y-auto p-4 space-y-4">
                 {/* Empty state with conversation starters */}

@@ -17,8 +17,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { IdentityFacetsEditor } from './identity-facets-editor'
 import { ModelSelector } from './model-selector'
 import { SkillsManager } from './skills-manager'
+import { RoleMcpManager } from './role-mcp-manager'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
+import type { McpServer } from '@/types/mcp'
 
 interface IdentityFacets {
   tone_adjustment?: string
@@ -47,9 +49,10 @@ interface RoleSettingsFormProps {
     description: string
     input_schema: Record<string, unknown> | null
   }>
+  mcpServers: McpServer[]
 }
 
-export function RoleSettingsForm({ role, roleSkills, allSkills }: RoleSettingsFormProps) {
+export function RoleSettingsForm({ role, roleSkills, allSkills, mcpServers }: RoleSettingsFormProps) {
   const router = useRouter()
   const [formData, setFormData] = useState({
     name: role.name,
@@ -96,10 +99,11 @@ export function RoleSettingsForm({ role, roleSkills, allSkills }: RoleSettingsFo
 
   return (
     <Tabs defaultValue="general" className="space-y-6">
-      <TabsList className="grid w-full grid-cols-3">
+      <TabsList className="grid w-full grid-cols-4">
         <TabsTrigger value="general">General</TabsTrigger>
         <TabsTrigger value="personality">Personality</TabsTrigger>
         <TabsTrigger value="skills">Skills</TabsTrigger>
+        <TabsTrigger value="mcp">MCP Servers</TabsTrigger>
       </TabsList>
 
       <TabsContent value="general">
@@ -227,6 +231,14 @@ export function RoleSettingsForm({ role, roleSkills, allSkills }: RoleSettingsFo
           roleId={role.id}
           roleSkills={roleSkills}
           allSkills={allSkills}
+          onUpdate={() => router.refresh()}
+        />
+      </TabsContent>
+
+      <TabsContent value="mcp">
+        <RoleMcpManager
+          roleId={role.id}
+          mcpServers={mcpServers}
           onUpdate={() => router.refresh()}
         />
       </TabsContent>

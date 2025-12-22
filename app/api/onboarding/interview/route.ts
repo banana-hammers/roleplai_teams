@@ -3,13 +3,16 @@ import { NextRequest } from 'next/server'
 import { streamText, convertToModelMessages } from 'ai'
 import { createAnthropic } from '@ai-sdk/anthropic'
 import { createOpenAI } from '@ai-sdk/openai'
-import { NOVA_SYSTEM_PROMPT } from '@/lib/constants/interview-prompts'
+import { buildNovaSystemPrompt } from '@/lib/prompts/system-prompt-builder'
 
 export const runtime = 'edge'
 
 /**
  * AI Personality Interview Endpoint
  * POST /api/onboarding/interview
+ *
+ * Nova interviews users to understand their personality.
+ * She's aware of who she's talking to and adapts her approach.
  */
 export async function POST(req: NextRequest) {
   const supabase = await createClient()
@@ -22,6 +25,24 @@ export async function POST(req: NextRequest) {
   }
 
   const { messages } = await req.json()
+
+  // Fetch user context for Nova
+  const [profileResult, rolesResult, identityResult] = await Promise.all([
+    supabase.from('profiles').select('full_name').eq('id', user.id).maybeSingle(),
+    supabase.from('roles').select('id', { count: 'exact' }).eq('user_id', user.id),
+    supabase.from('identity_cores').select('id').eq('user_id', user.id).maybeSingle(),
+  ])
+
+  const userName = profileResult.data?.full_name || undefined
+  const existingRolesCount = rolesResult.count || 0
+  const isReturningUser = !!identityResult.data
+
+  // Build Nova's system prompt with user context
+  const systemPrompt = buildNovaSystemPrompt({
+    userName,
+    existingRolesCount,
+    isReturningUser,
+  })
 
   // Use Anthropic as primary, OpenAI as fallback
   const anthropicKey = process.env.ANTHROPIC_API_KEY
@@ -43,7 +64,7 @@ export async function POST(req: NextRequest) {
   const result = streamText({
     model,
     messages: [
-      { role: 'system', content: NOVA_SYSTEM_PROMPT },
+      { role: 'system', content: systemPrompt },
       ...convertToModelMessages(messages),
     ],
     temperature: 0.7,
