@@ -16,6 +16,7 @@ export interface Skill {
   examples: SkillExample[]  // Level 2: Input/output examples
   linked_lore_ids: string[]  // Level 3: Lore IDs to inject as context
   allowed_tools: string[]  // Tools this skill can call
+  model_preference: string | null  // Optional model override (format: provider/model)
 }
 
 export interface SkillExample {

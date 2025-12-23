@@ -397,6 +397,7 @@ export type Database = {
           id: string
           input_schema: Json | null
           linked_lore_ids: string[] | null
+          model_preference: string | null
           name: string
           prompt_template: string
           role_id: string | null
@@ -415,6 +416,7 @@ export type Database = {
           id?: string
           input_schema?: Json | null
           linked_lore_ids?: string[] | null
+          model_preference?: string | null
           name: string
           prompt_template: string
           role_id?: string | null
@@ -433,6 +435,7 @@ export type Database = {
           id?: string
           input_schema?: Json | null
           linked_lore_ids?: string[] | null
+          model_preference?: string | null
           name?: string
           prompt_template?: string
           role_id?: string | null

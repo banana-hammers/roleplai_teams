@@ -34,6 +34,7 @@ export interface ExistingSkillContext {
   detailed_instructions?: string | null
   allowed_tools?: string[]
   examples?: SkillExample[]
+  model_preference?: string | null
 }
 
 // Context for Forge skill interview

@@ -2,17 +2,20 @@
  * Built-in Tools Registry
  * Defines and executes built-in tools for the chat endpoint
  * Edge-compatible (no Node.js dependencies)
+ *
+ * Note: web_search now uses Anthropic's native server tool (web_search_20250305)
+ * which is handled by Anthropic's servers. No API key required.
+ * Pricing: $10 per 1,000 searches + standard token costs
  */
 
 import type Anthropic from '@anthropic-ai/sdk'
-import { executeWebSearch, formatSearchResults } from './web-search'
 import { executeWebFetch, formatFetchResult } from './web-fetch'
 
 /**
  * Built-in tool names
  */
 export const BUILTIN_TOOL_NAMES = ['web_search', 'web_fetch'] as const
-export type BuiltinToolName = typeof BUILTIN_TOOL_NAMES[number]
+export type BuiltinToolName = (typeof BUILTIN_TOOL_NAMES)[number]
 
 /**
  * Check if a tool name is a built-in tool
@@ -22,65 +25,66 @@ export function isBuiltinTool(name: string): name is BuiltinToolName {
 }
 
 /**
- * Get Anthropic tool definitions for built-in tools
+ * Check if a tool name is a server-side tool (handled by Anthropic)
+ * Server tools don't require us to execute them - the API handles it
  */
-export function getBuiltinToolDefinitions(): Anthropic.Tool[] {
+export function isServerTool(name: string): boolean {
+  return name === 'web_search'
+}
+
+/**
+ * Get Anthropic's native web search tool definition
+ * This is a server-side tool - Anthropic handles the search execution
+ */
+export function getWebSearchTool(): Anthropic.WebSearchTool20250305 {
+  return {
+    type: 'web_search_20250305',
+    name: 'web_search',
+    max_uses: 10, // Limit searches per request
+  }
+}
+
+/**
+ * Get custom tool definitions (tools we execute ourselves)
+ */
+export function getCustomToolDefinitions(): Anthropic.Tool[] {
   return [
     {
-      name: 'web_search',
-      description: 'Search the web for information. Use this when you need to find current information, research topics, or look up facts that may not be in your training data.',
-      input_schema: {
-        type: 'object' as const,
-        properties: {
-          query: {
-            type: 'string',
-            description: 'The search query'
-          },
-          max_results: {
-            type: 'number',
-            description: 'Maximum number of results to return (default: 5, max: 10)'
-          }
-        },
-        required: ['query']
-      }
-    },
-    {
       name: 'web_fetch',
-      description: 'Fetch and read the content of a web page. Use this when you need to read the full content of a specific URL, such as an article, documentation page, or any web resource.',
+      description:
+        'Fetch and read the content of a web page. Use this when you need to read the full content of a specific URL, such as an article, documentation page, or any web resource.',
       input_schema: {
         type: 'object' as const,
         properties: {
           url: {
             type: 'string',
-            description: 'The URL to fetch (must be http or https)'
-          }
+            description: 'The URL to fetch (must be http or https)',
+          },
         },
-        required: ['url']
-      }
-    }
+        required: ['url'],
+      },
+    },
   ]
 }
 
 /**
- * Execute a built-in tool
+ * Execute a built-in tool (only for custom tools, not server tools)
+ * Server tools like web_search are handled automatically by the API
  */
 export async function executeBuiltinTool(
   name: string,
   input: Record<string, unknown>
 ): Promise<string> {
   switch (name) {
-    case 'web_search': {
-      const query = input.query as string
-      const maxResults = Math.min(input.max_results as number || 5, 10)
-      const result = await executeWebSearch(query, maxResults)
-      return formatSearchResults(result)
-    }
-
     case 'web_fetch': {
       const url = input.url as string
       const result = await executeWebFetch(url)
       return formatFetchResult(result)
     }
+
+    case 'web_search':
+      // This should never be called - web_search is a server tool
+      return 'Error: web_search is a server tool and should not be executed manually'
 
     default:
       return `Unknown built-in tool: ${name}`
@@ -88,27 +92,21 @@ export async function executeBuiltinTool(
 }
 
 /**
- * Check if web tools are available (API keys configured)
+ * Check if web tools are available
+ * Note: web_search is always available (native Anthropic tool)
+ * web_fetch is always available (just uses fetch)
  */
 export function areWebToolsAvailable(): boolean {
-  return !!(process.env.BRAVE_API_KEY || process.env.SERPER_API_KEY)
+  return true
 }
 
 /**
- * Get available built-in tools based on configuration
+ * Get all available built-in tools
+ * Returns a mixed array of server tools (WebSearchTool20250305) and custom tools (Tool)
  */
-export function getAvailableBuiltinTools(): Anthropic.Tool[] {
-  const tools: Anthropic.Tool[] = []
-
-  // Web search requires API key
-  if (process.env.BRAVE_API_KEY || process.env.SERPER_API_KEY) {
-    const searchTool = getBuiltinToolDefinitions().find(t => t.name === 'web_search')
-    if (searchTool) tools.push(searchTool)
-  }
-
-  // Web fetch is always available (just uses fetch)
-  const fetchTool = getBuiltinToolDefinitions().find(t => t.name === 'web_fetch')
-  if (fetchTool) tools.push(fetchTool)
-
-  return tools
+export function getAvailableBuiltinTools(): Anthropic.ToolUnion[] {
+  return [
+    getWebSearchTool(), // Native Anthropic server tool
+    ...getCustomToolDefinitions(), // Custom tools we execute ourselves
+  ]
 }

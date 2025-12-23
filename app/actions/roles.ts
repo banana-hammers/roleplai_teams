@@ -1,6 +1,7 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
+import { revalidatePath } from 'next/cache'
 import type { CreateRoleData, CreateRoleResult, ExtractedRoleConfig, ExtractedSkill } from '@/types/role-creation'
 
 /**
@@ -238,6 +239,40 @@ export async function getRole(roleId: string) {
 }
 
 /**
+ * Delete a role and all associated data
+ * Database CASCADE relationships handle cleanup of:
+ * - conversations and messages
+ * - role_skills junction entries
+ * - role_lore junction entries
+ * - mcp_servers
+ */
+export async function deleteRole(
+  roleId: string
+): Promise<{ success: boolean; error?: string }> {
+  const supabase = await createClient()
+
+  const { data: { user } } = await supabase.auth.getUser()
+
+  if (!user) {
+    return { success: false, error: 'Not authenticated' }
+  }
+
+  const { error } = await supabase
+    .from('roles')
+    .delete()
+    .eq('id', roleId)
+    .eq('user_id', user.id)
+
+  if (error) {
+    console.error('Role deletion error:', error)
+    return { success: false, error: 'Failed to delete role' }
+  }
+
+  revalidatePath('/roles')
+  return { success: true }
+}
+
+/**
  * Get skills for a role
  */
 export async function getRoleSkills(roleId: string) {
@@ -279,6 +314,7 @@ export async function createSkill(
     examples?: Array<{ input: string; output: string }>
     linked_lore_ids?: string[]
     allowed_tools?: string[]
+    model_preference?: string | null
   }
 ): Promise<{ success: boolean; skillId?: string; error?: string }> {
   const supabase = await createClient()
@@ -311,7 +347,7 @@ export async function createSkill(
         name: skill.name,
         description: skill.description,
         prompt_template: skill.prompt_template,
-        input_schema: skill.input_schema || {},
+        input_schema: skill.input_schema?.type ? skill.input_schema : { type: 'object', properties: {}, ...(skill.input_schema || {}) },
         tool_constraints: {},
         version: 1,
         // Progressive disclosure fields
@@ -320,6 +356,7 @@ export async function createSkill(
         examples: skill.examples || [],
         linked_lore_ids: skill.linked_lore_ids || [],
         allowed_tools: skill.allowed_tools || [],
+        model_preference: skill.model_preference || null,
       })
       .select('id')
       .single()
@@ -360,6 +397,7 @@ export async function updateSkill(
     examples?: Array<{ input: string; output: string }>
     linked_lore_ids?: string[]
     allowed_tools?: string[]
+    model_preference?: string | null
   }
 ): Promise<{ success: boolean; error?: string }> {
   const supabase = await createClient()

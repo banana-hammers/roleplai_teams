@@ -8,6 +8,26 @@ export interface AnthropicTool {
 }
 
 /**
+ * Default schema for skills without a valid input_schema.
+ * Anthropic requires at least { type: 'object' } for tool schemas.
+ */
+const DEFAULT_INPUT_SCHEMA = {
+  type: 'object' as const,
+  properties: {},
+}
+
+/**
+ * Ensure input_schema has the required 'type' field.
+ * Anthropic API returns 400 if input_schema.type is missing.
+ */
+function ensureValidSchema(schema: Record<string, unknown>): Record<string, unknown> {
+  if (!schema || typeof schema !== 'object' || !schema.type) {
+    return { ...DEFAULT_INPUT_SCHEMA, ...schema }
+  }
+  return schema
+}
+
+/**
  * Convert database skills to Anthropic API tool format.
  * JSON Schema from skill.input_schema works directly - no conversion needed!
  */
@@ -21,7 +41,7 @@ export function skillsToAnthropicTools(skills: Skill[]): AnthropicTool[] {
       || (skill.description
           ? skill.description.slice(0, 150) + (skill.description.length > 150 ? '...' : '')
           : 'Execute this skill'),
-    input_schema: skill.input_schema
+    input_schema: ensureValidSchema(skill.input_schema)
   }))
 }
 

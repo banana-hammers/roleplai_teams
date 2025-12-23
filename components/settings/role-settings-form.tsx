@@ -20,6 +20,7 @@ import { SkillsManager } from './skills-manager'
 import { RoleMcpManager } from './role-mcp-manager'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
+import { deleteRole } from '@/app/actions/roles'
 import type { McpServer } from '@/types/mcp'
 
 interface IdentityFacets {
@@ -72,6 +73,7 @@ export function RoleSettingsForm({ role, roleSkills, allSkills, mcpServers }: Ro
     model_preference: role.model_preference || 'anthropic/claude-sonnet-4-5-20250929',
   })
   const [saving, setSaving] = useState(false)
+  const [deleting, setDeleting] = useState(false)
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
 
   const handleSave = async () => {
@@ -102,7 +104,24 @@ export function RoleSettingsForm({ role, roleSkills, allSkills, mcpServers }: Ro
     }
   }
 
+  const handleDelete = async () => {
+    if (!confirm(`Delete "${formData.name}"? This will permanently delete all conversations and cannot be undone.`)) {
+      return
+    }
+
+    setDeleting(true)
+    const result = await deleteRole(role.id)
+
+    if (result.success) {
+      router.push('/roles')
+    } else {
+      setMessage({ type: 'error', text: result.error || 'Failed to delete role' })
+      setDeleting(false)
+    }
+  }
+
   return (
+    <div className="space-y-6">
     <Tabs defaultValue="general" className="space-y-6" id={`role-settings-${role.id}`}>
       <div className="overflow-x-auto scrollbar-hide -mx-4 px-4 md:mx-0 md:px-0 md:overflow-visible">
         <TabsList className="inline-flex w-max gap-1 md:grid md:w-full md:grid-cols-4">
@@ -250,5 +269,34 @@ export function RoleSettingsForm({ role, roleSkills, allSkills, mcpServers }: Ro
         />
       </TabsContent>
     </Tabs>
+
+    {/* Danger Zone */}
+    <Card className="border-red-200 dark:border-red-900">
+      <CardHeader>
+        <CardTitle className="text-red-600 dark:text-red-400">Danger Zone</CardTitle>
+        <CardDescription>
+          Irreversible actions for this role.
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <p className="font-medium">Delete this role</p>
+            <p className="text-sm text-muted-foreground">
+              All conversations and MCP server configs will be permanently deleted.
+            </p>
+          </div>
+          <Button
+            variant="destructive"
+            onClick={handleDelete}
+            disabled={deleting}
+            className="w-full sm:w-auto"
+          >
+            {deleting ? 'Deleting...' : 'Delete Role'}
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
+    </div>
   )
 }

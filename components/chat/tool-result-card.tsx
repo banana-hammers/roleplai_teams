@@ -8,6 +8,8 @@ interface ToolResultCardProps {
   name: string
   input?: Record<string, unknown>
   result?: string
+  /** Explicit status - if provided, takes precedence over inferred status */
+  status?: 'running' | 'completed' | 'error'
 }
 
 const ICON_MAP = {
@@ -17,18 +19,22 @@ const ICON_MAP = {
   Plug,
 } as const
 
-export function ToolResultCard({ name, input, result }: ToolResultCardProps) {
+export function ToolResultCard({ name, input, result, status }: ToolResultCardProps) {
   const [isOpen, setIsOpen] = useState(false)
   const metadata = getToolMetadata(name)
   const Icon = ICON_MAP[metadata.icon]
   const inputSummary = formatToolInput(name, input)
 
-  // Determine status: loading, success, or error
-  const isLoading = !result
-  const isError = result?.toLowerCase().startsWith('error') ||
-    result?.toLowerCase().startsWith('failed') ||
-    result?.includes('HTTP 4') ||
-    result?.includes('HTTP 5')
+  // Use explicit status if provided, otherwise infer from result
+  const inferredStatus: 'running' | 'completed' | 'error' = !result ? 'running' :
+    (result.toLowerCase().startsWith('error') ||
+     result.toLowerCase().startsWith('failed') ||
+     result.includes('HTTP 4') ||
+     result.includes('HTTP 5')) ? 'error' : 'completed'
+
+  const displayStatus = status ?? inferredStatus
+  const isLoading = displayStatus === 'running'
+  const isError = displayStatus === 'error'
 
   // Category-based colors
   const categoryColors = {
