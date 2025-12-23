@@ -39,11 +39,11 @@ export function SkillForgeModal({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
-        className="sm:max-w-2xl h-[80vh] max-h-[600px] flex flex-col p-0"
+        className="fixed inset-0 w-full h-full max-w-none rounded-none translate-x-0 translate-y-0 top-0 left-0 sm:relative sm:inset-auto sm:top-[50%] sm:left-[50%] sm:translate-x-[-50%] sm:translate-y-[-50%] sm:max-w-2xl sm:h-[80vh] sm:max-h-[600px] sm:rounded-lg flex flex-col p-0"
         showCloseButton={false}
       >
         <DialogTitle className="sr-only">{dialogTitle}</DialogTitle>
-        <div className="flex-1 overflow-hidden p-6">
+        <div className="flex-1 overflow-hidden sm:p-6">
           {open && (
             <SkillForgeInterview
               mode={mode}

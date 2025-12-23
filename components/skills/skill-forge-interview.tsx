@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { useChat } from '@ai-sdk/react'
 import { DefaultChatTransport } from 'ai'
+import { X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { MessageBubble } from '@/components/chat/message-bubble'
@@ -160,8 +161,18 @@ export function SkillForgeInterview({
 
   return (
     <div className="flex flex-col h-full">
-      {/* Header */}
-      <div className="space-y-1 pb-4 border-b">
+      {/* Mobile header with close button */}
+      <div className="flex items-center justify-between p-4 border-b sm:hidden">
+        <h3 className="text-lg font-semibold">
+          {mode === 'edit' ? 'Edit Skill' : 'Create Skill'}
+        </h3>
+        <Button variant="ghost" size="icon" onClick={onCancel}>
+          <X className="h-5 w-5" />
+        </Button>
+      </div>
+
+      {/* Desktop header */}
+      <div className="hidden sm:block space-y-1 pb-4 border-b">
         <h3 className="text-lg font-semibold">
           {mode === 'edit' ? 'Edit Skill with Forge' : 'Create Skill with Forge'}
         </h3>
@@ -178,7 +189,7 @@ export function SkillForgeInterview({
       </div>
 
       {/* Chat messages */}
-      <div className="flex-1 overflow-y-auto py-4 space-y-4 min-h-0">
+      <div className="flex-1 overflow-y-auto py-4 px-4 sm:px-0 space-y-4 min-h-0">
         {messages.map((message, index) => {
           const content = message.parts
             .map((part) => (part.type === 'text' ? part.text : ''))
@@ -203,7 +214,7 @@ export function SkillForgeInterview({
       </div>
 
       {/* Input form or complete button */}
-      <div className="pt-4 border-t space-y-3">
+      <div className="p-4 sm:pt-4 sm:px-0 sm:pb-0 border-t space-y-3">
         {extractionError && (
           <div className="rounded-lg border border-red-200 bg-red-50 p-2 text-sm text-red-900 dark:border-red-900 dark:bg-red-950 dark:text-red-100">
             {extractionError}
