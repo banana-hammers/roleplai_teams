@@ -4,11 +4,8 @@ import { useState } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { Switch } from '@/components/ui/switch'
-import { Label } from '@/components/ui/label'
-import { Database, Globe, Terminal, Server, Trash2 } from 'lucide-react'
+import { Server, Trash2, ExternalLink } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
-import { BUILT_IN_MCP_SERVERS, getMcpServerDescription } from '@/types/mcp'
 
 interface McpServersSettingsProps {
   mcpServers: Array<{
@@ -20,78 +17,11 @@ interface McpServersSettingsProps {
   }>
 }
 
-const SERVER_ICONS: Record<string, React.ReactNode> = {
-  playwright: <Globe className="h-4 w-4" />,
-  filesystem: <Terminal className="h-4 w-4" />,
-  github: <Server className="h-4 w-4" />,
-  postgres: <Database className="h-4 w-4" />,
-  fetch: <Globe className="h-4 w-4" />,
-  memory: <Database className="h-4 w-4" />,
-}
-
 export function McpServersSettings({ mcpServers: initialServers }: McpServersSettingsProps) {
   const [servers, setServers] = useState(initialServers)
-  const [enabling, setEnabling] = useState<string | null>(null)
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
 
-  const builtInServerNames = Object.keys(BUILT_IN_MCP_SERVERS)
-  const enabledBuiltIn = servers.filter(s => builtInServerNames.includes(s.name))
-  const enabledBuiltInNames = new Set(enabledBuiltIn.map(s => s.name))
-
-  const handleToggleBuiltIn = async (serverName: string, currentlyEnabled: boolean) => {
-    setEnabling(serverName)
-    setMessage(null)
-
-    try {
-      const supabase = createClient()
-      const { data: { user } } = await supabase.auth.getUser()
-
-      if (!user) throw new Error('Not authenticated')
-
-      if (currentlyEnabled) {
-        // Disable: delete the record
-        const { error } = await supabase
-          .from('mcp_servers')
-          .delete()
-          .eq('user_id', user.id)
-          .eq('name', serverName)
-          .is('role_id', null)
-
-        if (error) throw error
-
-        setServers(servers.filter(s => s.name !== serverName))
-      } else {
-        // Enable: insert the record
-        const config = BUILT_IN_MCP_SERVERS[serverName]
-        const { data, error } = await supabase
-          .from('mcp_servers')
-          .insert({
-            user_id: user.id,
-            name: serverName,
-            server_type: config.type || 'stdio',
-            config,
-            is_enabled: true,
-          })
-          .select()
-          .single()
-
-        if (error) throw error
-
-        setServers([...servers, data])
-      }
-
-      setMessage({
-        type: 'success',
-        text: `${serverName} ${currentlyEnabled ? 'disabled' : 'enabled'}`
-      })
-    } catch (error) {
-      setMessage({ type: 'error', text: `Failed to toggle ${serverName}` })
-    } finally {
-      setEnabling(null)
-    }
-  }
-
-  const handleDeleteCustom = async (id: string, name: string) => {
+  const handleDeleteServer = async (id: string, name: string) => {
     if (!confirm(`Are you sure you want to delete "${name}"?`)) return
 
     try {
@@ -105,69 +35,27 @@ export function McpServersSettings({ mcpServers: initialServers }: McpServersSet
 
       setServers(servers.filter(s => s.id !== id))
       setMessage({ type: 'success', text: 'Server deleted' })
-    } catch (error) {
+    } catch {
       setMessage({ type: 'error', text: 'Failed to delete server' })
     }
   }
-
-  const customServers = servers.filter(s => !builtInServerNames.includes(s.name))
 
   return (
     <Card>
       <CardHeader>
         <CardTitle>MCP Servers</CardTitle>
         <CardDescription>
-          Enable Model Context Protocol servers to give your roles access to external tools and systems.
+          Connect to MCP (Model Context Protocol) servers to give your roles access to external tools.
+          This app supports SSE transport only.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
-        {/* Built-in servers */}
-        <div className="space-y-4">
-          <h3 className="text-sm font-medium">Built-in Servers</h3>
-          <div className="space-y-3">
-            {builtInServerNames.map((name) => {
-              const isEnabled = enabledBuiltInNames.has(name)
-              const isLoading = enabling === name
-
-              return (
-                <div
-                  key={name}
-                  className="flex flex-col gap-3 rounded-lg border p-3 sm:flex-row sm:items-center sm:justify-between"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="flex h-8 w-8 items-center justify-center rounded-md bg-muted shrink-0">
-                      {SERVER_ICONS[name] || <Server className="h-4 w-4" />}
-                    </div>
-                    <div className="min-w-0">
-                      <p className="font-medium capitalize">{name}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {getMcpServerDescription(name)}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2 justify-end">
-                    <Label htmlFor={`toggle-${name}`} className="sr-only">
-                      Enable {name}
-                    </Label>
-                    <Switch
-                      id={`toggle-${name}`}
-                      checked={isEnabled}
-                      onCheckedChange={() => handleToggleBuiltIn(name, isEnabled)}
-                      disabled={isLoading}
-                    />
-                  </div>
-                </div>
-              )
-            })}
-          </div>
-        </div>
-
-        {/* Custom servers */}
-        {customServers.length > 0 && (
+        {/* Connected servers */}
+        {servers.length > 0 ? (
           <div className="space-y-4">
-            <h3 className="text-sm font-medium">Custom Servers</h3>
+            <h3 className="text-sm font-medium">Connected Servers</h3>
             <div className="space-y-3">
-              {customServers.map((server) => (
+              {servers.map((server) => (
                 <div
                   key={server.id}
                   className="flex flex-col gap-3 rounded-lg border p-3 sm:flex-row sm:items-center sm:justify-between"
@@ -186,7 +74,7 @@ export function McpServersSettings({ mcpServers: initialServers }: McpServersSet
                   <Button
                     variant="ghost"
                     size="icon"
-                    onClick={() => handleDeleteCustom(server.id, server.name)}
+                    onClick={() => handleDeleteServer(server.id, server.name)}
                     className="self-end sm:self-auto"
                   >
                     <Trash2 className="h-4 w-4 text-destructive" />
@@ -195,6 +83,10 @@ export function McpServersSettings({ mcpServers: initialServers }: McpServersSet
               ))}
             </div>
           </div>
+        ) : (
+          <p className="text-sm text-muted-foreground">
+            No MCP servers connected. Add servers per-role in role settings, or host your own SSE MCP server.
+          </p>
         )}
 
         {message && (
@@ -203,10 +95,38 @@ export function McpServersSettings({ mcpServers: initialServers }: McpServersSet
           </p>
         )}
 
-        <p className="text-xs text-muted-foreground">
-          Enabled servers will be available to all your roles by default.
-          You can override this per-role in role settings.
-        </p>
+        {/* Documentation links */}
+        <div className="rounded-lg border bg-muted/50 p-4 space-y-3">
+          <h4 className="text-sm font-medium">Learn More</h4>
+          <div className="space-y-2 text-sm text-muted-foreground">
+            <p>
+              MCP servers provide tools that your AI roles can use. This app connects to servers via SSE (Server-Sent Events) transport.
+            </p>
+            <div className="flex flex-col gap-1">
+              <a
+                href="https://modelcontextprotocol.io"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1 text-primary hover:underline"
+              >
+                MCP Specification
+                <ExternalLink className="h-3 w-3" />
+              </a>
+              <a
+                href="https://github.com/modelcontextprotocol/servers"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1 text-primary hover:underline"
+              >
+                Community MCP Servers
+                <ExternalLink className="h-3 w-3" />
+              </a>
+            </div>
+            <p className="text-xs">
+              Note: Most MCP servers use stdio transport. To use them here, you&apos;ll need to wrap them in an SSE endpoint or use a hosted service.
+            </p>
+          </div>
+        </div>
       </CardContent>
     </Card>
   )

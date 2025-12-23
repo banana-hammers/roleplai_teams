@@ -103,7 +103,7 @@ export function RoleSettingsForm({ role, roleSkills, allSkills, mcpServers }: Ro
   }
 
   return (
-    <Tabs defaultValue="general" className="space-y-6">
+    <Tabs defaultValue="general" className="space-y-6" id={`role-settings-${role.id}`}>
       <div className="overflow-x-auto scrollbar-hide -mx-4 px-4 md:mx-0 md:px-0 md:overflow-visible">
         <TabsList className="inline-flex w-max gap-1 md:grid md:w-full md:grid-cols-4">
           <TabsTrigger value="general" className="min-w-fit px-4">General</TabsTrigger>

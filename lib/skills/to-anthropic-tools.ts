@@ -15,7 +15,12 @@ export function skillsToAnthropicTools(skills: Skill[]): AnthropicTool[] {
   return skills.map(skill => ({
     // Tool names must be alphanumeric with underscores
     name: skill.name.toLowerCase().replace(/[^a-z0-9_]/g, '_'),
-    description: skill.description,
+    // Prefer short_description for tool triggering decisions
+    // Fall back to truncated description if short_description is not set
+    description: skill.short_description
+      || (skill.description
+          ? skill.description.slice(0, 150) + (skill.description.length > 150 ? '...' : '')
+          : 'Execute this skill'),
     input_schema: skill.input_schema
   }))
 }

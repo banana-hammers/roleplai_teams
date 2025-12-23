@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Switch } from '@/components/ui/switch'
-import { Plus, Trash2, Server, Loader2, CheckCircle, XCircle, Plug } from 'lucide-react'
+import { Plus, Trash2, Server, Loader2, CheckCircle, XCircle, Plug, ExternalLink } from 'lucide-react'
 import {
   createMcpServer,
   deleteMcpServer,
@@ -161,7 +161,7 @@ export function RoleMcpManager({ roleId, mcpServers, onUpdate }: RoleMcpManagerP
             Connected MCP Servers
           </CardTitle>
           <CardDescription>
-            External tool servers that this role can use. Only SSE transport is supported.
+            Connect to MCP servers via SSE transport to give this role access to external tools.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -218,7 +218,8 @@ export function RoleMcpManager({ roleId, mcpServers, onUpdate }: RoleMcpManagerP
         <CardHeader>
           <CardTitle>Add MCP Server</CardTitle>
           <CardDescription>
-            Connect to a user-hosted MCP server via SSE transport.
+            Connect to an MCP server that exposes tools via SSE (Server-Sent Events).
+            You&apos;ll need to host the server yourself or use a hosted MCP service.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -240,10 +241,10 @@ export function RoleMcpManager({ roleId, mcpServers, onUpdate }: RoleMcpManagerP
                   id="server-url"
                   value={newServer.url}
                   onChange={(e) => setNewServer({ ...newServer, url: e.target.value })}
-                  placeholder="https://your-mcp-server.example.com/mcp"
+                  placeholder="https://mcp.yourservice.com/sse"
                 />
                 <p className="text-xs text-muted-foreground">
-                  The MCP server endpoint URL (SSE transport)
+                  The SSE endpoint URL for your MCP server
                 </p>
               </div>
 
@@ -336,6 +337,37 @@ export function RoleMcpManager({ roleId, mcpServers, onUpdate }: RoleMcpManagerP
           )}
         </CardContent>
       </Card>
+
+      {/* Documentation */}
+      <div className="rounded-lg border bg-muted/50 p-4 space-y-3">
+        <h4 className="text-sm font-medium">Need an MCP server?</h4>
+        <div className="space-y-2 text-sm text-muted-foreground">
+          <p>
+            MCP servers provide tools like web search, database access, or file operations.
+            This app connects via SSE transport.
+          </p>
+          <div className="flex flex-col gap-1">
+            <a
+              href="https://modelcontextprotocol.io"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1 text-primary hover:underline"
+            >
+              MCP Specification
+              <ExternalLink className="h-3 w-3" />
+            </a>
+            <a
+              href="https://github.com/modelcontextprotocol/servers"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1 text-primary hover:underline"
+            >
+              Community MCP Servers
+              <ExternalLink className="h-3 w-3" />
+            </a>
+          </div>
+        </div>
+      </div>
     </div>
   )
 }
