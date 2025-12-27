@@ -5,6 +5,39 @@ import { TrendingUp, Headphones, Megaphone, type LucideIcon } from "lucide-react
 
 export type IndustryKey = "sales" | "support" | "marketing";
 
+export type PhaseOneData = {
+  headline: string;
+  identityExample: {
+    voice: string;
+    priority: string;
+    boundary: string;
+  };
+  testimonialSnippet: string;
+};
+
+export type PhaseTwoData = {
+  levelUpBenefits: string[];
+};
+
+export type PhaseThreeData = {
+  collaborationHighlight: string;
+};
+
+export type GrowthData = {
+  phase1Transformation: {
+    before: string;
+    after: string;
+  };
+  phase2Transformation: {
+    before: string;
+    after: string;
+  };
+  unlockRequirements: {
+    phase2: string;
+    phase3: string;
+  };
+};
+
 export type IndustryData = {
   label: string;
   icon: LucideIcon;
@@ -22,13 +55,17 @@ export type IndustryData = {
     name: string;
     description: string;
     progress: number;
-    team: { name: string; color: string }[];
+    team: { name: string; color: string; owner: "you" | "teammate" }[];
     handoff: {
       from: string;
       to: string;
       message: string;
     };
   };
+  phaseOne: PhaseOneData;
+  phaseTwo: PhaseTwoData;
+  phaseThree: PhaseThreeData;
+  growth: GrowthData;
 };
 
 export const industries: Record<IndustryKey, IndustryData> = {
@@ -49,14 +86,47 @@ export const industries: Record<IndustryKey, IndustryData> = {
       description: "3 RoleplAIrs working together",
       progress: 65,
       team: [
-        { name: "Qualifier", color: "bg-roles-accent" },
-        { name: "Researcher", color: "bg-skills-accent" },
-        { name: "Closer", color: "bg-identity-accent" },
+        { name: "Qualifier", color: "bg-roles-accent", owner: "you" },
+        { name: "Researcher", color: "bg-skills-accent", owner: "teammate" },
+        { name: "Closer", color: "bg-identity-accent", owner: "you" },
       ],
       handoff: {
         from: "Qualifier",
         to: "Closer",
         message: "Lead qualified. Ready for demo!",
+      },
+    },
+    phaseOne: {
+      headline: "AI that speaks like a closer",
+      identityExample: {
+        voice: "Warm but direct",
+        priority: "Close deals efficiently",
+        boundary: "Never discount below 20%",
+      },
+      testimonialSnippet: "It's like having a clone who knows my playbook",
+    },
+    phaseTwo: {
+      levelUpBenefits: [
+        "Learns your objection patterns",
+        "Remembers past deal contexts",
+        "Suggests optimal follow-up timing",
+      ],
+    },
+    phaseThree: {
+      collaborationHighlight: "Your closer + teammate's researcher = unstoppable",
+    },
+    growth: {
+      phase1Transformation: {
+        before: "Generic AI that sounds robotic",
+        after: "AI that speaks like a seasoned closer",
+      },
+      phase2Transformation: {
+        before: "One-size-fits-all sales assistant",
+        after: "Lead Qualifier that knows your playbook",
+      },
+      unlockRequirements: {
+        phase2: "Complete your Identity Core interview",
+        phase3: "Reach LVL 3 with your first RoleplAIr",
       },
     },
   },
@@ -77,15 +147,48 @@ export const industries: Record<IndustryKey, IndustryData> = {
       description: "4 RoleplAIrs working together",
       progress: 45,
       team: [
-        { name: "Triage", color: "bg-roles-accent" },
-        { name: "Resolver", color: "bg-skills-accent" },
-        { name: "Escalator", color: "bg-identity-accent" },
-        { name: "Follow-up", color: "bg-context-accent" },
+        { name: "Triage", color: "bg-roles-accent", owner: "you" },
+        { name: "Resolver", color: "bg-skills-accent", owner: "you" },
+        { name: "Escalator", color: "bg-identity-accent", owner: "teammate" },
+        { name: "Follow-up", color: "bg-context-accent", owner: "teammate" },
       ],
       handoff: {
         from: "Triage",
         to: "Resolver",
         message: "Priority ticket incoming!",
+      },
+    },
+    phaseOne: {
+      headline: "AI that cares like you do",
+      identityExample: {
+        voice: "Patient and thorough",
+        priority: "Resolve on first contact",
+        boundary: "Escalate when customer is frustrated",
+      },
+      testimonialSnippet: "Finally, support that sounds like our team",
+    },
+    phaseTwo: {
+      levelUpBenefits: [
+        "Learns common issue patterns",
+        "Remembers customer history",
+        "Predicts escalation needs",
+      ],
+    },
+    phaseThree: {
+      collaborationHighlight: "Your triage + teammate's escalator = zero dropped tickets",
+    },
+    growth: {
+      phase1Transformation: {
+        before: "Generic AI with no empathy",
+        after: "AI that cares like your best agent",
+      },
+      phase2Transformation: {
+        before: "Basic chatbot responses",
+        after: "Support Agent that knows your docs",
+      },
+      unlockRequirements: {
+        phase2: "Complete your Identity Core interview",
+        phase3: "Reach LVL 3 with your first RoleplAIr",
       },
     },
   },
@@ -106,15 +209,48 @@ export const industries: Record<IndustryKey, IndustryData> = {
       description: "4 RoleplAIrs working together",
       progress: 45,
       team: [
-        { name: "Research", color: "bg-roles-accent" },
-        { name: "Writer", color: "bg-skills-accent" },
-        { name: "Strategist", color: "bg-identity-accent" },
-        { name: "Editor", color: "bg-context-accent" },
+        { name: "Research", color: "bg-roles-accent", owner: "you" },
+        { name: "Writer", color: "bg-skills-accent", owner: "you" },
+        { name: "Strategist", color: "bg-identity-accent", owner: "teammate" },
+        { name: "Editor", color: "bg-context-accent", owner: "teammate" },
       ],
       handoff: {
         from: "Writer",
         to: "Editor",
         message: "Draft complete. Ready for your review!",
+      },
+    },
+    phaseOne: {
+      headline: "AI that writes in your voice",
+      identityExample: {
+        voice: "Bold and creative",
+        priority: "Brand consistency first",
+        boundary: "No clickbait, ever",
+      },
+      testimonialSnippet: "Content that actually sounds like our brand",
+    },
+    phaseTwo: {
+      levelUpBenefits: [
+        "Learns your brand voice nuances",
+        "Remembers campaign contexts",
+        "Suggests content angles",
+      ],
+    },
+    phaseThree: {
+      collaborationHighlight: "Your writer + teammate's strategist = campaigns that convert",
+    },
+    growth: {
+      phase1Transformation: {
+        before: "Generic AI copy that misses your tone",
+        after: "AI that writes in your brand voice",
+      },
+      phase2Transformation: {
+        before: "One-size-fits-all content generator",
+        after: "Content Strategist that knows your audience",
+      },
+      unlockRequirements: {
+        phase2: "Complete your Identity Core interview",
+        phase3: "Reach LVL 3 with your first RoleplAIr",
       },
     },
   },

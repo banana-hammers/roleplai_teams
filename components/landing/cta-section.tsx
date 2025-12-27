@@ -18,25 +18,25 @@ export function CTASection() {
           {/* Social proof */}
           <div className="mb-8 inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-4 py-1.5 text-sm text-muted-foreground">
             <Sparkles className="size-4 text-primary" />
-            <span>Join teams already building with RoleplAIrs</span>
+            <span>Join teams already on their growth journey</span>
           </div>
 
           <h2 className="max-w-2xl font-display text-3xl font-bold tracking-tight sm:text-4xl lg:text-5xl">
             Ready to{" "}
-            <span className="bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-              meet your RoleplAIrs?
+            <span className="bg-linear-to-r from-primary to-accent bg-clip-text text-transparent">
+              Begin Your Journey?
             </span>
           </h2>
 
           <p className="mt-6 max-w-xl text-lg text-muted-foreground">
-            Start a conversation with Nova and meet your first RoleplAIr in
-            minutes. No forms, no configuration — just talk.
+            Meet Nova, your AI guide. In 5 minutes, you&apos;ll have an Identity Core
+            that powers everything you build.
           </p>
 
           <div className="mt-10">
             <Button asChild variant="gradient" size="lg" className="gap-2">
               <Link href="/signup">
-                Create Your First RoleplAIr
+                Start Growing Today
                 <ArrowRight className="size-4" />
               </Link>
             </Button>
