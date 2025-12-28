@@ -18,25 +18,24 @@ export function CTASection() {
           {/* Social proof */}
           <div className="mb-8 inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-4 py-1.5 text-sm text-muted-foreground">
             <Sparkles className="size-4 text-primary" />
-            <span>Join teams already on their growth journey</span>
+            <span>Built by a team with 80+ years shipping products</span>
           </div>
 
           <h2 className="max-w-2xl font-display text-3xl font-bold tracking-tight sm:text-4xl lg:text-5xl">
             Ready to{" "}
             <span className="bg-linear-to-r from-primary to-accent bg-clip-text text-transparent">
-              Begin Your Journey?
+              Elevate Your Team?
             </span>
           </h2>
 
           <p className="mt-6 max-w-xl text-lg text-muted-foreground">
-            Meet Nova, your AI guide. In 5 minutes, you&apos;ll have an Identity Core
-            that powers everything you build.
+            Meet Nova, your AI guide. In 5 minutes, capture your voice and start building AI that actually sounds like you.
           </p>
 
           <div className="mt-10">
             <Button asChild variant="gradient" size="lg" className="gap-2">
               <Link href="/signup">
-                Start Growing Today
+                Get Started
                 <ArrowRight className="size-4" />
               </Link>
             </Button>

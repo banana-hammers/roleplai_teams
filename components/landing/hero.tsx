@@ -1,24 +1,12 @@
-"use client";
-
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import {
   ArrowRight,
   Fingerprint,
-  MessageSquareQuote,
+  Code2,
 } from "lucide-react";
-import { cn } from "@/lib/utils";
-import {
-  useIndustry,
-  industries,
-  industryKeys,
-} from "@/components/landing/industry-context";
 
 export function Hero() {
-  const { activeIndustry, setActiveIndustry, current, isTransitioning } =
-    useIndustry();
-  const Icon = current.icon;
-
   return (
     <section className="relative overflow-hidden">
       {/* Background gradient */}
@@ -28,64 +16,36 @@ export function Hero() {
         <div className="flex flex-col items-center text-center">
           {/* Headline */}
           <h1 className="max-w-4xl font-display text-5xl font-bold tracking-tight sm:text-6xl lg:text-7xl">
-            Start With{" "}
+            Elevate What Your{" "}
             <span className="bg-linear-to-r from-primary via-indigo-400 to-accent bg-clip-text text-transparent">
-              Who You Are
+              Team Can Do
             </span>
           </h1>
 
           {/* Subheadline */}
           <p className="mt-6 max-w-2xl text-lg text-muted-foreground sm:text-xl">
-            Every great AI partner begins with understanding you.
+            Not another AI tool that does the work for you.
             <br />
-            Capture your voice, priorities, and boundaries in minutes.
+            RoleplAIrs amplify your team&apos;s voice, expertise, and creativity.
           </p>
 
           {/* CTA */}
           <div className="mt-10">
             <Button asChild variant="gradient" size="lg" className="gap-2">
               <Link href="/signup">
-                Begin Your Journey
+                Get Started
                 <ArrowRight className="size-4" />
               </Link>
             </Button>
           </div>
 
-          {/* Industry Pills */}
-          <div className="mt-12">
-            <p className="mb-4 text-sm text-muted-foreground">
-              See how it works for your industry
-            </p>
-            <div className="flex flex-wrap justify-center gap-2">
-              {industryKeys.map((key) => {
-                const industry = industries[key];
-                const IndustryIcon = industry.icon;
-                return (
-                  <button
-                    key={key}
-                    onClick={() => setActiveIndustry(key)}
-                    className={cn(
-                      "flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium transition-all duration-200",
-                      activeIndustry === key
-                        ? "bg-primary text-primary-foreground shadow-md"
-                        : "bg-muted text-muted-foreground hover:bg-muted/80 hover:text-foreground"
-                    )}
-                  >
-                    <IndustryIcon className="size-4" />
-                    {industry.label}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
+          {/* Credibility line */}
+          <p className="mt-6 text-sm text-muted-foreground">
+            Built by a team with 80+ years shipping products that work
+          </p>
 
           {/* Identity Core Card */}
-          <div
-            className={cn(
-              "mt-10 w-full max-w-md rounded-xl border border-identity-accent/30 bg-card/80 shadow-lg backdrop-blur-sm transition-all duration-200",
-              isTransitioning ? "opacity-0 scale-95" : "opacity-100 scale-100"
-            )}
-          >
+          <div className="mt-10 w-full max-w-md rounded-xl border border-identity-accent/30 bg-card/80 shadow-lg backdrop-blur-sm">
             {/* Header */}
             <div className="flex items-center gap-3 border-b border-border/40 p-4">
               <div className="flex size-10 items-center justify-center rounded-lg bg-identity-accent/20">
@@ -94,20 +54,20 @@ export function Hero() {
               <div className="flex-1 text-left">
                 <h3 className="font-semibold">Your Identity Core</h3>
                 <p className="text-xs text-muted-foreground">
-                  {current.phaseOne.headline}
+                  AI that sounds like your team, not generic slop
                 </p>
               </div>
-              <Icon className="size-5 text-muted-foreground" />
+              <Code2 className="size-5 text-muted-foreground" />
             </div>
 
-            {/* Identity attributes */}
+            {/* Identity attributes - tech-focused example */}
             <div className="space-y-3 p-4">
               <div className="flex items-start gap-3 text-left">
                 <span className="mt-0.5 text-xs font-medium uppercase tracking-wider text-identity-accent">
                   Voice
                 </span>
                 <span className="flex-1 text-sm text-foreground">
-                  {current.phaseOne.identityExample.voice}
+                  Direct but collaborative
                 </span>
               </div>
               <div className="flex items-start gap-3 text-left">
@@ -115,7 +75,7 @@ export function Hero() {
                   Priority
                 </span>
                 <span className="flex-1 text-sm text-foreground">
-                  {current.phaseOne.identityExample.priority}
+                  Ship quality work, fast
                 </span>
               </div>
               <div className="flex items-start gap-3 text-left">
@@ -123,19 +83,16 @@ export function Hero() {
                   Boundary
                 </span>
                 <span className="flex-1 text-sm text-foreground">
-                  {current.phaseOne.identityExample.boundary}
+                  Never cut corners on security
                 </span>
               </div>
             </div>
 
-            {/* Testimonial */}
+            {/* Value prop */}
             <div className="border-t border-border/40 bg-muted/30 p-4">
-              <div className="flex items-start gap-2 text-left">
-                <MessageSquareQuote className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
-                <p className="text-sm italic text-muted-foreground">
-                  &ldquo;{current.phaseOne.testimonialSnippet}&rdquo;
-                </p>
-              </div>
+              <p className="text-sm text-muted-foreground text-left">
+                Captured in a 5-minute conversation with Nova, your AI guide.
+              </p>
             </div>
           </div>
 

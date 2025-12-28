@@ -49,26 +49,26 @@ const features: {
 }[] = [
   {
     icon: Users2,
-    title: "Party Up",
-    description: "Select 2-5 RoleplAIrs to form your mission team",
+    title: "Cross-Functional Teams",
+    description: "Bring together RoleplAIrs across roles and disciplines",
     color: "roles-accent",
   },
   {
     icon: AtSign,
-    title: "@Mention & Handoff",
-    description: "Direct specific roles or let AI pick the best responder",
+    title: "Seamless Handoffs",
+    description: "Context flows between team members without repetition",
     color: "context-accent",
   },
   {
     icon: TrendingUp,
-    title: "Track Progress",
-    description: "AI monitors your goals - you adjust as needed",
+    title: "Shared Progress",
+    description: "Everyone sees the same picture, always in sync",
     color: "skills-accent",
   },
   {
     icon: CalendarClock,
-    title: "Scheduled Check-ins",
-    description: "Daily or weekly tasks to keep momentum going",
+    title: "Async Collaboration",
+    description: "Work moves forward even when you're not online",
     color: "missions-accent",
   },
 ];
@@ -92,10 +92,10 @@ export function PhaseMissions() {
             <span className="bg-linear-to-r from-missions-accent to-context-accent bg-clip-text text-transparent">
               Scale
             </span>{" "}
-            With Your Team
+            Across Your Organization
           </h2>
           <p className="mt-4 text-lg text-muted-foreground">
-            Combine RoleplAIrs across your organization for collective impact
+            When everyone has a RoleplAIr, the whole team moves faster
           </p>
         </div>
 

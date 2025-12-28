@@ -24,7 +24,7 @@ const phases: {
   },
   {
     id: "grow",
-    label: "Grow",
+    label: "Evolve",
     shortLabel: "2",
     icon: Zap,
     color: "text-roles-accent",

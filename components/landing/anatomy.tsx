@@ -7,7 +7,6 @@ import {
   Zap,
   Wrench,
   Check,
-  TrendingUp,
   Brain,
   History,
 } from "lucide-react";
@@ -55,28 +54,28 @@ const components: {
     icon: Fingerprint,
     name: "Identity Core",
     description:
-      "Your voice, values, and boundaries. Created once through a conversation with Nova, then inherited by every RoleplAIr you create.",
+      "Your voice, priorities, and expertise. Created through conversation with Nova, carried into every interaction.",
     color: "identity-accent",
   },
   {
     icon: BookOpen,
     name: "Lore",
     description:
-      "Context they remember — your bio, brand guidelines, product docs. Attach different Lore packs to different RoleplAIrs.",
+      "The knowledge that makes you, you — your context, your expertise, your world. They remember so you don't have to repeat yourself.",
     color: "context-accent",
   },
   {
     icon: Zap,
     name: "Skills",
     description:
-      "Abilities they can perform — draft emails, review code, summarize docs. Skills earn XP and level up the more you use them.",
+      "The work they do so you can focus on what matters. They level up the more you use them — and help you level up too.",
     color: "skills-accent",
   },
   {
     icon: Wrench,
     name: "Tools",
     description:
-      "Integrations that let them take action — send emails, create PRs, update calendars. Coming soon.",
+      "Integrations that let them take action on your behalf. Coming soon.",
     color: "muted",
     muted: true,
   },
@@ -97,7 +96,7 @@ export function Anatomy() {
             </span>
           </h2>
           <p className="mt-4 text-lg text-muted-foreground">
-            AI agents with your personality that level up the more you use them
+            AI collaborators that extend your identity and level up alongside you
           </p>
         </div>
 
@@ -120,10 +119,6 @@ export function Anatomy() {
                   <p className="text-sm text-muted-foreground">
                     {current.roleplAIr.description}
                   </p>
-                </div>
-                <div className="flex items-center gap-1 rounded-full bg-skills-accent/10 px-2 py-1 text-xs font-medium text-skills-accent">
-                  <TrendingUp className="size-3" />
-                  LVL 4
                 </div>
               </div>
 
@@ -152,7 +147,7 @@ export function Anatomy() {
                 </div>
               </div>
 
-              {/* Skills with XP */}
+              {/* Skills */}
               <div className="mt-4">
                 <div className="mb-2 flex items-center gap-2 text-xs font-medium uppercase tracking-wider text-muted-foreground">
                   <Zap className="size-3" />
@@ -163,7 +158,7 @@ export function Anatomy() {
                     <div key={skill.name}>
                       <div className="mb-1 flex items-center justify-between text-xs">
                         <span>{skill.name}</span>
-                        <span className="text-skills-accent">LVL {skill.level}</span>
+                        <span className="text-skills-accent">{skill.progress}%</span>
                       </div>
                       <div className="h-1.5 w-full overflow-hidden rounded-full bg-skills-accent/20">
                         <div

@@ -6,7 +6,6 @@ import {
   Zap,
   Wrench,
   Check,
-  TrendingUp,
   Sparkles,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -51,19 +50,19 @@ const components: {
   {
     icon: Fingerprint,
     name: "Identity Core",
-    description: "Your voice, carried into every interaction",
+    description: "Your voice and expertise, carried into every interaction",
     color: "identity-accent",
   },
   {
     icon: BookOpen,
     name: "Lore",
-    description: "Knowledge that makes you, you",
+    description: "The context that makes your team unique",
     color: "context-accent",
   },
   {
     icon: Zap,
     name: "Skills",
-    description: "Abilities that level up with use",
+    description: "Capabilities that evolve with your workflow",
     color: "skills-accent",
   },
   {
@@ -85,12 +84,12 @@ export function PhaseRoleplAIrs() {
         <div className="text-center">
           <h2 className="font-display text-3xl font-bold tracking-tight sm:text-4xl lg:text-5xl">
             <span className="bg-linear-to-r from-roles-accent to-accent bg-clip-text text-transparent">
-              Grow
+              Evolve
             </span>{" "}
-            Into Specialized Roles
+            How Your Team Works
           </h2>
           <p className="mt-4 text-lg text-muted-foreground">
-            Turn your Identity Core into AI partners that level up with you
+            Build AI collaborators that carry your voice and adapt to your workflow
           </p>
         </div>
 
@@ -115,10 +114,6 @@ export function PhaseRoleplAIrs() {
                   <p className="text-sm text-muted-foreground">
                     {current.roleplAIr.description}
                   </p>
-                </div>
-                <div className="flex items-center gap-1 rounded-full bg-skills-accent/10 px-2 py-1 text-xs font-medium text-skills-accent">
-                  <TrendingUp className="size-3" />
-                  LVL 4
                 </div>
               </div>
 
@@ -147,7 +142,7 @@ export function PhaseRoleplAIrs() {
                 </div>
               </div>
 
-              {/* Skills with XP */}
+              {/* Skills */}
               <div className="mt-4">
                 <div className="mb-2 flex items-center gap-2 text-xs font-medium uppercase tracking-wider text-muted-foreground">
                   <Zap className="size-3" />
@@ -159,7 +154,7 @@ export function PhaseRoleplAIrs() {
                       <div className="mb-1 flex items-center justify-between text-xs">
                         <span>{skill.name}</span>
                         <span className="text-skills-accent">
-                          LVL {skill.level}
+                          {skill.progress}%
                         </span>
                       </div>
                       <div className="h-1.5 w-full overflow-hidden rounded-full bg-skills-accent/20">
@@ -175,7 +170,7 @@ export function PhaseRoleplAIrs() {
             </div>
           </div>
 
-          {/* Right: Component Cards + Level Up */}
+          {/* Right: Component Cards + Evolution Callout */}
           <div className="space-y-6">
             {/* Component cards */}
             <div className="grid gap-4 sm:grid-cols-2">
@@ -214,7 +209,7 @@ export function PhaseRoleplAIrs() {
               })}
             </div>
 
-            {/* Level Up Callout */}
+            {/* Evolution Callout */}
             <div
               className={cn(
                 "rounded-xl border border-roles-accent/30 bg-roles-accent/5 p-5 transition-all duration-200",
@@ -223,10 +218,10 @@ export function PhaseRoleplAIrs() {
             >
               <div className="flex items-center gap-2 text-roles-accent">
                 <Sparkles className="size-5" />
-                <h4 className="font-semibold">The more you use them, the better they get</h4>
+                <h4 className="font-semibold">AI that evolves with your team</h4>
               </div>
               <ul className="mt-3 space-y-2">
-                {current.phaseTwo.levelUpBenefits.map((benefit, i) => (
+                {current.phaseTwo.benefits.map((benefit, i) => (
                   <li
                     key={i}
                     className="flex items-center gap-2 text-sm text-muted-foreground"

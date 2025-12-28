@@ -26,10 +26,10 @@ export default function Home() {
           <JourneyConnector
             from="identity"
             to="roleplaairs"
-            message="Now you're ready to specialize"
+            message="Your voice powers everything"
           />
 
-          {/* Phase 2: GROW - RoleplAIrs */}
+          {/* Phase 2: EVOLVE - RoleplAIrs */}
           <section id="phase-grow">
             <PhaseRoleplAIrs />
           </section>
@@ -38,7 +38,7 @@ export default function Home() {
           <JourneyConnector
             from="roleplaairs"
             to="missions"
-            message="Now you're ready to scale"
+            message="From individual to team"
           />
 
           {/* Phase 3: SCALE - Missions */}

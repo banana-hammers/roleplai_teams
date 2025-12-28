@@ -2,59 +2,88 @@ import Link from "next/link";
 import { Navbar } from "@/components/navigation";
 import { Footer } from "@/components/landing/footer";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Users, Lightbulb, Fingerprint } from "lucide-react";
+import {
+  ArrowRight,
+  Fingerprint,
+  Trash2,
+  TrendingUp,
+  Monitor,
+  Cloud,
+  Bot,
+} from "lucide-react";
 
 export const metadata = {
   title: "About | Roleplai Teams",
   description:
-    "Technology should amplify humanity, not replace it. Learn about our philosophy and approach to thoughtful AI.",
+    "80+ years building products that work. We cut through AI hype to build technology that elevates what humans can do.",
 };
+
+const eras = [
+  {
+    icon: Monitor,
+    era: "Computers",
+    decade: "1980s",
+    description: "One person could produce professional work that once required entire departments",
+  },
+  {
+    icon: Cloud,
+    era: "SaaS",
+    decade: "2000s",
+    description: "Distributed teams could collaborate in real-time with tools once reserved for enterprises",
+  },
+  {
+    icon: Bot,
+    era: "AI Agents",
+    decade: "Now",
+    description: "You can delegate open-ended work to AI that carries your voice and judgment",
+  },
+];
 
 const pillars = [
   {
-    icon: Users,
-    title: "Human-First AI",
-    description:
-      "AI should work for you, not the other way around. Every feature we build starts with the question: does this keep humans in control?",
-  },
-  {
-    icon: Lightbulb,
-    title: "Thoughtful Development",
-    description:
-      "We don't ship features to check boxes. Every capability is designed with intention, tested for real workflows, and built to grow with your team.",
-  },
-  {
     icon: Fingerprint,
-    title: "Authentic Extension",
+    title: "Your Voice, Amplified",
     description:
-      "Your identity is yours. RoleplAIrs are extensions of you — not replacements. We help you project your authentic self into every AI interaction, consistently and controllably.",
+      "RoleplAIrs carry your expertise and values into every interaction. No more generic AI outputs that sound like everyone else.",
+  },
+  {
+    icon: TrendingUp,
+    title: "Evolve How You Work",
+    description:
+      "Technology should fit your workflow, not the other way around. RoleplAIrs learn your patterns and adapt to how your team actually operates.",
+  },
+  {
+    icon: Trash2,
+    title: "Focus on What Matters",
+    description:
+      "The tedious disappears. You spend time on meaningful, creative work — the parts of your job that drew you here in the first place.",
   },
 ];
 
 const team = [
   {
     name: "Ryan Eves",
-    role: "Co-founder & CEO",
+    role: "Chief Executive Officer",
     classTitle: "The Bard",
-    bio: "Product leader with nearly two decades in product and design. Lifelong gamer who believes the best products feel like play.",
+    bio: "Nearly 20 years in product and design. Built products at startups and enterprises alike. Believes the best software feels effortless.",
   },
   {
     name: "Anthony Charles",
-    role: "Co-founder & CTO",
+    role: "Chief Technology Officer",
     classTitle: "The Artificer",
-    bio: "30+ years building intuitive products. TTRPG enthusiast since the 80s who brings that magic to enterprise software.",
+    bio: "30+ years building intuitive products. Seen every technology hype cycle and knows what actually works.",
   },
   {
     name: "Rob Bauman",
-    role: "Co-founder & COO",
+    role: "Chief Operating Officer",
     classTitle: "The Paladin",
-    bio: "22+ years in ops, former EA.com global lead. Active DM running three campaigns with 30+ years at the table.",
+    bio: "22+ years in operations. Former EA.com global lead who scaled systems that actually ship.",
   },
   {
     name: "Thomas Levi",
-    role: "Co-founder & Chief Data Scientist",
+    role: "Chief Data Scientist",
     classTitle: "The Sorcerer",
-    bio: "ML visionary and former physicist. Brings strategic thinking from both data science and tabletop gameplay.",
+    bio: "ML expert and former physicist. Cuts through AI hype with rigorous, practical approaches.",
   },
 ];
 
@@ -69,46 +98,108 @@ export default function AboutPage() {
 
           <div className="mx-auto max-w-4xl px-6 py-24 text-center sm:py-32">
             <h1 className="font-display text-4xl font-bold tracking-tight sm:text-5xl lg:text-6xl">
-              Technology Should{" "}
+              Technology Has Always{" "}
               <span className="bg-gradient-to-r from-primary via-indigo-400 to-accent bg-clip-text text-transparent">
-                Amplify Humanity,
+                Elevated
               </span>{" "}
-              Not Replace It.
+              What Humans Can Do
             </h1>
             <p className="mx-auto mt-6 max-w-2xl text-lg text-muted-foreground sm:text-xl">
-              We&apos;re building RoleplAIrs — AI agents that extend your
-              authentic personality into every interaction.
+              From computers to SaaS to AI — each era amplified human
+              capabilities. We&apos;re building the next chapter: computers that
+              think on your behalf and handle the open-ended work.
             </p>
           </div>
         </section>
 
-        {/* Mission Section */}
+        {/* Evolution Timeline */}
         <section className="border-y border-border/40 bg-muted/20 py-16 sm:py-24">
-          <div className="mx-auto max-w-4xl px-6">
-            <div className="text-center">
-              <h2 className="font-display text-2xl font-bold tracking-tight sm:text-3xl">
-                Our Mission
-              </h2>
-              <blockquote className="mt-8 text-xl italic text-muted-foreground sm:text-2xl">
-                &ldquo;We believe the best AI doesn&apos;t sound like AI — it
-                sounds like you. RoleplayAI Teams exists to help you create
-                RoleplAIrs — AI agents that are true extensions of your
-                personality, carrying your voice, expertise, and values into
-                every interaction.&rdquo;
-              </blockquote>
+          <div className="mx-auto max-w-6xl px-6">
+            <div className="grid gap-8 md:grid-cols-3">
+              {eras.map((era, index) => (
+                <div
+                  key={era.era}
+                  className="relative rounded-xl border border-border/50 bg-card p-6 text-center"
+                >
+                  {index < eras.length - 1 && (
+                    <div className="absolute -right-4 top-1/2 z-10 hidden -translate-y-1/2 md:block">
+                      <ArrowRight className="size-6 text-muted-foreground/50" />
+                    </div>
+                  )}
+                  <div className="mx-auto mb-4 flex size-14 items-center justify-center rounded-2xl bg-primary/10">
+                    <era.icon className="size-7 text-primary" />
+                  </div>
+                  <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                    {era.decade}
+                  </p>
+                  <h3 className="mt-1 text-xl font-semibold">{era.era}</h3>
+                  <p className="mt-3 text-sm text-muted-foreground">
+                    {era.description}
+                  </p>
+                </div>
+              ))}
             </div>
           </div>
         </section>
 
-        {/* Three Pillars */}
+        {/* The Real Problem */}
         <section className="py-16 sm:py-24">
+          <div className="mx-auto max-w-4xl px-6">
+            <div className="text-center">
+              <h2 className="font-display text-2xl font-bold tracking-tight sm:text-3xl">
+                The Problem With Most AI Tools
+              </h2>
+              <p className="mt-2 text-xl font-medium text-primary">
+                They Create More Work, Not Less
+              </p>
+            </div>
+
+            <div className="mt-12 rounded-xl border border-border/50 bg-card p-8">
+              <div className="space-y-4">
+                <div className="flex items-start gap-3">
+                  <div className="mt-1 flex size-6 shrink-0 items-center justify-center rounded-full bg-destructive/10 text-destructive">
+                    <span className="text-sm font-bold">1</span>
+                  </div>
+                  <p className="text-lg text-muted-foreground">
+                    <span className="font-medium text-foreground">They generate slop</span> — generic outputs that sound like everyone else and require constant editing.
+                  </p>
+                </div>
+                <div className="flex items-start gap-3">
+                  <div className="mt-1 flex size-6 shrink-0 items-center justify-center rounded-full bg-destructive/10 text-destructive">
+                    <span className="text-sm font-bold">2</span>
+                  </div>
+                  <p className="text-lg text-muted-foreground">
+                    <span className="font-medium text-foreground">They replace human judgment</span> instead of enhancing it. You end up reviewing AI work instead of doing meaningful work.
+                  </p>
+                </div>
+                <div className="flex items-start gap-3">
+                  <div className="mt-1 flex size-6 shrink-0 items-center justify-center rounded-full bg-destructive/10 text-destructive">
+                    <span className="text-sm font-bold">3</span>
+                  </div>
+                  <p className="text-lg text-muted-foreground">
+                    <span className="font-medium text-foreground">They don&apos;t understand your context</span> — your voice, your standards, how your team actually operates.
+                  </p>
+                </div>
+              </div>
+
+              <div className="mt-8 border-t border-border/50 pt-6">
+                <p className="text-lg font-medium text-foreground">
+                  We built RoleplAIrs differently. AI that learns YOUR voice, YOUR workflows, YOUR standards — and gets better the more you use it.
+                </p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Our Philosophy */}
+        <section className="border-y border-border/40 bg-muted/20 py-16 sm:py-24">
           <div className="mx-auto max-w-6xl px-6">
             <div className="text-center">
               <h2 className="font-display text-2xl font-bold tracking-tight sm:text-3xl">
-                Our Approach
+                What We Believe
               </h2>
-              <p className="mt-4 text-lg text-muted-foreground">
-                Three principles that guide everything we build
+              <p className="mt-4 max-w-2xl mx-auto text-lg text-muted-foreground">
+                The &ldquo;yes, and...&rdquo; culture that makes collaboration magical is the same spirit behind the Agile Manifesto: individuals and interactions over processes and tools. That&apos;s how we build.
               </p>
             </div>
 
@@ -128,48 +219,18 @@ export default function AboutPage() {
           </div>
         </section>
 
-        {/* The Problem */}
-        <section className="border-y border-border/40 bg-muted/20 py-16 sm:py-24">
-          <div className="mx-auto max-w-4xl px-6">
-            <div className="text-center">
-              <h2 className="font-display text-2xl font-bold tracking-tight sm:text-3xl">
-                The Problem We Solve
-              </h2>
-              <div className="mt-8 rounded-xl border border-border/50 bg-card p-8 text-left">
-                <p className="text-lg text-muted-foreground">
-                  Today&apos;s AI tools are generic by design. They don&apos;t
-                  know your brand voice, your team&apos;s expertise, or your
-                  values. Every conversation starts from scratch.
-                </p>
-                <p className="mt-4 text-lg font-medium text-foreground">
-                  The result? AI that sounds like everyone else&apos;s AI.
-                </p>
-                <p className="mt-4 text-lg text-muted-foreground">
-                  RoleplAIrs are different. Through a simple conversation, you
-                  create AI agents that speak with your voice, know your world,
-                  and get better the more you use them.
-                </p>
-              </div>
-            </div>
-          </div>
-        </section>
-
         {/* Our Vision */}
         <section className="py-16 sm:py-24">
           <div className="mx-auto max-w-4xl px-6">
             <div className="text-center">
               <h2 className="font-display text-2xl font-bold tracking-tight sm:text-3xl">
-                Our Vision
+                Why We&apos;re Building This
               </h2>
               <p className="mx-auto mt-8 max-w-3xl text-xl text-muted-foreground">
-                We envision a future where everyone has RoleplAIrs — AI agents
-                that are true extensions of their personality. Where technology
-                amplifies human creativity and expertise rather than
-                homogenizing it.
+                We&apos;ve watched AI hype cycles come and go. We know what lasts: technology that makes humans more capable, not less relevant.
               </p>
               <p className="mx-auto mt-6 max-w-3xl text-xl font-medium text-foreground">
-                Where your AI sounds unmistakably like you, because it IS you —
-                extended, enhanced, and leveling up alongside you.
+                RoleplAIrs are AI agents that think on your behalf — handling open-ended tasks while carrying your voice, your expertise, and your standards. Technology doing what it was always meant to do.
               </p>
             </div>
           </div>
@@ -180,11 +241,10 @@ export default function AboutPage() {
           <div className="mx-auto max-w-6xl px-6">
             <div className="text-center">
               <h2 className="font-display text-2xl font-bold tracking-tight sm:text-3xl">
-                The Party
+                The Team
               </h2>
-              <p className="mt-4 text-lg text-muted-foreground">
-                A band of seasoned adventurers with 80+ combined years in product, engineering, and AI -
-                united by a love of games and a belief that work software should feel like play.
+              <p className="mt-4 max-w-2xl mx-auto text-lg text-muted-foreground">
+                80+ combined years building products that work. We&apos;ve seen every hype cycle and learned what actually matters: technology that elevates humans.
               </p>
             </div>
 
@@ -224,16 +284,15 @@ export default function AboutPage() {
 
           <div className="mx-auto max-w-4xl px-6 text-center">
             <h2 className="font-display text-2xl font-bold tracking-tight sm:text-3xl">
-              Meet Your RoleplAIrs
+              Ready to Elevate Your Team?
             </h2>
             <p className="mt-4 text-lg text-muted-foreground">
-              Start a conversation with Nova and create your first RoleplAIr in
-              minutes.
+              Meet Nova, your AI guide. In 5 minutes, capture your voice and start building AI that actually sounds like you.
             </p>
             <div className="mt-8">
               <Button asChild variant="gradient" size="lg" className="gap-2">
                 <Link href="/signup">
-                  Create Your First RoleplAIr
+                  Get Started
                   <ArrowRight className="size-4" />
                 </Link>
               </Button>
