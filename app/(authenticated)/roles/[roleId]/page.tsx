@@ -169,7 +169,7 @@ export default function RoleChatPage({ params }: RoleChatPageProps) {
   const conversationStarters = getConversationStarters(skills, role)
 
   return (
-    <div className="flex min-h-screen flex-col bg-background">
+    <div className="flex h-dvh flex-col bg-background">
       {/* Compact Header */}
       <header className={cn(
         'sticky top-0 z-50',
@@ -273,7 +273,7 @@ export default function RoleChatPage({ params }: RoleChatPageProps) {
             <div className="mx-auto max-w-3xl px-4 py-6 space-y-4">
               {/* Empty state with conversation starters */}
               {messages.length === 0 && (
-                <div className="flex flex-col items-center justify-center min-h-[60vh] py-8">
+                <div className="flex flex-col items-center justify-center py-8">
                   {/* Animated role avatar */}
                   <div className="relative mb-6">
                     <TierAvatar tier={tierConfig} size="xl" />
@@ -312,6 +312,8 @@ export default function RoleChatPage({ params }: RoleChatPageProps) {
               {/* Messages */}
               {messages.map((message, index) => {
                 const isNew = index >= lastMessageCount
+                const prevMessage = messages[index - 1]
+                const isGrouped = prevMessage?.role === message.role
 
                 return (
                   <div key={message.id}>
@@ -320,6 +322,8 @@ export default function RoleChatPage({ params }: RoleChatPageProps) {
                       content={message.content}
                       senderName={message.role === 'assistant' ? role.name : undefined}
                       isNew={isNew}
+                      isGrouped={isGrouped}
+                      tierConfig={tierConfig}
                       formattedCost={message.usage?.formattedCost}
                     />
 
@@ -340,7 +344,7 @@ export default function RoleChatPage({ params }: RoleChatPageProps) {
                 )
               })}
 
-              {isChatLoading && <TypingIndicator senderName={role.name} />}
+              {isChatLoading && <TypingIndicator senderName={role.name} tierConfig={tierConfig} />}
 
               {error && (
                 <div className="flex justify-center">

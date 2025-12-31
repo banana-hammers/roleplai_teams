@@ -14,6 +14,7 @@ import { TypingIndicator } from '@/components/chat/typing-indicator'
 import { ToolResultCard } from '@/components/chat/tool-result-card'
 import { SkillProgressCard } from '@/components/chat/skill-progress-card'
 import { Clock, Search } from 'lucide-react'
+import type { ModelTierConfig } from '@/lib/utils/model-tiers'
 
 /**
  * Rate limit banner with countdown timer
@@ -64,9 +65,10 @@ function RateLimitBanner({
 interface ChatInterfaceProps {
   roleId?: string
   roleName?: string
+  tierConfig?: ModelTierConfig
 }
 
-export function ChatInterface({ roleId, roleName }: ChatInterfaceProps) {
+export function ChatInterface({ roleId, roleName, tierConfig }: ChatInterfaceProps) {
   const [inputValue, setInputValue] = useState('')
   const [lastMessageCount, setLastMessageCount] = useState(0)
 
@@ -150,6 +152,8 @@ export function ChatInterface({ roleId, roleName }: ChatInterfaceProps) {
               : ''
 
           const isNew = index >= lastMessageCount
+          const prevMessage = messages[index - 1]
+          const isGrouped = prevMessage?.role === message.role
           const senderName = message.role === 'user' ? undefined : (roleName || 'Assistant')
           const formattedCost = isRoleChat ? (message as RoleMessage).usage?.formattedCost : undefined
 
@@ -160,6 +164,8 @@ export function ChatInterface({ roleId, roleName }: ChatInterfaceProps) {
                 content={content}
                 senderName={senderName}
                 isNew={isNew}
+                isGrouped={isGrouped}
+                tierConfig={tierConfig}
                 formattedCost={formattedCost}
               />
 
@@ -201,7 +207,7 @@ export function ChatInterface({ roleId, roleName }: ChatInterfaceProps) {
 
         {isLoading && (
           <>
-            <TypingIndicator senderName={roleName || 'Assistant'} />
+            <TypingIndicator senderName={roleName || 'Assistant'} tierConfig={tierConfig} />
             {searchQuery && (
               <div className="flex items-center gap-2 ml-12 text-sm text-muted-foreground animate-pulse">
                 <Search className="h-4 w-4" />
