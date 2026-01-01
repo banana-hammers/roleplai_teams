@@ -4,6 +4,7 @@ import { cn } from '@/lib/utils'
 import { TierAvatar } from './tier-avatar'
 import { SkillPills } from './skill-list'
 import { getModelTier, getModelDisplayName } from '@/lib/utils/model-tiers'
+import { User } from 'lucide-react'
 import type { RoleWithSkills } from '@/types/role'
 
 interface RoleCardProps {
@@ -90,6 +91,16 @@ export function RoleCard({ role, isSelected, onSelect, className }: RoleCardProp
           {role.description || 'Ready to assist you'}
         </p>
       </div>
+
+      {/* Identity Core Connection */}
+      {role.identity_voice && (
+        <div className="px-4 pb-2">
+          <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+            <User className="h-3 w-3 shrink-0" />
+            <span className="truncate italic">&quot;{role.identity_voice}&quot;</span>
+          </div>
+        </div>
+      )}
 
       {/* Skills as horizontal pills */}
       <div className="px-4 pb-4">

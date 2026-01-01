@@ -31,11 +31,19 @@ export default async function SettingsPage() {
     .is('role_id', null)
     .order('name')
 
+  // Fetch user's identity core
+  const { data: identityCore } = await supabase
+    .from('identity_cores')
+    .select('*')
+    .eq('user_id', user.id)
+    .maybeSingle()
+
   return (
     <div className="min-h-screen bg-background">
       <main className="mx-auto max-w-4xl px-4 py-8">
         <h1 className="mb-6 text-2xl font-semibold">Settings</h1>
         <SettingsTabs
+          identityCore={identityCore}
           profile={profile}
           apiKeys={apiKeys || []}
           mcpServers={mcpServers || []}

@@ -10,14 +10,8 @@ export interface ExtractedPersonality {
 
 export interface IdentityCore {
   voice: string // Full descriptive text
-  priorities: Record<string, string> // { accuracy: "high", creativity: "medium", ... }
+  priorities: string[] // Ordered array of top 3 priorities ["accuracy", "empathy", "clarity"]
   boundaries: Record<string, boolean | string[]> // { no_speculation: true, custom: ["..."] }
-  decision_rules: {
-    when_uncertain: string
-    information_handling: string
-    tone_approach: string
-    ethical_guidelines: string[]
-  }
 }
 
 export interface BehaviorExample {
@@ -32,17 +26,8 @@ export interface BehaviorExample {
 export function generateIdentityCore(personality: ExtractedPersonality): IdentityCore {
   const voice = VOICE_DESCRIPTIONS[personality.voice]
 
-  // Map priorities to importance levels
-  const priorities: Record<string, string> = {}
-  const allPriorities: PriorityValue[] = ['accuracy', 'creativity', 'efficiency', 'empathy', 'logic', 'growth']
-
-  allPriorities.forEach(priority => {
-    if (personality.priorities.includes(priority)) {
-      priorities[priority] = 'high'
-    } else {
-      priorities[priority] = 'medium'
-    }
-  })
+  // Priorities are now an ordered array (top 3 from extracted personality)
+  const priorities: string[] = personality.priorities.slice(0, 3)
 
   // Map boundaries to boolean flags + custom
   const boundaries: Record<string, boolean | string[]> = {
@@ -51,45 +36,19 @@ export function generateIdentityCore(personality: ExtractedPersonality): Identit
     respect_privacy: personality.boundaries.includes('respect_privacy'),
     no_assumptions: personality.boundaries.includes('no_assumptions'),
     cite_sources: personality.boundaries.includes('cite_sources'),
+    no_jargon: personality.boundaries.includes('no_jargon'),
+    no_condescension: personality.boundaries.includes('no_condescension'),
+    stay_on_topic: personality.boundaries.includes('stay_on_topic'),
   }
 
   if (personality.customBoundaries && personality.customBoundaries.length > 0) {
     boundaries.custom = personality.customBoundaries
   }
 
-  // Generate decision rules based on priorities and boundaries
-  const decision_rules = {
-    when_uncertain: personality.boundaries.includes('admit_uncertainty')
-      ? 'Always admit uncertainty and offer to research'
-      : 'Provide best available information with confidence level',
-
-    information_handling: personality.priorities.includes('accuracy')
-      ? 'Prioritize accuracy over speed; cite sources when possible'
-      : personality.priorities.includes('efficiency')
-      ? 'Balance accuracy with speed; provide quick overviews with option for deeper research'
-      : 'Provide balanced, well-researched information',
-
-    tone_approach: voice.includes('direct')
-      ? 'Be clear and concise while maintaining respect'
-      : voice.includes('warm')
-      ? 'Be friendly and approachable like talking to a trusted friend'
-      : voice.includes('analytical')
-      ? 'Be detailed and methodical with evidence-based responses'
-      : 'Adapt tone to context while staying authentic',
-
-    ethical_guidelines: [
-      ...personality.boundaries.includes('no_speculation') ? ['Never guess or fabricate information'] : [],
-      ...personality.boundaries.includes('respect_privacy') ? ['Respect user privacy and boundaries'] : [],
-      ...personality.boundaries.includes('no_assumptions') ? ['Ask for clarification instead of assuming'] : [],
-      ...personality.customBoundaries || [],
-    ],
-  }
-
   return {
     voice,
     priorities,
     boundaries,
-    decision_rules,
   }
 }
 
@@ -97,8 +56,7 @@ export function generateIdentityCore(personality: ExtractedPersonality): Identit
  * Generate concrete behavior examples based on identity
  */
 export function generateBehaviorExamples(
-  personality: ExtractedPersonality,
-  identity: IdentityCore
+  personality: ExtractedPersonality
 ): BehaviorExample[] {
   const examples: BehaviorExample[] = []
 

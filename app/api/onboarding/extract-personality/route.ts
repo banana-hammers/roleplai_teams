@@ -59,25 +59,35 @@ Voice types:
 - calm_thoughtful: Measured, reflective
 - energetic_enthusiastic: Upbeat, motivating
 
-Priority values (select top 3-4):
-- accuracy: Facts matter most
-- creativity: Novel ideas matter
+Priority values (select EXACTLY 3, in order of importance - first is most important):
+- accuracy: Facts and correctness matter most
+- creativity: Novel ideas and fresh perspectives matter
 - efficiency: Speed and productivity matter
 - empathy: Understanding feelings matters
 - logic: Rational thinking matters
 - growth: Learning and improvement matter
+- clarity: Crystal clear communication matters
+- thoroughness: Comprehensive coverage matters
+- brevity: Concise, no unnecessary words
+- curiosity: Exploring deeply matters
+- patience: Taking time, never rushing
+- directness: Straight to the point, no hedging
 
-Boundaries (select what applies):
+Boundaries (select all that apply):
 - no_speculation: Don't make up information
 - admit_uncertainty: Say "I don't know" when unsure
 - respect_privacy: Don't pry or assume personal details
 - no_assumptions: Ask for clarification instead of guessing
 - cite_sources: Reference where information comes from
+- no_jargon: Avoid technical language unless user uses it first
+- no_condescension: Never talk down to people
+- stay_on_topic: Stay focused without tangents
 
 Conversation to analyze:
 ${JSON.stringify(messages, null, 2)}
 
-Extract the personality profile with high confidence (70-100).`
+Extract the personality profile. For priorities, return EXACTLY 3 values in order of importance (first = most important).
+Return with high confidence (70-100).`
 
   try {
     const result = await generateObject({

@@ -52,7 +52,6 @@ export async function completeOnboarding(
         voice: data.identity.voice,
         priorities: data.identity.priorities,
         boundaries: data.identity.boundaries,
-        decision_rules: data.identity.decision_rules,
       })
 
     if (identityError) {

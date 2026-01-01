@@ -36,10 +36,11 @@ export interface ResolvedSkill {
 }
 
 /**
- * Role with resolved skill information and lore count
+ * Role with resolved skill information, lore count, and identity context
  * Used for the enhanced RoleCard display
  */
 export interface RoleWithSkills extends Role {
   resolved_skills: ResolvedSkill[]
   lore_count: number
+  identity_voice?: string | null  // User's identity core voice for display
 }

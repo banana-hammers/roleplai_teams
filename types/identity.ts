@@ -2,9 +2,8 @@ export interface IdentityCore {
   id: string
   user_id: string
   voice: string
-  priorities: Record<string, any>
-  boundaries: Record<string, any>
-  decision_rules: Record<string, any>
+  priorities: string[] // Ordered array of top 3 priority values
+  boundaries: Record<string, boolean | string[]> // Boolean flags + custom array
   created_at: string
   updated_at: string
 }

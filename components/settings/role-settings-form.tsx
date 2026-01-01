@@ -14,6 +14,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { User } from 'lucide-react'
 import { IdentityFacetsEditor } from './identity-facets-editor'
 import { ModelSelector } from './model-selector'
 import { SkillsManager } from './skills-manager'
@@ -39,6 +40,12 @@ interface FullSkill {
   allowed_tools?: string[]
 }
 
+interface IdentityCoreContext {
+  voice?: string | null
+  priorities?: Record<string, string> | null
+  boundaries?: Record<string, boolean | string[]> | null
+}
+
 interface RoleSettingsFormProps {
   role: {
     id: string
@@ -56,9 +63,10 @@ interface RoleSettingsFormProps {
   }>
   allSkills: Array<FullSkill>
   mcpServers: McpServer[]
+  identityCore?: IdentityCoreContext | null
 }
 
-export function RoleSettingsForm({ role, roleSkills, allSkills, mcpServers }: RoleSettingsFormProps) {
+export function RoleSettingsForm({ role, roleSkills, allSkills, mcpServers, identityCore }: RoleSettingsFormProps) {
   const router = useRouter()
   const [formData, setFormData] = useState({
     name: role.name,
@@ -233,7 +241,32 @@ export function RoleSettingsForm({ role, roleSkills, allSkills, mcpServers }: Ro
               Define how this role&apos;s personality differs from your identity core.
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-6">
+            {/* Identity Core Context */}
+            {identityCore?.voice && (
+              <div className="rounded-lg border bg-muted/50 p-4">
+                <h4 className="text-sm font-medium mb-2 flex items-center gap-2">
+                  <User className="h-4 w-4 text-muted-foreground" />
+                  Your Identity Core
+                </h4>
+                <p className="text-sm text-muted-foreground italic">
+                  &quot;{identityCore.voice}&quot;
+                </p>
+                {identityCore.priorities && Object.keys(identityCore.priorities).length > 0 && (
+                  <div className="mt-3 flex flex-wrap gap-1.5">
+                    {Object.entries(identityCore.priorities).map(([key, level]) => (
+                      <span
+                        key={key}
+                        className="inline-flex items-center rounded-full border px-2 py-0.5 text-xs text-muted-foreground"
+                      >
+                        {key}: {level}
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
             <IdentityFacetsEditor
               facets={formData.identity_facets}
               onChange={(facets) => setFormData({ ...formData, identity_facets: facets })}

@@ -20,9 +20,8 @@ export function IdentitySummary({
   onNext,
   onEdit,
 }: IdentitySummaryProps) {
-  const highPriorities = Object.entries(identity.priorities)
-    .filter(([, level]) => level === 'high')
-    .map(([name]) => name)
+  // Priorities are now an ordered array
+  const rankedPriorities = identity.priorities || []
 
   const activeBoundaries = Object.entries(identity.boundaries)
     .filter(([key, value]) => key !== 'custom' && value === true)
@@ -57,11 +56,15 @@ export function IdentitySummary({
         </div>
 
         <div>
-          <h3 className="text-sm font-semibold text-muted-foreground mb-2">VALUES</h3>
+          <h3 className="text-sm font-semibold text-muted-foreground mb-2">VALUES (Ranked)</h3>
           <div className="flex flex-wrap gap-2">
-            {highPriorities.map((priority) => (
-              <Badge key={priority} variant="secondary" className="capitalize">
-                {priority}
+            {rankedPriorities.map((priority, index) => (
+              <Badge
+                key={priority}
+                variant={index === 0 ? 'default' : 'secondary'}
+                className="capitalize"
+              >
+                {index + 1}. {priority}
               </Badge>
             ))}
           </div>
@@ -114,22 +117,6 @@ export function IdentitySummary({
             </div>
           </div>
         ))}
-      </div>
-
-      {/* Decision Rules Summary */}
-      <div className="rounded-lg border bg-muted/30 p-4 space-y-2">
-        <h4 className="text-sm font-semibold">Decision Framework</h4>
-        <ul className="space-y-1 text-sm text-muted-foreground">
-          <li>
-            <strong>When uncertain:</strong> {identity.decision_rules.when_uncertain}
-          </li>
-          <li>
-            <strong>Information handling:</strong> {identity.decision_rules.information_handling}
-          </li>
-          <li>
-            <strong>Tone:</strong> {identity.decision_rules.tone_approach}
-          </li>
-        </ul>
       </div>
 
       {/* Action Buttons */}

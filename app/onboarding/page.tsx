@@ -23,7 +23,7 @@ export default function OnboardingPage() {
     }
 
     const identity = generateIdentityCore(state.extractedPersonality)
-    const examples = generateBehaviorExamples(state.extractedPersonality, identity)
+    const examples = generateBehaviorExamples(state.extractedPersonality)
 
     return { identity, examples }
   }, [state.extractedPersonality])

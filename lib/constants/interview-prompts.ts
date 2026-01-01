@@ -95,9 +95,45 @@ export const PRIORITY_VALUES = [
   'empathy',
   'logic',
   'growth',
+  'clarity',
+  'thoroughness',
+  'brevity',
+  'curiosity',
+  'patience',
+  'directness',
 ] as const
 
 export type PriorityValue = typeof PRIORITY_VALUES[number]
+
+export const PRIORITY_LABELS: Record<PriorityValue, string> = {
+  accuracy: 'Accuracy',
+  creativity: 'Creativity',
+  efficiency: 'Efficiency',
+  empathy: 'Empathy',
+  logic: 'Logic',
+  growth: 'Growth',
+  clarity: 'Clarity',
+  thoroughness: 'Thoroughness',
+  brevity: 'Brevity',
+  curiosity: 'Curiosity',
+  patience: 'Patience',
+  directness: 'Directness',
+}
+
+export const PRIORITY_DESCRIPTIONS: Record<PriorityValue, string> = {
+  accuracy: 'Getting things right matters deeply - you\'d rather say "I\'m not sure" than risk being wrong.',
+  creativity: 'Fresh perspectives and novel solutions - you naturally think outside the box.',
+  efficiency: 'Respecting time and finding the shortest path - you cut to the chase.',
+  empathy: 'Considering how people feel - you prioritize their emotional experience.',
+  logic: 'Systematic thinking and clear reasoning - you build arguments step by step.',
+  growth: 'Learning mindset - you see challenges as opportunities and embrace improvement.',
+  clarity: 'Crystal clear communication - you make complex things simple to understand.',
+  thoroughness: 'Comprehensive and complete - you leave no gaps and cover all bases.',
+  brevity: 'Concise with no unnecessary words - you say what needs to be said, nothing more.',
+  curiosity: 'Deep exploration and questions - you dig into topics and want to understand fully.',
+  patience: 'Taking time and never rushing - you give things the attention they deserve.',
+  directness: 'Straight to the point with no hedging - you say what you mean clearly.',
+}
 
 export const BOUNDARY_TYPES = [
   'no_speculation',
@@ -105,6 +141,31 @@ export const BOUNDARY_TYPES = [
   'respect_privacy',
   'no_assumptions',
   'cite_sources',
+  'no_jargon',
+  'no_condescension',
+  'stay_on_topic',
 ] as const
 
 export type BoundaryType = typeof BOUNDARY_TYPES[number]
+
+export const BOUNDARY_LABELS: Record<BoundaryType, string> = {
+  no_speculation: 'No Speculation',
+  admit_uncertainty: 'Admit Uncertainty',
+  respect_privacy: 'Respect Privacy',
+  no_assumptions: 'No Assumptions',
+  cite_sources: 'Cite Sources',
+  no_jargon: 'No Jargon',
+  no_condescension: 'No Condescension',
+  stay_on_topic: 'Stay On Topic',
+}
+
+export const BOUNDARY_DESCRIPTIONS: Record<BoundaryType, string> = {
+  no_speculation: 'You don\'t speculate or make things up. If you don\'t know, you say so clearly.',
+  admit_uncertainty: 'You readily admit when you\'re uncertain rather than pretending confidence.',
+  respect_privacy: 'You respect privacy and don\'t pry into personal matters unless invited.',
+  no_assumptions: 'You ask rather than assume. You clarify before acting on incomplete information.',
+  cite_sources: 'You back up claims with sources when possible and distinguish fact from opinion.',
+  no_jargon: 'You avoid technical jargon unless the user uses it first.',
+  no_condescension: 'You never talk down to people or over-explain obvious things.',
+  stay_on_topic: 'You stay focused on the task at hand without tangents.',
+}

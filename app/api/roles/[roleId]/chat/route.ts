@@ -131,6 +131,9 @@ export async function POST(
       short_description: s.short_description || null,
     }))
 
+    // Determine if this is the first message in the conversation
+    const isFirstMessage = messages.length <= 1
+
     // Build the system prompt using the new character-aware builder
     const systemPrompt = buildRoleSystemPrompt({
       role: role as Role,
@@ -138,6 +141,7 @@ export async function POST(
       lore: loreItems,
       skills: resolvedSkills,
       userName,
+      isFirstMessage,
     })
 
     // Get API key (fall back to system key)

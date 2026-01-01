@@ -70,6 +70,13 @@ export default async function RoleSettingsPage({ params }: RoleSettingsPageProps
 
   const mcpServers = (mcpServersData || []) as McpServer[]
 
+  // Fetch identity core for context in settings
+  const { data: identityCore } = await supabase
+    .from('identity_cores')
+    .select('voice, priorities, boundaries')
+    .eq('user_id', user.id)
+    .maybeSingle()
+
   return (
     <div className="min-h-screen bg-background">
       <main className="mx-auto max-w-4xl px-4 py-8">
@@ -88,6 +95,7 @@ export default async function RoleSettingsPage({ params }: RoleSettingsPageProps
           roleSkills={roleSkills || []}
           allSkills={allSkills || []}
           mcpServers={mcpServers}
+          identityCore={identityCore}
         />
       </main>
     </div>

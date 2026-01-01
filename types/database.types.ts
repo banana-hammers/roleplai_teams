@@ -83,9 +83,8 @@ export type Database = {
         Row: {
           boundaries: Json | null
           created_at: string | null
-          decision_rules: Json | null
           id: string
-          priorities: Json | null
+          priorities: string[] | null
           updated_at: string | null
           user_id: string
           voice: string
@@ -93,9 +92,8 @@ export type Database = {
         Insert: {
           boundaries?: Json | null
           created_at?: string | null
-          decision_rules?: Json | null
           id?: string
-          priorities?: Json | null
+          priorities?: string[] | null
           updated_at?: string | null
           user_id: string
           voice: string
@@ -103,9 +101,8 @@ export type Database = {
         Update: {
           boundaries?: Json | null
           created_at?: string | null
-          decision_rules?: Json | null
           id?: string
-          priorities?: Json | null
+          priorities?: string[] | null
           updated_at?: string | null
           user_id?: string
           voice?: string

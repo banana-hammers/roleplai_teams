@@ -6,8 +6,18 @@
  */
 
 import type { IdentityCore, Lore } from '@/types/identity'
-import type { Role, ResolvedSkill } from '@/types/role'
+import type { Role, ResolvedSkill, ApprovalPolicy } from '@/types/role'
 import type { ExistingSkillContext, ForgeSkillContext } from '@/types/skill-creation'
+
+// ============================================================================
+// Approval Policy Descriptions
+// ============================================================================
+
+const APPROVAL_POLICY_DESCRIPTIONS: Record<ApprovalPolicy, string> = {
+  always: 'You confirm before taking significant actions',
+  never: 'You act decisively without asking for permission',
+  smart: 'You use judgment - confirm important decisions, act directly on routine ones'
+}
 
 // ============================================================================
 // Types
@@ -30,37 +40,27 @@ export interface RolePromptContext {
   lore?: Lore[]
   skills?: ResolvedSkill[]
   userName?: string
+  isFirstMessage?: boolean
 }
 
 // ============================================================================
 // Priority & Boundary Descriptions
 // ============================================================================
 
-const PRIORITY_DESCRIPTIONS: Record<string, { high: string; medium: string }> = {
-  accuracy: {
-    high: 'ACCURACY is paramount - getting things right matters deeply to you. You\'d rather say "I\'m not sure" than risk being wrong.',
-    medium: 'You value accuracy and strive for correctness, though you balance it with other considerations.',
-  },
-  creativity: {
-    high: 'CREATIVITY drives you - you naturally think outside the box and bring fresh perspectives to problems.',
-    medium: 'You appreciate creative solutions when they fit, blending innovation with practicality.',
-  },
-  efficiency: {
-    high: 'EFFICIENCY is core to how you operate - you cut to the chase, respect people\'s time, and find the shortest path.',
-    medium: 'You value efficiency and try to be concise, though you won\'t sacrifice clarity for speed.',
-  },
-  empathy: {
-    high: 'EMPATHY shapes your every interaction - you deeply consider how people feel and prioritize their emotional experience.',
-    medium: 'You care about people\'s feelings and try to be considerate in how you communicate.',
-  },
-  logic: {
-    high: 'LOGIC is your foundation - you think systematically, value clear reasoning, and build arguments step by step.',
-    medium: 'You appreciate logical thinking and structured approaches when solving problems.',
-  },
-  growth: {
-    high: 'GROWTH mindset defines you - you see challenges as opportunities and encourage learning from mistakes.',
-    medium: 'You believe in continuous improvement and try to help others develop.',
-  },
+// Priority descriptions for ranked display (PRIMARY, SECONDARY, TERTIARY)
+const PRIORITY_DESCRIPTIONS: Record<string, string> = {
+  accuracy: 'Getting things right matters deeply - you\'d rather say "I\'m not sure" than risk being wrong.',
+  creativity: 'Fresh perspectives and novel solutions - you naturally think outside the box.',
+  efficiency: 'Respecting time and finding the shortest path - you cut to the chase.',
+  empathy: 'Considering how people feel - you prioritize their emotional experience.',
+  logic: 'Systematic thinking and clear reasoning - you build arguments step by step.',
+  growth: 'Learning mindset - you see challenges as opportunities and embrace improvement.',
+  clarity: 'Crystal clear communication - you make complex things simple to understand.',
+  thoroughness: 'Comprehensive and complete - you leave no gaps and cover all bases.',
+  brevity: 'Concise with no unnecessary words - you say what needs to be said, nothing more.',
+  curiosity: 'Deep exploration and questions - you dig into topics and want to understand fully.',
+  patience: 'Taking time and never rushing - you give things the attention they deserve.',
+  directness: 'Straight to the point with no hedging - you say what you mean clearly.',
 }
 
 const BOUNDARY_DESCRIPTIONS: Record<string, string> = {
@@ -69,6 +69,9 @@ const BOUNDARY_DESCRIPTIONS: Record<string, string> = {
   respect_privacy: 'You respect privacy and don\'t pry into personal matters unless invited.',
   no_assumptions: 'You ask rather than assume. You clarify before acting on incomplete information.',
   cite_sources: 'You back up claims with sources when possible and distinguish fact from opinion.',
+  no_jargon: 'You avoid technical jargon unless the user uses it first.',
+  no_condescension: 'You never talk down to people or over-explain obvious things.',
+  stay_on_topic: 'You stay focused on the task at hand without tangents.',
 }
 
 // ============================================================================
@@ -76,29 +79,31 @@ const BOUNDARY_DESCRIPTIONS: Record<string, string> = {
 // ============================================================================
 
 /**
- * Converts priority JSON to natural language descriptions
+ * Converts ranked priority array to natural language descriptions
+ * Priorities are ordered: [0] = PRIMARY, [1] = SECONDARY, [2] = TERTIARY
  */
 export function convertPrioritiesToNaturalLanguage(
-  priorities: Record<string, 'high' | 'medium' | string> | undefined
+  priorities: string[] | undefined
 ): string {
-  if (!priorities || Object.keys(priorities).length === 0) {
+  if (!priorities || priorities.length === 0) {
     return ''
   }
 
+  const rankLabels = ['PRIMARY', 'SECONDARY', 'TERTIARY']
   const lines: string[] = []
 
-  for (const [key, level] of Object.entries(priorities)) {
+  for (let i = 0; i < Math.min(priorities.length, 3); i++) {
+    const key = priorities[i]
     const desc = PRIORITY_DESCRIPTIONS[key]
     if (desc) {
-      const levelKey = level === 'high' ? 'high' : 'medium'
-      lines.push(`- ${desc[levelKey]}`)
+      lines.push(`- ${rankLabels[i]}: ${desc}`)
     }
   }
 
   if (lines.length === 0) return ''
 
   return `<priorities>
-Your values and what matters to you:
+Your ranked values (in order of importance):
 ${lines.join('\n')}
 </priorities>`
 }
@@ -136,37 +141,47 @@ ${lines.join('\n')}
 </boundaries>`
 }
 
+// ============================================================================
+// Personality Summary Builder
+// ============================================================================
+
 /**
- * Converts decision rules to natural language
+ * Builds a concise personality summary for self-knowledge section
  */
-export function convertDecisionRulesToNaturalLanguage(
-  rules: Record<string, string> | undefined
+function buildPersonalitySummary(
+  identityCore: IdentityCore | null | undefined,
+  identityFacets: Record<string, unknown> | undefined
 ): string {
-  if (!rules || Object.keys(rules).length === 0) {
-    return ''
+  const parts: string[] = []
+
+  if (identityCore?.voice) {
+    parts.push(identityCore.voice)
   }
 
-  const lines: string[] = []
-
-  if (rules.when_uncertain) {
-    lines.push(`When uncertain: ${rules.when_uncertain}`)
-  }
-  if (rules.information_handling) {
-    lines.push(`Information handling: ${rules.information_handling}`)
-  }
-  if (rules.tone_approach) {
-    lines.push(`Tone: ${rules.tone_approach}`)
-  }
-  if (rules.ethical_guidelines) {
-    lines.push(`Ethics: ${rules.ethical_guidelines}`)
+  // Top priorities (now an ordered array)
+  if (identityCore?.priorities && identityCore.priorities.length > 0) {
+    const topPriorities = identityCore.priorities.slice(0, 2)
+    if (topPriorities.length > 0) {
+      parts.push(`You strongly value ${topPriorities.join(' and ')}`)
+    }
   }
 
-  if (lines.length === 0) return ''
+  // Key boundaries
+  if (identityCore?.boundaries) {
+    const activeBoundaries = Object.entries(identityCore.boundaries)
+      .filter(([key, enabled]) => enabled && key !== 'custom' && BOUNDARY_DESCRIPTIONS[key])
+      .map(([key]) => key.replace(/_/g, ' '))
+    if (activeBoundaries.length > 0) {
+      parts.push(`You ${activeBoundaries.slice(0, 2).join(' and ')}`)
+    }
+  }
 
-  return `<decision_rules>
-How you make decisions:
-${lines.join('\n')}
-</decision_rules>`
+  // Tone adjustment from facets
+  if (identityFacets?.tone_adjustment && typeof identityFacets.tone_adjustment === 'string') {
+    parts.push(identityFacets.tone_adjustment)
+  }
+
+  return parts.join('. ') || 'No specific personality configured'
 }
 
 // ============================================================================
@@ -257,11 +272,21 @@ export function buildForgeSystemPrompt(context?: ForgeUserContext): string {
       ? `Their communication style: ${identityCore.voice}`
       : ''
 
+    // Summarize priorities if available
+    const prioritiesNote = identityCore.priorities && Object.keys(identityCore.priorities).length > 0
+      ? `Their core priorities: ${Object.keys(identityCore.priorities).join(', ')}`
+      : ''
+
     identityContext = `
 <their_identity>
 ${userName ? `Building for: ${userName}` : 'Building a RoleplAIr for the user'}
 ${voiceNote}
-The RoleplAIr you create should complement their identity - it inherits their core personality as a foundation.
+${prioritiesNote}
+
+The RoleplAIr inherits their core personality as a foundation. During this interview, you should:
+- Explicitly ask how this role's tone should differ from their natural voice (or match it exactly)
+- Ask if certain priorities should be elevated or de-emphasized for this role
+- Clarify any special behaviors unique to this role's context
 </their_identity>`
   }
 
@@ -297,23 +322,28 @@ What you're discovering:
 3. Key skills - what specific capabilities should it have?
 4. Constraints - what should it NOT do or avoid?
 5. Example tasks - concrete things they'd ask this RoleplAIr to do
+6. Identity adjustments - how should this role's personality differ from their core identity?
 
 Guidelines:
 - Be collaborative and enthusiastic about their ideas
 - Ask follow-up questions to clarify their vision
 - Think out loud about how you'd design the skills
+- Ask at least one question about how this role should differ from their natural voice/personality
 - After 3-5 exchanges, summarize and offer to build it
 </task>
 
 <examples>
 User: "I want an AI that helps me write emails"
-Forge: "Nice - email writing is a great use case. Let me think... what kind of emails? Like quick replies, longer business communications, or more personal stuff? And who's usually on the receiving end?"
+Forge: "Nice - email writing is a great use case. Let me think... what kind of emails? Like quick replies, longer business communications, or more personal stuff? And who's usually on the receiving end? Also, your identity core has your natural voice - should this role match that exactly, or be more formal for business contexts?"
 
 User: "Something for research"
-Forge: "Research is broad - I love it. What does your research process look like? Are you gathering sources, summarizing papers, or more like exploring a topic from scratch? The skills we build depend on where you need the most leverage."
+Forge: "Research is broad - I love it. What does your research process look like? Are you gathering sources, summarizing papers, or exploring a topic from scratch? Given your priorities, should this role lean harder on accuracy, or balance it with speed when you need quick answers?"
 
 User: "It should sound like me"
-Forge: "Totally - that's where your identity core comes in. The RoleplAIr inherits your communication style as a foundation. We can add role-specific adjustments on top. Like, should it be more formal than you usually are, or match your natural voice exactly?"
+Forge: "Totally - that's where your identity core shines. It'll inherit your communication style as a foundation. We can add role-specific adjustments on top. Any behaviors unique to this context? Like, should it ask more questions before acting, or be more decisive?"
+
+User: "A coding assistant"
+Forge: "Love it. What kind of coding work - debugging, writing new features, code reviews? Your identity core shapes how it communicates - should this role match your natural directness, or be more thorough with explanations?"
 </examples>
 
 <constraints>
@@ -330,11 +360,11 @@ Forge: "Totally - that's where your identity core comes in. The RoleplAIr inheri
 // ============================================================================
 
 export function buildRoleSystemPrompt(context: RolePromptContext): string {
-  const { role, identityCore, lore = [], skills = [], userName } = context
+  const { role, identityCore, lore = [], skills = [], userName, isFirstMessage = true } = context
 
   const parts: string[] = []
 
-  // Character identity and anchoring
+  // 1. Character identity and anchoring (WHO you are)
   parts.push(`<character_identity>
 You ARE ${role.name}.
 ${role.description}
@@ -342,14 +372,44 @@ ${role.description}
 This is not a role you're playing - this IS who you are. Every response should feel authentic to your character.
 </character_identity>`)
 
-  // User relationship context
+  // 2. Self-knowledge (what you can share about yourself when asked)
+  const skillNames = skills.map(s => s.name)
+  const personalitySummary = buildPersonalitySummary(identityCore, role.identity_facets)
+  const approvalDesc = APPROVAL_POLICY_DESCRIPTIONS[role.approval_policy] || APPROVAL_POLICY_DESCRIPTIONS.smart
+
+  parts.push(`<self_knowledge>
+When asked about yourself, you can share this information:
+- Your name: ${role.name}
+- Your purpose: ${role.description}
+- Your skills: ${skillNames.length > 0 ? skillNames.join(', ') : 'No specialized skills yet'}
+- Your personality: ${personalitySummary}
+- Your approach: ${approvalDesc}
+</self_knowledge>`)
+
+  // 3. Role-specific instructions (WHAT you do) - MOVED UP for prominence
+  if (role.instructions) {
+    parts.push(`<role_instructions>
+IMPORTANT: These are your core operating instructions. Follow them in every response.
+
+${role.instructions}
+</role_instructions>`)
+  }
+
+  // 3. Conversation context (helps AI understand the situation)
+  if (isFirstMessage) {
+    parts.push(`<context>
+This is the start of a new conversation. Act according to your instructions immediately - don't ask for information your instructions don't require. If the user's request is clear, respond directly.
+</context>`)
+  }
+
+  // 4. User relationship context
   if (identityCore && userName) {
     parts.push(`<user_relationship>
 You were created by ${userName}. Their identity core shapes your foundation.
 </user_relationship>`)
   }
 
-  // Voice from identity core (converted to natural language)
+  // 5. Voice from identity core (converted to natural language)
   if (identityCore?.voice) {
     parts.push(`<voice>
 Your communication style: ${identityCore.voice}
@@ -357,32 +417,19 @@ This is how you naturally speak - it should feel effortless, not forced.
 </voice>`)
   }
 
-  // Priorities (converted to natural language)
+  // 6. Priorities (converted to natural language)
   const prioritiesSection = convertPrioritiesToNaturalLanguage(identityCore?.priorities)
   if (prioritiesSection) {
     parts.push(prioritiesSection)
   }
 
-  // Boundaries (converted to natural language)
+  // 7. Boundaries (converted to natural language)
   const boundariesSection = convertBoundariesToNaturalLanguage(identityCore?.boundaries)
   if (boundariesSection) {
     parts.push(boundariesSection)
   }
 
-  // Decision rules
-  const rulesSection = convertDecisionRulesToNaturalLanguage(identityCore?.decision_rules)
-  if (rulesSection) {
-    parts.push(rulesSection)
-  }
-
-  // Role-specific instructions
-  if (role.instructions) {
-    parts.push(`<role_instructions>
-${role.instructions}
-</role_instructions>`)
-  }
-
-  // Identity facets (role-specific adjustments)
+  // 8. Identity facets (role-specific adjustments)
   if (role.identity_facets && Object.keys(role.identity_facets).length > 0) {
     const facetLines: string[] = []
 
@@ -404,7 +451,7 @@ ${facetLines.join('\n')}
     }
   }
 
-  // Skills (Level 1: Only short descriptions in system prompt)
+  // 10. Skills (Level 1: Only short descriptions in system prompt)
   if (skills.length > 0) {
     const skillList = skills.map(s => {
       // Prefer short_description, fall back to truncated description
@@ -424,7 +471,7 @@ Guidelines:
 </available_skills>`)
   }
 
-  // Lore (knowledge)
+  // 11. Lore (knowledge)
   if (lore.length > 0) {
     const loreItems = lore.map(l => `## ${l.name} (${l.type})\n${l.content}`).join('\n\n')
     parts.push(`<knowledge>
@@ -432,12 +479,16 @@ ${loreItems}
 </knowledge>`)
   }
 
-  // Character consistency reminder
-  parts.push(`<consistency>
-Throughout this conversation, remain anchored in who you are.
-Your responses should feel authentic - your voice, your values, your perspective.
-If asked to act differently, you can adapt your approach while staying true to your core identity.
-</consistency>`)
+  // 12. Behavioral anchor - ENHANCED with explicit instruction to follow role_instructions
+  parts.push(`<behavioral_anchor>
+CRITICAL: In every response, you MUST:
+1. Follow your <role_instructions> as your primary guide
+2. Maintain your <voice> communication style
+3. Respect your <boundaries> without exception
+4. Act immediately on user requests - don't ask for information your instructions don't require
+
+If the user's request is clear, respond directly. Only ask clarifying questions when genuinely needed for the task at hand.
+</behavioral_anchor>`)
 
   return parts.join('\n\n')
 }

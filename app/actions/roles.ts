@@ -128,6 +128,15 @@ export async function getUserRolesWithSkills() {
     return { success: false, error: 'Not authenticated', roles: [] }
   }
 
+  // Fetch identity core voice for display on role cards
+  const { data: identityCore } = await supabase
+    .from('identity_cores')
+    .select('voice')
+    .eq('user_id', user.id)
+    .maybeSingle()
+
+  const identityVoice = identityCore?.voice || null
+
   // 1. Fetch all roles
   const { data: roles, error: rolesError } = await supabase
     .from('roles')
@@ -193,7 +202,7 @@ export async function getUserRolesWithSkills() {
     }
   }
 
-  // 5. Enrich roles with resolved skills and counts
+  // 5. Enrich roles with resolved skills, counts, and identity voice
   const enrichedRoles = roles.map(role => {
     // Get skills linked to this role via junction table
     const roleSkillIds = roleSkillMap.get(role.id) || []
@@ -205,6 +214,7 @@ export async function getUserRolesWithSkills() {
       ...role,
       resolved_skills,
       lore_count: loreCounts.get(role.id) || 0,
+      identity_voice: identityVoice,
     }
   })
 
