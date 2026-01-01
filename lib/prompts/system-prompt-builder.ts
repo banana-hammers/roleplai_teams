@@ -8,6 +8,7 @@
 import type { IdentityCore, Lore } from '@/types/identity'
 import type { Role, ResolvedSkill, ApprovalPolicy } from '@/types/role'
 import type { ExistingSkillContext, ForgeSkillContext } from '@/types/skill-creation'
+import { detectVoiceType, getVoiceFingerprint, type VoiceFingerprint } from '@/lib/constants/interview-prompts'
 
 // ============================================================================
 // Approval Policy Descriptions
@@ -139,6 +140,68 @@ export function convertBoundariesToNaturalLanguage(
 Your personal boundaries - things you hold firm on:
 ${lines.join('\n')}
 </boundaries>`
+}
+
+// ============================================================================
+// Enhanced Voice Builder
+// ============================================================================
+
+/**
+ * Builds an enhanced voice section using structured voice fingerprints.
+ * Includes vocabulary, sentence patterns, and scenario-specific guidance
+ * for creating distinct, recognizable AI personalities.
+ */
+export function buildEnhancedVoiceSection(
+  voiceDescription: string | undefined
+): string {
+  if (!voiceDescription) return ''
+
+  // Try to detect the voice type from the description
+  const voiceType = detectVoiceType(voiceDescription)
+
+  // If we can't detect a voice type, fall back to simple voice section
+  if (!voiceType) {
+    return `<voice>
+Your communication style: ${voiceDescription}
+This is how you naturally speak - it should feel effortless, not forced.
+</voice>`
+  }
+
+  const fingerprint = getVoiceFingerprint(voiceType)
+
+  return `<voice>
+${fingerprint.core}
+
+<vocabulary>
+Phrases you naturally use:
+${fingerprint.vocabulary.signature.map(p => `- "${p}"`).join('\n')}
+
+Phrases you avoid:
+${fingerprint.vocabulary.forbidden.map(p => `- "${p}"`).join('\n')}
+</vocabulary>
+
+<communication_patterns>
+${fingerprint.sentence_patterns.map(p => `- ${p}`).join('\n')}
+</communication_patterns>
+
+<response_openings>
+Ways you typically start responses:
+${fingerprint.opening_patterns.map(p => `- ${p}`).join('\n')}
+</response_openings>
+
+<emotional_handling>
+${fingerprint.emotional_handling}
+</emotional_handling>
+
+<tone_adaptation>
+Adapt your voice to these situations while maintaining your core style:
+- When the user is frustrated: ${fingerprint.scenarios.frustration}
+- When celebrating success: ${fingerprint.scenarios.celebration}
+- When you're uncertain: ${fingerprint.scenarios.uncertainty}
+- When you disagree: ${fingerprint.scenarios.disagreement}
+- When the topic is sensitive: ${fingerprint.scenarios.sensitive}
+</tone_adaptation>
+</voice>`
 }
 
 // ============================================================================
@@ -409,12 +472,10 @@ You were created by ${userName}. Their identity core shapes your foundation.
 </user_relationship>`)
   }
 
-  // 5. Voice from identity core (converted to natural language)
-  if (identityCore?.voice) {
-    parts.push(`<voice>
-Your communication style: ${identityCore.voice}
-This is how you naturally speak - it should feel effortless, not forced.
-</voice>`)
+  // 5. Voice from identity core (enhanced with voice fingerprint)
+  const voiceSection = buildEnhancedVoiceSection(identityCore?.voice)
+  if (voiceSection) {
+    parts.push(voiceSection)
   }
 
   // 6. Priorities (converted to natural language)
@@ -479,15 +540,16 @@ ${loreItems}
 </knowledge>`)
   }
 
-  // 12. Behavioral anchor - ENHANCED with explicit instruction to follow role_instructions
+  // 12. Behavioral anchor - guides consistent behavior
   parts.push(`<behavioral_anchor>
-CRITICAL: In every response, you MUST:
+In every response:
 1. Follow your <role_instructions> as your primary guide
-2. Maintain your <voice> communication style
+2. Use your <voice> vocabulary and communication patterns naturally
 3. Respect your <boundaries> without exception
-4. Act immediately on user requests - don't ask for information your instructions don't require
+4. Adapt your tone to the situation using <tone_adaptation> guidance
+5. Act on user requests directly - only ask for clarification when genuinely needed
 
-If the user's request is clear, respond directly. Only ask clarifying questions when genuinely needed for the task at hand.
+Your voice should feel authentic, not forced. Let your signature phrases and patterns emerge naturally.
 </behavioral_anchor>`)
 
   return parts.join('\n\n')
