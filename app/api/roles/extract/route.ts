@@ -152,8 +152,14 @@ Decision Rules: ${JSON.stringify(identityCore.decision_rules)}`
       return NextResponse.json({ error: 'Failed to extract role configuration' }, { status: 500 })
     }
 
+    // Ensure skills array exists (AI sometimes omits it despite tool schema)
+    const input = toolUseBlock.input as Record<string, unknown>
+    if (!input.skills) {
+      input.skills = []
+    }
+
     // Validate with Zod schema (tool_use already returns structured JSON)
-    const extracted: ExtractionResult = extractionResultSchema.parse(toolUseBlock.input)
+    const extracted: ExtractionResult = extractionResultSchema.parse(input)
 
     return NextResponse.json(extracted)
   } catch (error) {

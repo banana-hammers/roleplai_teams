@@ -40,7 +40,7 @@ export type ExtractedSkill = z.infer<typeof extractedSkillSchema>
 // Full extraction result
 export const extractionResultSchema = z.object({
   role: roleConfigSchema,
-  skills: z.array(extractedSkillSchema).min(2).max(4),
+  skills: z.array(extractedSkillSchema).max(4).default([]),
 })
 
 export type ExtractionResult = z.infer<typeof extractionResultSchema>

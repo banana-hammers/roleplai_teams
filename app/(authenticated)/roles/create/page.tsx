@@ -68,14 +68,15 @@ export default function RoleCreationPage() {
   // Handle role creation
   const handleCreateRole = async () => {
     const roleConfig = getMergedRoleConfig()
-    const selectedSkills = getSelectedSkills()
 
     if (!roleConfig || !state.extractedConfig) {
       setError('Missing role configuration')
       return
     }
 
-    if (state.selectedSkillIds?.length === 0) {
+    // Require skill selection only if skills were extracted
+    const hasAvailableSkills = (state.extractedConfig?.skills?.length ?? 0) > 0
+    if (hasAvailableSkills && state.selectedSkillIds?.length === 0) {
       setError('Please select at least one skill')
       return
     }
@@ -192,7 +193,7 @@ export default function RoleCreationPage() {
                 </Button>
                 <Button
                   onClick={handleCreateRole}
-                  disabled={isCreating || (state.selectedSkillIds?.length || 0) === 0}
+                  disabled={isCreating || ((state.extractedConfig?.skills?.length ?? 0) > 0 && (state.selectedSkillIds?.length || 0) === 0)}
                 >
                   {isCreating ? (
                     <>
