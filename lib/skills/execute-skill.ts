@@ -12,40 +12,12 @@ import type { Lore } from '@/types/identity'
 import { withRetry } from '@/lib/errors/retry'
 import { isRateLimitError, RateLimitError, ERROR_MESSAGES } from '@/lib/errors/api-errors'
 import { isServerTool } from '@/lib/tools/builtin-tools'
-
-/**
- * SECURITY: Maximum length for input values to prevent DoS
- */
-const MAX_INPUT_LENGTH = 100000
+import { isValidPlaceholderKey, sanitizeTemplateInput } from '@/lib/skills/template-utils'
 
 /**
  * Maximum iterations for agentic skill execution to prevent infinite loops
  */
 const MAX_AGENTIC_ITERATIONS = 5
-
-/**
- * SECURITY: Validate that a key is a safe placeholder name
- */
-function isValidPlaceholderKey(key: string): boolean {
-  return /^[a-zA-Z_][a-zA-Z0-9_]*$/.test(key)
-}
-
-/**
- * SECURITY: Sanitize input value for template interpolation
- */
-function sanitizeTemplateInput(value: unknown): string {
-  if (value === null || value === undefined) {
-    return ''
-  }
-
-  let str = String(value)
-
-  if (str.length > MAX_INPUT_LENGTH) {
-    str = str.slice(0, MAX_INPUT_LENGTH) + '... [truncated]'
-  }
-
-  return str
-}
 
 /**
  * Interpolate inputs into a prompt template.

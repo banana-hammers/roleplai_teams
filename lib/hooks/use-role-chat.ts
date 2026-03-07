@@ -6,6 +6,7 @@ import {
   addMessage as addMessageToDb,
   getConversationWithMessages,
   updateConversationTitle,
+  summarizeConversation,
 } from '@/app/actions/conversations'
 
 export interface MessageUsage {
@@ -174,6 +175,7 @@ export function useRoleChat({ roleId, conversationId: initialConversationId, onC
     let fullAssistantContent = ''
     let assistantToolCalls: Array<{ id?: string; name: string; input?: Record<string, unknown>; result?: string }> = []
     let assistantUsage: MessageUsage | undefined
+    let serverSavedMessage = false
 
     try {
       abortControllerRef.current = new AbortController()
@@ -293,6 +295,9 @@ export function useRoleChat({ roleId, conversationId: initialConversationId, onC
                     ? { ...m, usage: assistantUsage }
                     : m
                 ))
+              } else if (event.type === 'message_saved') {
+                // Server persisted the assistant message - skip client-side save
+                serverSavedMessage = true
               } else if (event.type === 'skill_start') {
                 // Skill execution starting - create progress tracker
                 console.log('[Chat] skill_start received:', {
@@ -460,7 +465,8 @@ export function useRoleChat({ roleId, conversationId: initialConversationId, onC
       }
 
       // Persist assistant message to database after stream completes
-      if (fullAssistantContent && activeConversationId) {
+      // Skip if server already saved it (message_saved event received)
+      if (fullAssistantContent && activeConversationId && !serverSavedMessage) {
         const metadata: Record<string, unknown> = {}
         if (assistantToolCalls.length > 0) {
           metadata.toolCalls = assistantToolCalls
@@ -469,12 +475,23 @@ export function useRoleChat({ roleId, conversationId: initialConversationId, onC
           metadata.usage = assistantUsage
         }
         await addMessageToDb(activeConversationId, 'assistant', fullAssistantContent, metadata)
+      }
 
+      // These run regardless of who saved the message
+      if (fullAssistantContent && activeConversationId) {
         // Generate title from first user message if this is a new conversation
         if (isFirstMessageRef.current) {
           const title = userMessage.content.slice(0, 50) + (userMessage.content.length > 50 ? '...' : '')
           await updateConversationTitle(activeConversationId, title)
           isFirstMessageRef.current = false
+        }
+
+        // Generate conversation summary in the background if enough messages
+        const totalMessages = messages.length + 2
+        if (totalMessages >= 6) {
+          summarizeConversation(activeConversationId).catch(err => {
+            console.error('[Chat] Background summary generation failed:', err)
+          })
         }
       }
     } catch (err) {

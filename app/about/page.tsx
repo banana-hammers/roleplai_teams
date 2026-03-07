@@ -99,7 +99,7 @@ export default function AboutPage() {
           <div className="mx-auto max-w-4xl px-6 py-24 text-center sm:py-32">
             <h1 className="font-display text-4xl font-bold tracking-tight sm:text-5xl lg:text-6xl">
               Technology Has Always{" "}
-              <span className="bg-gradient-to-r from-primary via-indigo-400 to-accent bg-clip-text text-transparent">
+              <span className="bg-linear-to-r from-primary via-indigo-400 to-accent bg-clip-text text-transparent">
                 Elevated
               </span>{" "}
               What Humans Can Do
@@ -254,7 +254,7 @@ export default function AboutPage() {
                   key={member.name}
                   className="rounded-xl border border-border/50 bg-card p-6 text-center"
                 >
-                  <div className="mx-auto mb-4 flex size-20 items-center justify-center rounded-full bg-gradient-to-br from-primary/20 to-accent/20">
+                  <div className="mx-auto mb-4 flex size-20 items-center justify-center rounded-full bg-linear-to-br from-primary/20 to-accent/20">
                     <span className="text-2xl font-bold text-primary">
                       {member.name
                         .split(" ")
@@ -280,7 +280,7 @@ export default function AboutPage() {
 
         {/* CTA Section */}
         <section className="relative overflow-hidden py-16 sm:py-24">
-          <div className="absolute inset-0 -z-10 bg-gradient-to-br from-primary/10 via-background to-accent/10" />
+          <div className="absolute inset-0 -z-10 bg-linear-to-br from-primary/10 via-background to-accent/10" />
 
           <div className="mx-auto max-w-4xl px-6 text-center">
             <h2 className="font-display text-2xl font-bold tracking-tight sm:text-3xl">

@@ -44,7 +44,7 @@ export function IdentitySummary({
       </div>
 
       {/* Identity Summary Card */}
-      <div className="rounded-lg border bg-gradient-to-br from-primary/5 to-primary/10 p-6 space-y-4">
+      <div className="rounded-lg border bg-linear-to-br from-primary/5 to-primary/10 p-6 space-y-4">
         <div>
           <h3 className="text-sm font-semibold text-muted-foreground mb-2">ALIAS</h3>
           <p className="text-2xl font-bold">@{aliasName}</p>

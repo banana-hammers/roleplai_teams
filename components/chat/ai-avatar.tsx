@@ -49,7 +49,7 @@ export function AIAvatar({ state = 'idle', size = 'md', className }: AIAvatarPro
       <div
         className={cn(
           'relative rounded-full',
-          'bg-gradient-to-br from-primary via-primary/80 to-indigo-400',
+          'bg-linear-to-br from-primary via-primary/80 to-indigo-400',
           sizeClasses[size],
           isActive
             ? 'animate-[pulse-glow_2s_ease-in-out_infinite]'

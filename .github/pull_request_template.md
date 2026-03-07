@@ -14,4 +14,6 @@
 
 - [ ] `npm run lint` passes
 - [ ] `npx tsc --noEmit` passes
+- [ ] `npm test` passes
+- [ ] `npm run build` succeeds
 - [ ] Tested locally

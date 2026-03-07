@@ -1,7 +1,6 @@
 'use server'
 
-import { createClient } from '@/lib/supabase/server'
-import { redirect } from 'next/navigation'
+import { requireAuth } from '@/lib/supabase/auth-helpers'
 import type { IdentityCore } from '@/lib/onboarding/generate-identity'
 
 export interface CompleteOnboardingData {
@@ -20,13 +19,9 @@ export interface CompleteOnboardingResult {
 export async function completeOnboarding(
   data: CompleteOnboardingData
 ): Promise<CompleteOnboardingResult> {
-  const supabase = await createClient()
-
-  const { data: { user } } = await supabase.auth.getUser()
-
-  if (!user) {
-    return { success: false, error: 'Not authenticated' }
-  }
+  const auth = await requireAuth()
+  if ('error' in auth) return { success: false, error: auth.error }
+  const { supabase, user } = auth
 
   try {
     // Upsert profile with alias and completion flag (creates if missing)
@@ -44,15 +39,15 @@ export async function completeOnboarding(
       return { success: false, error: 'Failed to update profile' }
     }
 
-    // Create identity core
+    // Create or update identity core (upsert for idempotency on double-click/retry)
     const { error: identityError } = await supabase
       .from('identity_cores')
-      .insert({
+      .upsert({
         user_id: user.id,
         voice: data.identity.voice,
         priorities: data.identity.priorities,
         boundaries: data.identity.boundaries,
-      })
+      }, { onConflict: 'user_id' })
 
     if (identityError) {
       console.error('Identity core creation error:', identityError)

@@ -8,6 +8,18 @@ import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Switch } from '@/components/ui/switch'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog'
+import { StatusMessage } from './status-message'
 import { Plus, Trash2, Server, Loader2, CheckCircle, XCircle, Plug, ExternalLink } from 'lucide-react'
 import {
   createMcpServer,
@@ -82,10 +94,6 @@ export function RoleMcpManager({ roleId, mcpServers, onUpdate }: RoleMcpManagerP
   }
 
   const handleDeleteServer = async (serverId: string) => {
-    if (!confirm('Are you sure you want to remove this MCP server?')) {
-      return
-    }
-
     startTransition(async () => {
       const result = await deleteMcpServer(serverId)
 
@@ -143,15 +151,7 @@ export function RoleMcpManager({ roleId, mcpServers, onUpdate }: RoleMcpManagerP
   return (
     <div className="space-y-6">
       {/* Message */}
-      {message && (
-        <div className={`rounded-lg p-3 text-sm ${
-          message.type === 'success'
-            ? 'bg-green-50 text-green-700 dark:bg-green-950 dark:text-green-300'
-            : 'bg-red-50 text-red-700 dark:bg-red-950 dark:text-red-300'
-        }`}>
-          {message.text}
-        </div>
-      )}
+      <StatusMessage message={message} />
 
       {/* Connected Servers */}
       <Card>
@@ -192,14 +192,31 @@ export function RoleMcpManager({ roleId, mcpServers, onUpdate }: RoleMcpManagerP
                         onCheckedChange={(checked) => handleToggleServer(server.id, checked)}
                         disabled={isPending}
                       />
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => handleDeleteServer(server.id)}
-                        disabled={isPending}
-                      >
-                        <Trash2 className="h-4 w-4 text-destructive" />
-                      </Button>
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            disabled={isPending}
+                          >
+                            <Trash2 className="h-4 w-4 text-destructive" />
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Remove &ldquo;{server.name}&rdquo;?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              This role will lose access to all tools provided by this MCP server.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction onClick={() => handleDeleteServer(server.id)} className="bg-destructive text-white hover:bg-destructive/90">
+                              Remove
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
                     </div>
                   </div>
                 )
@@ -232,6 +249,7 @@ export function RoleMcpManager({ roleId, mcpServers, onUpdate }: RoleMcpManagerP
                   value={newServer.name}
                   onChange={(e) => setNewServer({ ...newServer, name: e.target.value })}
                   placeholder="e.g., My Database Tools"
+                  maxLength={50}
                 />
               </div>
 

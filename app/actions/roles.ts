@@ -1,20 +1,16 @@
 'use server'
 
-import { createClient } from '@/lib/supabase/server'
+import { requireAuth, verifyRoleOwnership } from '@/lib/supabase/auth-helpers'
 import { revalidatePath } from 'next/cache'
-import type { CreateRoleData, CreateRoleResult, ExtractedRoleConfig, ExtractedSkill } from '@/types/role-creation'
+import type { CreateRoleData, CreateRoleResult } from '@/types/role-creation'
 
 /**
  * Create a role with associated skills
  */
 export async function createRoleWithSkills(data: CreateRoleData): Promise<CreateRoleResult> {
-  const supabase = await createClient()
-
-  const { data: { user } } = await supabase.auth.getUser()
-
-  if (!user) {
-    return { success: false, error: 'Not authenticated' }
-  }
+  const auth = await requireAuth()
+  if ('error' in auth) return { success: false, error: auth.error }
+  const { supabase, user } = auth
 
   try {
     // Get selected skills
@@ -30,7 +26,7 @@ export async function createRoleWithSkills(data: CreateRoleData): Promise<Create
         instructions: data.role.instructions,
         identity_facets: data.role.identity_facets,
         approval_policy: data.role.approval_policy,
-        model_preference: 'anthropic/claude-sonnet-4-5-20250929', // Default model
+        model_preference: 'anthropic/claude-sonnet-4-6', // Default model
       })
       .select('id')
       .single()
@@ -42,13 +38,13 @@ export async function createRoleWithSkills(data: CreateRoleData): Promise<Create
 
     const roleId = role.id
 
-    // 2. Create skills linked to the role
-    const skillIds: string[] = []
+    // 2. Batch-create skills linked to the role
+    let skillIds: string[] = []
 
-    for (const skill of selectedSkills) {
-      const { data: createdSkill, error: skillError } = await supabase
+    if (selectedSkills.length > 0) {
+      const { data: createdSkills, error: skillError } = await supabase
         .from('skills')
-        .insert({
+        .insert(selectedSkills.map(skill => ({
           user_id: user.id,
           role_id: roleId,
           name: skill.name,
@@ -57,25 +53,24 @@ export async function createRoleWithSkills(data: CreateRoleData): Promise<Create
           input_schema: skill.input_schema,
           tool_constraints: {},
           version: 1,
-        })
+        })))
         .select('id')
-        .single()
 
-      if (skillError || !createdSkill) {
+      if (skillError) {
         console.error('Skill creation error:', skillError)
-        // Continue creating other skills, but log the error
-        continue
       }
 
-      skillIds.push(createdSkill.id)
+      if (createdSkills?.length) {
+        skillIds = createdSkills.map(s => s.id)
 
-      // Link skill to role via junction table
-      await supabase
-        .from('role_skills')
-        .insert({
-          role_id: roleId,
-          skill_id: createdSkill.id,
-        })
+        // Batch-link skills to role via junction table
+        await supabase
+          .from('role_skills')
+          .insert(createdSkills.map(s => ({
+            role_id: roleId,
+            skill_id: s.id,
+          })))
+      }
     }
 
     return {
@@ -90,43 +85,13 @@ export async function createRoleWithSkills(data: CreateRoleData): Promise<Create
 }
 
 /**
- * Get user's roles
- */
-export async function getUserRoles() {
-  const supabase = await createClient()
-
-  const { data: { user } } = await supabase.auth.getUser()
-
-  if (!user) {
-    return { success: false, error: 'Not authenticated', roles: [] }
-  }
-
-  const { data: roles, error } = await supabase
-    .from('roles')
-    .select('*')
-    .eq('user_id', user.id)
-    .order('created_at', { ascending: false })
-
-  if (error) {
-    console.error('Error fetching roles:', error)
-    return { success: false, error: 'Failed to fetch roles', roles: [] }
-  }
-
-  return { success: true, roles: roles || [] }
-}
-
-/**
  * Get user's roles with resolved skill information
  * Returns roles with skill names/descriptions and context pack counts
  */
 export async function getUserRolesWithSkills() {
-  const supabase = await createClient()
-
-  const { data: { user } } = await supabase.auth.getUser()
-
-  if (!user) {
-    return { success: false, error: 'Not authenticated', roles: [] }
-  }
+  const auth = await requireAuth()
+  if ('error' in auth) return { success: false, error: auth.error, roles: [] }
+  const { supabase, user } = auth
 
   // Fetch identity core voice for display on role cards
   const { data: identityCore } = await supabase
@@ -137,10 +102,14 @@ export async function getUserRolesWithSkills() {
 
   const identityVoice = identityCore?.voice || null
 
-  // 1. Fetch all roles
+  // Single query: fetch roles with nested skills and lore counts
   const { data: roles, error: rolesError } = await supabase
     .from('roles')
-    .select('*')
+    .select(`
+      *,
+      role_skills(skill_id, skills(id, name, description)),
+      role_lore(lore_id)
+    `)
     .eq('user_id', user.id)
     .order('created_at', { ascending: false })
 
@@ -149,71 +118,18 @@ export async function getUserRolesWithSkills() {
     return { success: false, error: 'Failed to fetch roles', roles: [] }
   }
 
-  // 2. Fetch all skills linked to roles via junction table
-  const roleIds = roles.map(r => r.id)
+  // Transform nested data to match the existing RoleWithSkills shape
+  const enrichedRoles = roles.map((role: any) => {
+    const resolved_skills = (role.role_skills || [])
+      .map((rs: any) => rs.skills)
+      .filter((s: any): s is { id: string; name: string; description: string | null } => s !== undefined && s !== null)
 
-  const { data: roleSkillLinks } = await supabase
-    .from('role_skills')
-    .select('role_id, skill_id')
-    .in('role_id', roleIds)
-
-  // Build a map of skill IDs per role
-  const roleSkillMap = new Map<string, string[]>()
-  if (roleSkillLinks) {
-    for (const link of roleSkillLinks) {
-      const skillIds = roleSkillMap.get(link.role_id) || []
-      skillIds.push(link.skill_id)
-      roleSkillMap.set(link.role_id, skillIds)
-    }
-  }
-
-  // 3. Fetch all unique skills
-  const allSkillIds = new Set<string>()
-  for (const skillIds of roleSkillMap.values()) {
-    skillIds.forEach(id => allSkillIds.add(id))
-  }
-
-  const skillsMap = new Map<string, { id: string; name: string; description: string | null }>()
-  if (allSkillIds.size > 0) {
-    const { data: skills } = await supabase
-      .from('skills')
-      .select('id, name, description')
-      .in('id', Array.from(allSkillIds))
-
-    if (skills) {
-      for (const skill of skills) {
-        skillsMap.set(skill.id, skill)
-      }
-    }
-  }
-
-  // 4. Fetch lore counts for all roles
-  const { data: loreLinks } = await supabase
-    .from('role_lore')
-    .select('role_id')
-    .in('role_id', roleIds)
-
-  // Count lore per role
-  const loreCounts = new Map<string, number>()
-  if (loreLinks) {
-    for (const link of loreLinks) {
-      const count = loreCounts.get(link.role_id) || 0
-      loreCounts.set(link.role_id, count + 1)
-    }
-  }
-
-  // 5. Enrich roles with resolved skills, counts, and identity voice
-  const enrichedRoles = roles.map(role => {
-    // Get skills linked to this role via junction table
-    const roleSkillIds = roleSkillMap.get(role.id) || []
-    const resolved_skills = roleSkillIds
-      .map(skillId => skillsMap.get(skillId))
-      .filter((skill): skill is { id: string; name: string; description: string | null } => skill !== undefined)
+    const { role_skills: _rs, role_lore: roleLore, ...roleData } = role
 
     return {
-      ...role,
+      ...roleData,
       resolved_skills,
-      lore_count: loreCounts.get(role.id) || 0,
+      lore_count: (roleLore || []).length,
       identity_voice: identityVoice,
     }
   })
@@ -225,13 +141,9 @@ export async function getUserRolesWithSkills() {
  * Get a specific role by ID
  */
 export async function getRole(roleId: string) {
-  const supabase = await createClient()
-
-  const { data: { user } } = await supabase.auth.getUser()
-
-  if (!user) {
-    return { success: false, error: 'Not authenticated', role: null }
-  }
+  const auth = await requireAuth()
+  if ('error' in auth) return { success: false, error: auth.error, role: null }
+  const { supabase, user } = auth
 
   const { data: role, error } = await supabase
     .from('roles')
@@ -259,13 +171,9 @@ export async function getRole(roleId: string) {
 export async function deleteRole(
   roleId: string
 ): Promise<{ success: boolean; error?: string }> {
-  const supabase = await createClient()
-
-  const { data: { user } } = await supabase.auth.getUser()
-
-  if (!user) {
-    return { success: false, error: 'Not authenticated' }
-  }
+  const auth = await requireAuth()
+  if ('error' in auth) return { success: false, error: auth.error }
+  const { supabase, user } = auth
 
   const { error } = await supabase
     .from('roles')
@@ -286,13 +194,9 @@ export async function deleteRole(
  * Get skills for a role
  */
 export async function getRoleSkills(roleId: string) {
-  const supabase = await createClient()
-
-  const { data: { user } } = await supabase.auth.getUser()
-
-  if (!user) {
-    return { success: false, error: 'Not authenticated', skills: [] }
-  }
+  const auth = await requireAuth()
+  if ('error' in auth) return { success: false, error: auth.error, skills: [] }
+  const { supabase, user } = auth
 
   const { data: skills, error } = await supabase
     .from('skills')
@@ -327,23 +231,12 @@ export async function createSkill(
     model_preference?: string | null
   }
 ): Promise<{ success: boolean; skillId?: string; error?: string }> {
-  const supabase = await createClient()
-
-  const { data: { user } } = await supabase.auth.getUser()
-
-  if (!user) {
-    return { success: false, error: 'Not authenticated' }
-  }
+  const auth = await requireAuth()
+  if ('error' in auth) return { success: false, error: auth.error }
+  const { supabase, user } = auth
 
   // Verify the role belongs to the user
-  const { data: role, error: roleError } = await supabase
-    .from('roles')
-    .select('id')
-    .eq('id', roleId)
-    .eq('user_id', user.id)
-    .single()
-
-  if (roleError || !role) {
+  if (!await verifyRoleOwnership(supabase, roleId, user.id)) {
     return { success: false, error: 'Role not found' }
   }
 
@@ -410,13 +303,9 @@ export async function updateSkill(
     model_preference?: string | null
   }
 ): Promise<{ success: boolean; error?: string }> {
-  const supabase = await createClient()
-
-  const { data: { user } } = await supabase.auth.getUser()
-
-  if (!user) {
-    return { success: false, error: 'Not authenticated' }
-  }
+  const auth = await requireAuth()
+  if ('error' in auth) return { success: false, error: auth.error }
+  const { supabase, user } = auth
 
   // Update the skill (RLS ensures user_id match)
   const { error } = await supabase
@@ -442,13 +331,9 @@ export async function updateSkill(
 export async function deleteSkill(
   skillId: string
 ): Promise<{ success: boolean; error?: string }> {
-  const supabase = await createClient()
-
-  const { data: { user } } = await supabase.auth.getUser()
-
-  if (!user) {
-    return { success: false, error: 'Not authenticated' }
-  }
+  const auth = await requireAuth()
+  if ('error' in auth) return { success: false, error: auth.error }
+  const { supabase, user } = auth
 
   // Remove from role_skills junction table first
   await supabase
@@ -478,23 +363,12 @@ export async function linkSkillToRole(
   roleId: string,
   skillId: string
 ): Promise<{ success: boolean; error?: string }> {
-  const supabase = await createClient()
-
-  const { data: { user } } = await supabase.auth.getUser()
-
-  if (!user) {
-    return { success: false, error: 'Not authenticated' }
-  }
+  const auth = await requireAuth()
+  if ('error' in auth) return { success: false, error: auth.error }
+  const { supabase, user } = auth
 
   // Verify the role belongs to the user
-  const { data: role, error: roleError } = await supabase
-    .from('roles')
-    .select('id')
-    .eq('id', roleId)
-    .eq('user_id', user.id)
-    .single()
-
-  if (roleError || !role) {
+  if (!await verifyRoleOwnership(supabase, roleId, user.id)) {
     return { success: false, error: 'Role not found' }
   }
 
@@ -533,23 +407,12 @@ export async function unlinkSkillFromRole(
   roleId: string,
   skillId: string
 ): Promise<{ success: boolean; error?: string }> {
-  const supabase = await createClient()
-
-  const { data: { user } } = await supabase.auth.getUser()
-
-  if (!user) {
-    return { success: false, error: 'Not authenticated' }
-  }
+  const auth = await requireAuth()
+  if ('error' in auth) return { success: false, error: auth.error }
+  const { supabase, user } = auth
 
   // Verify the role belongs to the user
-  const { data: role, error: roleError } = await supabase
-    .from('roles')
-    .select('id')
-    .eq('id', roleId)
-    .eq('user_id', user.id)
-    .single()
-
-  if (roleError || !role) {
+  if (!await verifyRoleOwnership(supabase, roleId, user.id)) {
     return { success: false, error: 'Role not found' }
   }
 
@@ -569,27 +432,104 @@ export async function unlinkSkillFromRole(
 }
 
 /**
- * Get all skills for the current user (for adding to roles)
+ * Clone an existing role with all its skills, lore, and MCP servers
  */
-export async function getAllUserSkills() {
-  const supabase = await createClient()
+export async function cloneRole(
+  roleId: string
+): Promise<{ success: boolean; roleId?: string; error?: string }> {
+  const auth = await requireAuth()
+  if ('error' in auth) return { success: false, error: auth.error }
+  const { supabase, user } = auth
 
-  const { data: { user } } = await supabase.auth.getUser()
+  try {
+    // Fetch the source role (RLS ensures ownership)
+    const { data: sourceRole, error: roleError } = await supabase
+      .from('roles')
+      .select('*')
+      .eq('id', roleId)
+      .eq('user_id', user.id)
+      .single()
 
-  if (!user) {
-    return { success: false, error: 'Not authenticated', skills: [] }
+    if (roleError || !sourceRole) {
+      return { success: false, error: 'Role not found' }
+    }
+
+    // Create the cloned role
+    const { data: newRole, error: insertError } = await supabase
+      .from('roles')
+      .insert({
+        user_id: user.id,
+        name: `${sourceRole.name} (Copy)`,
+        description: sourceRole.description,
+        instructions: sourceRole.instructions,
+        identity_facets: sourceRole.identity_facets,
+        approval_policy: sourceRole.approval_policy,
+        model_preference: sourceRole.model_preference,
+      })
+      .select('id')
+      .single()
+
+    if (insertError || !newRole) {
+      console.error('Role clone error:', insertError)
+      return { success: false, error: 'Failed to clone role' }
+    }
+
+    const newRoleId = newRole.id
+
+    // Copy role_skills junction entries
+    const { data: sourceSkills } = await supabase
+      .from('role_skills')
+      .select('skill_id')
+      .eq('role_id', roleId)
+
+    if (sourceSkills?.length) {
+      await supabase
+        .from('role_skills')
+        .insert(sourceSkills.map(rs => ({
+          role_id: newRoleId,
+          skill_id: rs.skill_id,
+        })))
+    }
+
+    // Copy role_lore junction entries
+    const { data: sourceLore } = await supabase
+      .from('role_lore')
+      .select('lore_id')
+      .eq('role_id', roleId)
+
+    if (sourceLore?.length) {
+      await supabase
+        .from('role_lore')
+        .insert(sourceLore.map(rl => ({
+          role_id: newRoleId,
+          lore_id: rl.lore_id,
+        })))
+    }
+
+    // Copy MCP server configurations
+    const { data: sourceMcpServers } = await supabase
+      .from('mcp_servers')
+      .select('name, server_type, config, is_enabled')
+      .eq('role_id', roleId)
+
+    if (sourceMcpServers?.length) {
+      await supabase
+        .from('mcp_servers')
+        .insert(sourceMcpServers.map(server => ({
+          user_id: user.id,
+          role_id: newRoleId,
+          name: server.name,
+          server_type: server.server_type,
+          config: server.config,
+          is_enabled: server.is_enabled,
+        })))
+    }
+
+    revalidatePath('/roles')
+    return { success: true, roleId: newRoleId }
+  } catch (error) {
+    console.error('Role clone error:', error)
+    return { success: false, error: 'An unexpected error occurred' }
   }
-
-  const { data: skills, error } = await supabase
-    .from('skills')
-    .select('id, name, description, role_id')
-    .eq('user_id', user.id)
-    .order('name')
-
-  if (error) {
-    console.error('Error fetching skills:', error)
-    return { success: false, error: 'Failed to fetch skills', skills: [] }
-  }
-
-  return { success: true, skills: skills || [] }
 }
+

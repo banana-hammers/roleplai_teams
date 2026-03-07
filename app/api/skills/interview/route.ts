@@ -1,13 +1,13 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextRequest } from 'next/server'
 import { streamText, convertToModelMessages } from 'ai'
-import { createAnthropic } from '@ai-sdk/anthropic'
-import { createOpenAI } from '@ai-sdk/openai'
 import {
   buildForgeSkillPrompt,
   buildForgeSkillEditPrompt,
 } from '@/lib/prompts/system-prompt-builder'
 import type { ForgeSkillContext, ExistingSkillContext, SkillInterviewMode } from '@/types/skill-creation'
+import { getSystemModel, errorResponse, DEFAULT_TEMPERATURE } from '@/lib/ai/create-system-model'
+import { rateLimit, rateLimitExceededResponse, RATE_LIMITS } from '@/lib/rate-limit'
 
 export const runtime = 'edge'
 
@@ -27,7 +27,16 @@ export async function POST(req: NextRequest) {
   } = await supabase.auth.getUser()
 
   if (!user) {
-    return new Response('Unauthorized', { status: 401 })
+    return errorResponse('Unauthorized', 401)
+  }
+
+  const rateLimitResult = await rateLimit(
+    `skills-interview:${user.id}`,
+    RATE_LIMITS.default.limit,
+    RATE_LIMITS.default.windowMs
+  )
+  if (!rateLimitResult.success) {
+    return rateLimitExceededResponse(rateLimitResult)
   }
 
   // Messages come from useChat in UI format, other params come from transport body
@@ -57,7 +66,7 @@ export async function POST(req: NextRequest) {
       .from('mcp_servers')
       .select('name')
       .eq('role_id', roleId)
-      .eq('enabled', true)
+      .eq('is_enabled', true)
 
     if (mcpServers && mcpServers.length > 0) {
       // Note: We just show server names, actual tools are fetched at runtime
@@ -80,30 +89,17 @@ export async function POST(req: NextRequest) {
       ? buildForgeSkillEditPrompt(context)
       : buildForgeSkillPrompt(context)
 
-  // Use Anthropic as primary, OpenAI as fallback
-  const anthropicKey = process.env.ANTHROPIC_API_KEY
-  const openaiKey = process.env.OPENAI_API_KEY
-
-  let model
-
-  if (anthropicKey) {
-    const anthropic = createAnthropic({ apiKey: anthropicKey })
-    model = anthropic('claude-haiku-4-5')
-  } else if (openaiKey) {
-    const openai = createOpenAI({ apiKey: openaiKey })
-    model = openai('gpt-4-turbo-preview')
-  } else {
-    return new Response('No AI provider configured', { status: 500 })
-  }
+  const modelResult = getSystemModel()
+  if ('error' in modelResult) return modelResult.error
 
   // Stream the interview conversation
   const result = streamText({
-    model,
+    model: modelResult.model,
     messages: [
       { role: 'system', content: systemPrompt },
-      ...convertToModelMessages(messages),
+      ...await convertToModelMessages(messages),
     ],
-    temperature: 0.7,
+    temperature: DEFAULT_TEMPERATURE,
   })
 
   return result.toUIMessageStreamResponse()

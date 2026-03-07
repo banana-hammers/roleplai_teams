@@ -96,13 +96,14 @@ Client component with tabs:
 
 #### 3. Role Settings Page (`app/(authenticated)/roles/[roleId]/settings/page.tsx`)
 
-Per-role configuration with 3 tabs:
+Per-role configuration with 4 tabs:
 
 | Tab | Features |
 |-----|----------|
 | General | Name, description, instructions, model, approval policy |
 | Tools & Permissions | Toggle web tools (web_search, web_fetch) |
-| Skills | View assigned skills |
+| Skills | View, add, edit, and manage assigned skills |
+| MCP Servers | Add/remove SSE MCP servers, test connections, toggle enable/disable |
 
 #### 4. Tool Config Selector (`components/settings/tool-config-selector.tsx`)
 
@@ -130,7 +131,7 @@ Each tool shows:
 | `web_search` | Search the web via Brave/Serper API | Moderate |
 | `web_fetch` | Fetch and extract content from URLs | Moderate |
 
-**Note**: File operations (Read, Write, Edit, Bash) and MCP servers are not available on Vercel Edge runtime.
+**Note**: File operations (Read, Write, Edit, Bash) are not available on Vercel Edge runtime. MCP servers are supported via SSE transport.
 
 ---
 
@@ -149,8 +150,11 @@ Each tool shows:
 | `components/settings/profile-settings.tsx` | Profile editor |
 | `components/settings/api-keys-settings.tsx` | API key management |
 | `components/settings/preferences-settings.tsx` | Default preferences |
-| `components/settings/role-settings-form.tsx` | Role settings tabs |
+| `components/settings/role-settings-form.tsx` | Role settings tabs (General/Tools/Skills/MCP) |
 | `components/settings/tool-config-selector.tsx` | Web tool permission editor |
+| `components/settings/skills-manager.tsx` | Skills CRUD management |
+| `components/settings/model-selector.tsx` | Model selection with tier display |
+| `components/settings/role-mcp-manager.tsx` | MCP server management |
 
 ### UI Components Added
 | File | Purpose |
@@ -195,6 +199,7 @@ Each tool shows:
 | `roles` | Role settings (tool_config, approval_policy) |
 | `role_skills` | Assigned skills per role |
 | `skills` | Available skill definitions |
+| `mcp_servers` | MCP server configurations per role |
 
 ---
 

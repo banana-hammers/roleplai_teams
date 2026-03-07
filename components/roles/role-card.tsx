@@ -1,10 +1,13 @@
 'use client'
 
+import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { cn } from '@/lib/utils'
 import { TierAvatar } from './tier-avatar'
 import { SkillPills } from './skill-list'
 import { getModelTier, getModelDisplayName } from '@/lib/utils/model-tiers'
-import { User } from 'lucide-react'
+import { User, Copy, Loader2 } from 'lucide-react'
+import { cloneRole } from '@/app/actions/roles'
 import type { RoleWithSkills } from '@/types/role'
 
 interface RoleCardProps {
@@ -17,6 +20,22 @@ interface RoleCardProps {
 export function RoleCard({ role, isSelected, onSelect, className }: RoleCardProps) {
   const tierConfig = getModelTier(role.model_preference)
   const modelLabel = getModelDisplayName(role.model_preference)
+  const router = useRouter()
+  const [isCloning, setIsCloning] = useState(false)
+
+  async function handleClone(e: React.MouseEvent) {
+    e.stopPropagation()
+    e.preventDefault()
+    setIsCloning(true)
+    try {
+      const result = await cloneRole(role.id)
+      if (result.success) {
+        router.refresh()
+      }
+    } finally {
+      setIsCloning(false)
+    }
+  }
 
   return (
     <button
@@ -67,7 +86,7 @@ export function RoleCard({ role, isSelected, onSelect, className }: RoleCardProp
         tierConfig.tier === 'rare' && 'bg-linear-to-br from-teal-500/10 via-transparent to-transparent',
       )} />
 
-      {/* Header: Avatar + Name + Model */}
+      {/* Header: Avatar + Name + Model + Clone */}
       <div className="relative flex items-center gap-3 p-4 pb-3">
         <TierAvatar tier={tierConfig} size="lg" />
         <div className="flex-1 min-w-0">
@@ -81,6 +100,28 @@ export function RoleCard({ role, isSelected, onSelect, className }: RoleCardProp
             )}>
               {modelLabel}
             </span>
+          )}
+        </div>
+        <div
+          role="button"
+          tabIndex={0}
+          title="Clone role"
+          onClick={handleClone}
+          onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') handleClone(e as any) }}
+          className={cn(
+            'shrink-0 p-1.5 rounded-lg',
+            'text-muted-foreground/50 hover:text-foreground',
+            'hover:bg-muted/80',
+            'opacity-0 group-hover:opacity-100 focus-visible:opacity-100',
+            'transition-all duration-200',
+            'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+            isCloning && 'opacity-100 pointer-events-none',
+          )}
+        >
+          {isCloning ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : (
+            <Copy className="h-4 w-4" />
           )}
         </div>
       </div>

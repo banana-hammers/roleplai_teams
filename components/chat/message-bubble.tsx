@@ -44,7 +44,8 @@ export const MessageBubble = memo(function MessageBubble({
   return (
     <div
       className={cn(
-        'flex gap-4',
+        'flex gap-3',
+        isUser ? 'justify-end' : '',
         isGrouped ? 'py-1' : 'py-3',
         !isUser && tierBorder,
         !isUser && tierConfig && 'pl-2',
@@ -52,32 +53,36 @@ export const MessageBubble = memo(function MessageBubble({
         className
       )}
     >
-      {/* Avatar column - fixed width, hidden when grouped */}
-      <div className="shrink-0 w-8">
-        {!isGrouped && (
-          isUser ? (
-            <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
-              <User className="h-4 w-4 text-primary" />
-            </div>
-          ) : tierConfig ? (
-            <TierAvatar tier={tierConfig} size="sm" />
-          ) : (
-            <AIAvatar state="idle" size="sm" />
-          )
-        )}
-      </div>
+      {/* AI Avatar - left side */}
+      {!isUser && (
+        <div className="shrink-0 w-8">
+          {!isGrouped && (
+            tierConfig ? (
+              <TierAvatar tier={tierConfig} size="sm" />
+            ) : (
+              <AIAvatar state="idle" size="sm" />
+            )
+          )}
+        </div>
+      )}
 
-      {/* Content column - flexible */}
-      <div className="flex-1 min-w-0">
+      {/* Content column */}
+      <div className={cn(
+        'min-w-0',
+        isUser ? 'max-w-[85%]' : 'flex-1'
+      )}>
         {/* Sender name - hidden when grouped */}
-        {!isGrouped && (
+        {!isGrouped && !isUser && (
           <div className="text-sm font-medium mb-1.5 text-foreground">
-            {isUser ? 'You' : senderName || 'Assistant'}
+            {senderName || 'Assistant'}
           </div>
         )}
 
-        {/* Markdown content */}
-        <div className="text-sm text-foreground">
+        {/* Message content */}
+        <div className={cn(
+          'text-sm text-foreground',
+          isUser && 'bg-primary/10 rounded-2xl rounded-tr-sm px-4 py-2.5'
+        )}>
           <ReactMarkdown
             remarkPlugins={[remarkGfm]}
             components={{
@@ -97,11 +102,11 @@ export const MessageBubble = memo(function MessageBubble({
                     {children}
                   </code>
                 ) : (
-                  <code className="text-sm font-mono">{children}</code>
+                  <code className="text-sm font-mono text-foreground/90">{children}</code>
                 )
               },
               pre: ({ children }) => (
-                <pre className="p-4 rounded-lg overflow-x-auto my-3 bg-muted text-sm">
+                <pre className="group relative p-4 rounded-lg overflow-x-auto my-3 bg-[oklch(0.12_0.01_260)] border border-border/50 text-sm">
                   {children}
                 </pre>
               ),
@@ -154,6 +159,17 @@ export const MessageBubble = memo(function MessageBubble({
           </div>
         )}
       </div>
+
+      {/* User Avatar - right side */}
+      {isUser && (
+        <div className="shrink-0 w-8">
+          {!isGrouped && (
+            <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
+              <User className="h-4 w-4 text-primary" />
+            </div>
+          )}
+        </div>
+      )}
     </div>
   )
 })

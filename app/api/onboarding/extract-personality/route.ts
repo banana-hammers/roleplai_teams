@@ -1,10 +1,10 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
 import { generateObject } from 'ai'
-import { createAnthropic } from '@ai-sdk/anthropic'
-import { createOpenAI } from '@ai-sdk/openai'
 import { z } from 'zod'
 import { VOICE_TYPES, PRIORITY_VALUES, BOUNDARY_TYPES } from '@/lib/constants/interview-prompts'
+import { getSystemModel, errorResponse } from '@/lib/ai/create-system-model'
+import { rateLimit, rateLimitExceededResponse, RATE_LIMITS } from '@/lib/rate-limit'
 
 export const runtime = 'edge'
 
@@ -26,26 +26,23 @@ export async function POST(req: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser()
 
   if (!user) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    return errorResponse('Unauthorized', 401)
+  }
+
+  const rateLimitResult = await rateLimit(
+    `onboarding-extract:${user.id}`,
+    RATE_LIMITS.default.limit,
+    RATE_LIMITS.default.windowMs
+  )
+  if (!rateLimitResult.success) {
+    return rateLimitExceededResponse(rateLimitResult)
   }
 
   const { messages } = await req.json()
 
-  // Use Anthropic as primary, OpenAI as fallback
-  const anthropicKey = process.env.ANTHROPIC_API_KEY
-  const openaiKey = process.env.OPENAI_API_KEY
-
-  let model
-
-  if (anthropicKey) {
-    const anthropic = createAnthropic({ apiKey: anthropicKey })
-    model = anthropic('claude-haiku-4-5')
-  } else if (openaiKey) {
-    const openai = createOpenAI({ apiKey: openaiKey })
-    model = openai('gpt-4-turbo-preview')
-  } else {
-    return NextResponse.json({ error: 'No AI provider configured' }, { status: 500 })
-  }
+  const modelResult = getSystemModel()
+  if ('error' in modelResult) return modelResult.error
+  const model = modelResult.model
 
   const extractionPrompt = `Analyze this conversation between Nova (AI interviewer) and the user.
 Extract the user's personality traits based on their responses.

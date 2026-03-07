@@ -197,19 +197,21 @@ SERPER_API_KEY=...     # https://serper.dev/
 
 | Feature | Reason |
 |---------|--------|
-| MCP Servers | Requires child processes |
+| MCP Servers (stdio) | Requires child processes |
 | File Operations | No filesystem on Edge |
 | Bash Commands | No shell on Edge |
 | Session Resume | No persistent processes |
+
+**Note**: MCP Servers via **SSE transport** ARE supported and fully implemented. See [EPIC-003 in EPIC-001-platform-architecture.md](./EPIC-001-platform-architecture.md) for details.
 
 ---
 
 ## Future Enhancements
 
-If full agent capabilities are needed:
+If full agent capabilities are needed (stdio MCP, file ops, bash):
 1. Deploy to container platform (Railway, Fly.io, AWS ECS)
 2. Reinstall Claude Agent SDK
-3. Restore agent endpoint with MCP support
+3. Restore agent endpoint with stdio MCP support
 
 ---
 

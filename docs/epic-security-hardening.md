@@ -16,8 +16,8 @@ The project uses **Direct Anthropic API** on Vercel Edge, not the Claude Agent S
 |---------|-----------|----------------|
 | File Operations | Needed sandboxing | N/A (no filesystem) |
 | Bash Commands | Needed validation | N/A (no shell) |
-| MCP Servers | Needed env whitelisting | N/A (not supported) |
-| Tool Permissions | Complex validation | Simplified (web tools only) |
+| MCP Servers | Needed env whitelisting | SSE only, URL validation |
+| Tool Permissions | Complex validation | Web tools + MCP tools |
 
 ---
 
@@ -100,13 +100,14 @@ These were necessary when using the SDK to spawn Claude Code as a child process.
 
 ### Web Tools Security
 
-The only built-in tools are `web_search` and `web_fetch`:
+Built-in tools (`web_search`, `web_fetch`) plus MCP external tools:
 
 | Tool | Security Consideration | Mitigation |
 |------|----------------------|------------|
 | `web_search` | API key exposure | Server-side only, not in responses |
-| `web_fetch` | SSRF risk | Only HTTP/HTTPS, user-agent set |
+| `web_fetch` | SSRF risk | Only HTTP/HTTPS, user-agent set, URL validation |
 | `web_fetch` | Large response DoS | Content truncated to 50KB |
+| MCP tools | External server trust | User-managed servers, URL validation, role-level isolation |
 
 ### API Key Security
 

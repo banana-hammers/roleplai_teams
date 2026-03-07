@@ -10,6 +10,7 @@ import {
   Loader2,
   RefreshCw,
 } from 'lucide-react'
+import { cn } from '@/lib/utils'
 import { ToolResultCard } from './tool-result-card'
 import type { SkillProgress } from '@/lib/hooks/use-role-chat'
 
@@ -22,13 +23,13 @@ export function SkillProgressCard({ progress }: SkillProgressCardProps) {
 
   // Determine icon based on status
   const statusIcon = {
-    running: <Loader2 className="h-3.5 w-3.5 animate-spin text-purple-500" />,
-    completed: <CheckCircle className="h-3.5 w-3.5 text-green-500" />,
-    error: <XCircle className="h-3.5 w-3.5 text-red-500" />,
+    running: <Loader2 className="h-3.5 w-3.5 animate-spin text-tool-skill" />,
+    completed: <CheckCircle className="h-3.5 w-3.5 text-success" />,
+    error: <XCircle className="h-3.5 w-3.5 text-destructive" />,
   }
 
   return (
-    <div className="border-l-2 border-purple-500 rounded-r text-xs bg-purple-50/50 dark:bg-purple-950/20">
+    <div className={cn('border-l-2 border-l-tool-skill rounded-r text-xs card-inset')}>
       {/* Header - clickable */}
       <button
         type="button"
@@ -36,8 +37,8 @@ export function SkillProgressCard({ progress }: SkillProgressCardProps) {
         className="w-full flex items-center justify-between px-3 py-2 hover:bg-black/5 dark:hover:bg-white/5 transition-colors cursor-pointer text-left"
       >
         <div className="flex items-center gap-2 min-w-0">
-          <Wrench className="h-3.5 w-3.5 flex-shrink-0 text-purple-600 dark:text-purple-400" />
-          <span className="font-medium text-purple-600 dark:text-purple-400">
+          <Wrench className="h-3.5 w-3.5 flex-shrink-0 text-tool-skill" />
+          <span className="font-medium text-tool-skill">
             {progress.skillName}
           </span>
           {progress.status === 'running' && (
@@ -64,7 +65,7 @@ export function SkillProgressCard({ progress }: SkillProgressCardProps) {
 
       {/* Expandable content */}
       {isOpen && (
-        <div className="px-3 pb-3 space-y-3 border-t border-purple-200 dark:border-purple-800 pt-2">
+        <div className="px-3 pb-3 space-y-3 border-t border-border/50 pt-2">
           {/* Streaming text output */}
           {progress.streamingText && (
             <div className="space-y-1">
@@ -73,7 +74,7 @@ export function SkillProgressCard({ progress }: SkillProgressCardProps) {
                 <pre className="whitespace-pre-wrap break-words font-mono text-[11px] max-h-48 overflow-y-auto">
                   {progress.streamingText}
                   {progress.status === 'running' && (
-                    <span className="animate-pulse text-purple-500">|</span>
+                    <span className="animate-pulse text-tool-skill">|</span>
                   )}
                 </pre>
               </div>
@@ -90,8 +91,8 @@ export function SkillProgressCard({ progress }: SkillProgressCardProps) {
                 {progress.toolCalls.map((toolCall, index) => (
                   <div key={toolCall.toolId || index} className="relative">
                     {/* Connection line */}
-                    <div className="absolute left-0 top-0 bottom-0 w-px bg-purple-300 dark:bg-purple-700 -ml-2" />
-                    <div className="absolute left-0 top-3 w-2 h-px bg-purple-300 dark:bg-purple-700 -ml-2" />
+                    <div className="absolute left-0 top-0 bottom-0 w-px bg-tool-skill/40 -ml-2" />
+                    <div className="absolute left-0 top-3 w-2 h-px bg-tool-skill/40 -ml-2" />
                     <ToolResultCard
                       name={toolCall.toolName}
                       input={toolCall.input}
@@ -107,7 +108,7 @@ export function SkillProgressCard({ progress }: SkillProgressCardProps) {
           {progress.status === 'completed' && progress.finalResult && progress.finalResult !== progress.streamingText && (
             <div className="space-y-1">
               <span className="font-medium text-muted-foreground">Final Result:</span>
-              <div className="bg-green-100 dark:bg-green-950/30 rounded px-2 py-1.5">
+              <div className="bg-success/10 rounded px-2 py-1.5">
                 <pre className="whitespace-pre-wrap break-words font-mono text-[11px] max-h-32 overflow-y-auto">
                   {progress.finalResult}
                 </pre>
@@ -118,8 +119,8 @@ export function SkillProgressCard({ progress }: SkillProgressCardProps) {
           {/* Error message */}
           {progress.status === 'error' && progress.error && (
             <div className="space-y-1">
-              <span className="font-medium text-red-500">Error:</span>
-              <div className="bg-red-100 dark:bg-red-950/30 text-red-700 dark:text-red-300 rounded px-2 py-1.5">
+              <span className="font-medium text-destructive">Error:</span>
+              <div className="bg-destructive/10 text-destructive rounded px-2 py-1.5">
                 <pre className="whitespace-pre-wrap break-words font-mono text-[11px]">
                   {progress.error}
                 </pre>

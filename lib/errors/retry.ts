@@ -122,18 +122,3 @@ export async function withRetry<T>(fn: () => Promise<T>, options: RetryOptions =
   throw lastError
 }
 
-/**
- * Create a retryable version of any async function
- *
- * @example
- * const retryableCreate = retryable(
- *   (params) => anthropic.messages.create(params),
- *   { maxRetries: 3 }
- * )
- */
-export function retryable<TArgs extends unknown[], TResult>(
-  fn: (...args: TArgs) => Promise<TResult>,
-  options: RetryOptions = {}
-): (...args: TArgs) => Promise<TResult> {
-  return (...args: TArgs) => withRetry(() => fn(...args), options)
-}

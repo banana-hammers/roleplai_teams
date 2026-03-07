@@ -23,11 +23,3 @@ export interface Conversation {
 export interface ConversationWithMessages extends Conversation {
   messages: Message[]
 }
-
-// Conversation with role info for listing
-export interface ConversationWithRole extends Conversation {
-  role: {
-    id: string
-    name: string
-  }
-}

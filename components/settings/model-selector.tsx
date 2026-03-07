@@ -7,7 +7,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { CLAUDE_MODELS, modelTierConfigs, type ModelTier } from '@/lib/utils/model-tiers'
+import { AVAILABLE_MODELS, modelTierConfigs, type ModelTier } from '@/lib/utils/model-tiers'
 
 interface ModelSelectorProps {
   value: string
@@ -21,7 +21,7 @@ export function ModelSelector({ value, onChange }: ModelSelectorProps) {
         <SelectValue placeholder="Select a model" />
       </SelectTrigger>
       <SelectContent>
-        {CLAUDE_MODELS.map((model) => {
+        {AVAILABLE_MODELS.map((model) => {
           const tierConfig = modelTierConfigs[model.tier as ModelTier]
           const TierIcon = tierConfig.icon
 

@@ -3,16 +3,6 @@
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '@/components/ui/alert-dialog'
 import { AIInterview } from '@/components/onboarding/ai-interview'
 import {
   generateIdentityCore,
@@ -21,10 +11,16 @@ import {
   type IdentityCore,
   type BehaviorExample,
 } from '@/lib/onboarding/generate-identity'
-import { Sparkles, CheckCircle2, AlertTriangle, RefreshCw } from 'lucide-react'
+import { Sparkles, CheckCircle2, RefreshCw } from 'lucide-react'
 import type { UpdateIdentityCoreData } from '@/app/actions/identity'
+import {
+  PRIORITY_LABELS,
+  BOUNDARY_LABELS,
+  type PriorityValue,
+  type BoundaryType,
+} from '@/lib/constants/interview-prompts'
 
-type ReInterviewStep = 'confirm' | 'interview' | 'preview' | 'saving'
+type ReInterviewStep = 'interview' | 'preview' | 'saving'
 
 interface IdentityReInterviewProps {
   onComplete: (data: UpdateIdentityCoreData) => Promise<void>
@@ -35,15 +31,11 @@ export function IdentityReInterview({
   onComplete,
   onCancel,
 }: IdentityReInterviewProps) {
-  const [step, setStep] = useState<ReInterviewStep>('confirm')
+  const [step, setStep] = useState<ReInterviewStep>('interview')
   const [newIdentity, setNewIdentity] = useState<IdentityCore | null>(null)
   const [examples, setExamples] = useState<BehaviorExample[]>([])
   const [error, setError] = useState<string | null>(null)
   const [isProcessing, setIsProcessing] = useState(false)
-
-  const handleConfirmStart = () => {
-    setStep('interview')
-  }
 
   const handleInterviewComplete = async (
     messages: Array<{ role: string; content: string }>
@@ -52,7 +44,6 @@ export function IdentityReInterview({
     setError(null)
 
     try {
-      // Call the extract-personality API
       const response = await fetch('/api/onboarding/extract-personality', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -64,8 +55,6 @@ export function IdentityReInterview({
       }
 
       const personality: ExtractedPersonality = await response.json()
-
-      // Generate identity core and examples
       const identity = generateIdentityCore(personality)
       const behaviorExamples = generateBehaviorExamples(personality)
 
@@ -106,38 +95,6 @@ export function IdentityReInterview({
     setStep('interview')
   }
 
-  // Confirmation Dialog
-  if (step === 'confirm') {
-    return (
-      <AlertDialog open onOpenChange={(open) => !open && onCancel()}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle className="flex items-center gap-2">
-              <AlertTriangle className="h-5 w-5 text-amber-500" />
-              Start New Interview?
-            </AlertDialogTitle>
-            <AlertDialogDescription className="space-y-2">
-              <p>
-                This will start a fresh interview with Nova to rebuild your
-                identity core from scratch.
-              </p>
-              <p className="font-medium text-foreground">
-                Your current identity will be replaced after you confirm the new
-                one.
-              </p>
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel onClick={onCancel}>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleConfirmStart}>
-              Start Interview
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-    )
-  }
-
   // Interview Step
   if (step === 'interview') {
     return (
@@ -167,12 +124,11 @@ export function IdentityReInterview({
 
   // Preview Step
   if (step === 'preview' && newIdentity) {
-    // Priorities are now an ordered array
     const rankedPriorities = newIdentity.priorities || []
 
     const activeBoundaries = Object.entries(newIdentity.boundaries)
       .filter(([key, value]) => key !== 'custom' && value === true)
-      .map(([name]) => name.replace(/_/g, ' '))
+      .map(([name]) => name as BoundaryType)
 
     const customBoundaries = newIdentity.boundaries.custom as string[] | undefined
 
@@ -195,17 +151,17 @@ export function IdentityReInterview({
         )}
 
         {/* Identity Summary Card */}
-        <div className="rounded-lg border bg-gradient-to-br from-primary/5 to-primary/10 p-6 space-y-4">
+        <div className="rounded-lg border bg-linear-to-br from-primary/5 to-primary/10 p-6 space-y-4">
           <div>
             <h4 className="text-sm font-semibold text-muted-foreground mb-2">
-              VOICE
+              HOW YOU SPEAK
             </h4>
             <p className="text-sm">{newIdentity.voice}</p>
           </div>
 
           <div>
             <h4 className="text-sm font-semibold text-muted-foreground mb-2">
-              VALUES (Ranked)
+              WHAT DRIVES YOU
             </h4>
             <div className="flex flex-wrap gap-2">
               {rankedPriorities.map((priority, index) => (
@@ -214,7 +170,7 @@ export function IdentityReInterview({
                   variant={index === 0 ? 'default' : 'secondary'}
                   className="capitalize"
                 >
-                  {index + 1}. {priority}
+                  {index + 1}. {PRIORITY_LABELS[priority as PriorityValue] || priority}
                 </Badge>
               ))}
             </div>
@@ -222,18 +178,18 @@ export function IdentityReInterview({
 
           <div>
             <h4 className="text-sm font-semibold text-muted-foreground mb-2">
-              BOUNDARIES
+              YOUR CODE
             </h4>
             <ul className="space-y-1 text-sm">
               {activeBoundaries.map((boundary) => (
                 <li key={boundary} className="flex items-center gap-2">
-                  <CheckCircle2 className="h-4 w-4 text-green-600" />
-                  <span className="capitalize">{boundary}</span>
+                  <CheckCircle2 className="h-4 w-4 text-teal-500" />
+                  <span>{BOUNDARY_LABELS[boundary]}</span>
                 </li>
               ))}
               {customBoundaries?.map((boundary, idx) => (
                 <li key={`custom-${idx}`} className="flex items-center gap-2">
-                  <CheckCircle2 className="h-4 w-4 text-green-600" />
+                  <CheckCircle2 className="h-4 w-4 text-teal-500" />
                   <span>{boundary}</span>
                 </li>
               ))}
@@ -257,7 +213,7 @@ export function IdentityReInterview({
                 <div className="rounded bg-background p-2 text-xs">
                   <span className="font-medium">AI:</span>{' '}
                   <span className="text-muted-foreground">
-                    "{example.response}"
+                    &ldquo;{example.response}&rdquo;
                   </span>
                 </div>
               </div>

@@ -14,7 +14,19 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog'
 import { User } from 'lucide-react'
+import { StatusMessage } from './status-message'
 import { IdentityFacetsEditor } from './identity-facets-editor'
 import { ModelSelector } from './model-selector'
 import { SkillsManager } from './skills-manager'
@@ -42,7 +54,7 @@ interface FullSkill {
 
 interface IdentityCoreContext {
   voice?: string | null
-  priorities?: Record<string, string> | null
+  priorities?: string[] | null
   boundaries?: Record<string, boolean | string[]> | null
 }
 
@@ -78,10 +90,11 @@ export function RoleSettingsForm({ role, roleSkills, allSkills, mcpServers, iden
       special_behaviors: [],
     },
     approval_policy: role.approval_policy,
-    model_preference: role.model_preference || 'anthropic/claude-sonnet-4-5-20250929',
+    model_preference: role.model_preference || 'anthropic/claude-sonnet-4-6',
   })
   const [saving, setSaving] = useState(false)
   const [deleting, setDeleting] = useState(false)
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
 
   const handleSave = async () => {
@@ -113,11 +126,8 @@ export function RoleSettingsForm({ role, roleSkills, allSkills, mcpServers, iden
   }
 
   const handleDelete = async () => {
-    if (!confirm(`Delete "${formData.name}"? This will permanently delete all conversations and cannot be undone.`)) {
-      return
-    }
-
     setDeleting(true)
+    setDeleteDialogOpen(false)
     const result = await deleteRole(role.id)
 
     if (result.success) {
@@ -133,10 +143,10 @@ export function RoleSettingsForm({ role, roleSkills, allSkills, mcpServers, iden
     <Tabs defaultValue="general" className="space-y-6" id={`role-settings-${role.id}`}>
       <div className="overflow-x-auto scrollbar-hide -mx-4 px-4 md:mx-0 md:px-0 md:overflow-visible">
         <TabsList className="inline-flex w-max gap-1 md:grid md:w-full md:grid-cols-4">
-          <TabsTrigger value="general" className="min-w-fit px-4">General</TabsTrigger>
-          <TabsTrigger value="personality" className="min-w-fit px-4">Personality</TabsTrigger>
-          <TabsTrigger value="skills" className="min-w-fit px-4">Skills</TabsTrigger>
-          <TabsTrigger value="mcp" className="min-w-fit px-4">MCP Servers</TabsTrigger>
+          <TabsTrigger value="general" className="min-w-0 px-3 truncate">General</TabsTrigger>
+          <TabsTrigger value="personality" className="min-w-0 px-3 truncate">Personality</TabsTrigger>
+          <TabsTrigger value="skills" className="min-w-0 px-3 truncate">Skills</TabsTrigger>
+          <TabsTrigger value="mcp" className="min-w-0 px-3 truncate">MCP</TabsTrigger>
         </TabsList>
       </div>
 
@@ -156,6 +166,7 @@ export function RoleSettingsForm({ role, roleSkills, allSkills, mcpServers, iden
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                 placeholder="Role name"
+                maxLength={50}
               />
             </div>
 
@@ -166,6 +177,7 @@ export function RoleSettingsForm({ role, roleSkills, allSkills, mcpServers, iden
                 value={formData.description}
                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                 placeholder="Brief description of this role"
+                maxLength={200}
               />
             </div>
 
@@ -220,11 +232,7 @@ export function RoleSettingsForm({ role, roleSkills, allSkills, mcpServers, iden
               </div>
             </div>
 
-            {message && (
-              <p className={`text-sm ${message.type === 'success' ? 'text-green-600' : 'text-red-600'}`}>
-                {message.text}
-              </p>
-            )}
+            <StatusMessage message={message} />
 
             <Button onClick={handleSave} disabled={saving}>
               {saving ? 'Saving...' : 'Save Changes'}
@@ -252,14 +260,14 @@ export function RoleSettingsForm({ role, roleSkills, allSkills, mcpServers, iden
                 <p className="text-sm text-muted-foreground italic">
                   &quot;{identityCore.voice}&quot;
                 </p>
-                {identityCore.priorities && Object.keys(identityCore.priorities).length > 0 && (
+                {identityCore.priorities && identityCore.priorities.length > 0 && (
                   <div className="mt-3 flex flex-wrap gap-1.5">
-                    {Object.entries(identityCore.priorities).map(([key, level]) => (
+                    {identityCore.priorities.map((priority, index) => (
                       <span
-                        key={key}
+                        key={priority}
                         className="inline-flex items-center rounded-full border px-2 py-0.5 text-xs text-muted-foreground"
                       >
-                        {key}: {level}
+                        {index + 1}. {priority.replace(/_/g, ' ')}
                       </span>
                     ))}
                   </div>
@@ -272,11 +280,7 @@ export function RoleSettingsForm({ role, roleSkills, allSkills, mcpServers, iden
               onChange={(facets) => setFormData({ ...formData, identity_facets: facets })}
             />
 
-            {message && (
-              <p className={`text-sm ${message.type === 'success' ? 'text-green-600' : 'text-red-600'}`}>
-                {message.text}
-              </p>
-            )}
+            <StatusMessage message={message} />
 
             <Button onClick={handleSave} disabled={saving}>
               {saving ? 'Saving...' : 'Save Personality'}
@@ -319,14 +323,31 @@ export function RoleSettingsForm({ role, roleSkills, allSkills, mcpServers, iden
               All conversations and MCP server configs will be permanently deleted.
             </p>
           </div>
-          <Button
-            variant="destructive"
-            onClick={handleDelete}
-            disabled={deleting}
-            className="w-full sm:w-auto"
-          >
-            {deleting ? 'Deleting...' : 'Delete Role'}
-          </Button>
+          <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+            <AlertDialogTrigger asChild>
+              <Button
+                variant="destructive"
+                disabled={deleting}
+                className="w-full sm:w-auto"
+              >
+                {deleting ? 'Deleting...' : 'Delete Role'}
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Delete &ldquo;{formData.name}&rdquo;?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  This will permanently delete all conversations and MCP server configs. This action cannot be undone.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction onClick={handleDelete} className="bg-destructive text-white hover:bg-destructive/90">
+                  Delete
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         </div>
       </CardContent>
     </Card>

@@ -106,6 +106,26 @@ export async function getMcpToolsFromServers(
   return { tools, toolMappings, errors }
 }
 
+import type { GenericToolDefinition } from './types'
+
+/**
+ * Get MCP tools in provider-agnostic format (for OpenAI path)
+ */
+export function getMcpToolsGeneric(
+  toolMappings: Map<string, McpToolServerMapping>,
+  anthropicTools: Anthropic.Tool[]
+): GenericToolDefinition[] {
+  return anthropicTools.map(tool => ({
+    name: tool.name,
+    description: tool.description || tool.name,
+    parameters: {
+      type: 'object' as const,
+      properties: (tool.input_schema as Record<string, unknown>).properties as Record<string, unknown> || {},
+      required: (tool.input_schema as Record<string, unknown>).required as string[] | undefined,
+    },
+  }))
+}
+
 /**
  * Check if a tool name is an MCP tool
  */

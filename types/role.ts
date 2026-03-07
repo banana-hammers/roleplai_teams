@@ -13,18 +13,6 @@ export interface Role {
   updated_at: string
 }
 
-export interface RoleLore {
-  role_id: string
-  lore_id: string
-}
-
-export interface RoleSkill {
-  role_id: string
-  skill_id: string
-  config_overrides: Record<string, any>
-  created_at: string
-}
-
 /**
  * Resolved skill data for display (joined from skills table)
  */

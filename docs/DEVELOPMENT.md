@@ -316,7 +316,7 @@ curl -X POST http://localhost:3000/api/chat \
 - ✅ API routes verify user authentication
 - ✅ Environment variables never committed
 - ✅ Edge Runtime provides isolation
-- ⚠️ TODO: Implement API key encryption (see `user_api_keys` table)
+- ✅ API key encryption implemented (AES-256-GCM with PBKDF2 key derivation)
 
 ## Resources
 

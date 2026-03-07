@@ -3,13 +3,22 @@
 import { useState, useTransition } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
-import { Textarea } from '@/components/ui/textarea'
-import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { Plus, Pencil, Trash2, X, Check, Zap, Wrench, Search, Sparkles, Cpu } from 'lucide-react'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { CLAUDE_MODELS, modelTierConfigs } from '@/lib/utils/model-tiers'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog'
+import { StatusMessage } from './status-message'
+import { Plus, Pencil, Trash2, X, Check, Zap, Wrench, Search, Sparkles } from 'lucide-react'
+import { SkillFormFields } from '@/components/settings/skill-form-fields'
 import {
   createSkill,
   updateSkill,
@@ -23,12 +32,6 @@ import type {
   ExistingSkillContext,
   ForgeExtractedSkill,
 } from '@/types/skill-creation'
-
-// Available built-in tools that skills can use
-const AVAILABLE_TOOLS = [
-  { id: 'web_search', name: 'Web Search', description: 'Search the web for information' },
-  { id: 'web_fetch', name: 'Web Fetch', description: 'Fetch and parse web page content' },
-]
 
 interface Skill {
   id: string
@@ -178,29 +181,13 @@ export function SkillsManager({ roleId, roleSkills, allSkills, onUpdate }: Skill
     })
   }
 
-  const toggleTool = (toolId: string, isNewSkill: boolean) => {
-    if (isNewSkill) {
-      const current = newSkill.allowed_tools
-      if (current.includes(toolId)) {
-        setNewSkill({ ...newSkill, allowed_tools: current.filter(t => t !== toolId) })
-      } else {
-        setNewSkill({ ...newSkill, allowed_tools: [...current, toolId] })
-      }
-    } else if (editingSkill) {
-      const current = editingSkill.allowed_tools || []
-      if (current.includes(toolId)) {
-        setEditingSkill({ ...editingSkill, allowed_tools: current.filter(t => t !== toolId) })
-      } else {
-        setEditingSkill({ ...editingSkill, allowed_tools: [...current, toolId] })
-      }
-    }
+  const toggleToolInValues = (toolId: string, current: string[]): string[] => {
+    return current.includes(toolId)
+      ? current.filter(t => t !== toolId)
+      : [...current, toolId]
   }
 
   const handleDeleteSkill = async (skillId: string) => {
-    if (!confirm('Are you sure you want to delete this skill? This action cannot be undone.')) {
-      return
-    }
-
     startTransition(async () => {
       const result = await deleteSkill(skillId)
 
@@ -299,15 +286,7 @@ export function SkillsManager({ roleId, roleSkills, allSkills, onUpdate }: Skill
   return (
     <div className="space-y-6">
       {/* Message */}
-      {message && (
-        <div className={`rounded-lg p-3 text-sm ${
-          message.type === 'success'
-            ? 'bg-green-50 text-green-700 dark:bg-green-950 dark:text-green-300'
-            : 'bg-red-50 text-red-700 dark:bg-red-950 dark:text-red-300'
-        }`}>
-          {message.text}
-        </div>
-      )}
+      <StatusMessage message={message} />
 
       {/* Search and Create Header */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
@@ -348,119 +327,12 @@ export function SkillsManager({ roleId, roleSkills, allSkills, onUpdate }: Skill
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="skill-name">Name *</Label>
-                <Input
-                  id="skill-name"
-                  value={newSkill.name}
-                  onChange={(e) => setNewSkill({ ...newSkill, name: e.target.value })}
-                  placeholder="e.g., Draft Email, Review Code"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="skill-short-desc">Short Description (for system prompt)</Label>
-                <Input
-                  id="skill-short-desc"
-                  value={newSkill.short_description}
-                  onChange={(e) => setNewSkill({ ...newSkill, short_description: e.target.value })}
-                  placeholder="~50 chars: Concise description shown to the AI"
-                  maxLength={100}
-                />
-                <p className="text-xs text-muted-foreground">
-                  Brief description that appears in the system prompt. Keep it short.
-                </p>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="skill-description">Full Description *</Label>
-                <Input
-                  id="skill-description"
-                  value={newSkill.description}
-                  onChange={(e) => setNewSkill({ ...newSkill, description: e.target.value })}
-                  placeholder="Complete description of what this skill does"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="skill-prompt">Prompt Template *</Label>
-                <Textarea
-                  id="skill-prompt"
-                  value={newSkill.prompt_template}
-                  onChange={(e) => setNewSkill({ ...newSkill, prompt_template: e.target.value })}
-                  placeholder="The task template. Use {{placeholder}} for inputs."
-                  rows={3}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="skill-instructions">Detailed Instructions</Label>
-                <Textarea
-                  id="skill-instructions"
-                  value={newSkill.detailed_instructions}
-                  onChange={(e) => setNewSkill({ ...newSkill, detailed_instructions: e.target.value })}
-                  placeholder="Detailed guidance loaded when this skill is invoked..."
-                  rows={4}
-                />
-                <p className="text-xs text-muted-foreground">
-                  Rich instructions loaded only when the skill is used (not in system prompt).
-                </p>
-              </div>
-
-              <div className="space-y-2">
-                <Label className="flex items-center gap-2">
-                  <Wrench className="h-4 w-4" />
-                  Allowed Tools
-                </Label>
-                <p className="text-xs text-muted-foreground mb-2">
-                  Enable tools this skill can use. Skills with tools run in agentic mode.
-                </p>
-                <div className="flex flex-wrap gap-2">
-                  {AVAILABLE_TOOLS.map((tool) => (
-                    <Badge
-                      key={tool.id}
-                      variant={newSkill.allowed_tools.includes(tool.id) ? 'default' : 'outline'}
-                      className="cursor-pointer"
-                      onClick={() => toggleTool(tool.id, true)}
-                    >
-                      {newSkill.allowed_tools.includes(tool.id) && <Check className="mr-1 h-3 w-3" />}
-                      {tool.name}
-                    </Badge>
-                  ))}
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label className="flex items-center gap-2">
-                  <Cpu className="h-4 w-4" />
-                  Model Override
-                </Label>
-                <Select
-                  value={newSkill.model_preference || '__inherit__'}
-                  onValueChange={(value) => setNewSkill({ ...newSkill, model_preference: value === '__inherit__' ? '' : value })}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Use role's model (default)" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="__inherit__">Use role&apos;s model (default)</SelectItem>
-                    {CLAUDE_MODELS.map((model) => {
-                      const tierConfig = modelTierConfigs[model.tier]
-                      return (
-                        <SelectItem key={model.value} value={model.value}>
-                          <span className="flex items-center gap-2">
-                            <span className={tierConfig.colorClass}>{model.label}</span>
-                            <span className="text-xs text-muted-foreground">({tierConfig.label})</span>
-                          </span>
-                        </SelectItem>
-                      )
-                    })}
-                  </SelectContent>
-                </Select>
-                <p className="text-xs text-muted-foreground">
-                  Override the role&apos;s model for this skill. Useful for complex skills that need more capable models.
-                </p>
-              </div>
+              <SkillFormFields
+                values={newSkill}
+                onChange={(values) => setNewSkill({ ...values, model_preference: values.model_preference ?? '' })}
+                idPrefix="skill"
+                onToggleTool={(toolId) => setNewSkill({ ...newSkill, allowed_tools: toggleToolInValues(toolId, newSkill.allowed_tools) })}
+              />
 
               <div className="flex gap-2">
                 <Button onClick={handleCreateSkill} disabled={isPending}>
@@ -506,105 +378,23 @@ export function SkillsManager({ roleId, roleSkills, allSkills, onUpdate }: Skill
                     // Edit mode - expanded card
                     <Card className="border-primary">
                       <CardContent className="pt-4 space-y-4">
-                        <div className="space-y-2">
-                          <Label>Name *</Label>
-                          <Input
-                            value={editingSkill.name}
-                            onChange={(e) => setEditingSkill({ ...editingSkill, name: e.target.value })}
-                            placeholder="Skill name"
-                          />
-                        </div>
-
-                        <div className="space-y-2">
-                          <Label>Short Description</Label>
-                          <Input
-                            value={editingSkill.short_description || ''}
-                            onChange={(e) => setEditingSkill({ ...editingSkill, short_description: e.target.value })}
-                            placeholder="~50 chars: Concise description for system prompt"
-                            maxLength={100}
-                          />
-                        </div>
-
-                        <div className="space-y-2">
-                          <Label>Full Description *</Label>
-                          <Input
-                            value={editingSkill.description}
-                            onChange={(e) => setEditingSkill({ ...editingSkill, description: e.target.value })}
-                            placeholder="Complete description"
-                          />
-                        </div>
-
-                        <div className="space-y-2">
-                          <Label>Prompt Template</Label>
-                          <Textarea
-                            value={editingSkill.prompt_template || ''}
-                            onChange={(e) => setEditingSkill({ ...editingSkill, prompt_template: e.target.value })}
-                            placeholder="The task template. Use {{placeholder}} for inputs."
-                            rows={3}
-                          />
-                        </div>
-
-                        <div className="space-y-2">
-                          <Label>Detailed Instructions</Label>
-                          <Textarea
-                            value={editingSkill.detailed_instructions || ''}
-                            onChange={(e) => setEditingSkill({ ...editingSkill, detailed_instructions: e.target.value })}
-                            placeholder="Detailed guidance loaded when this skill is invoked..."
-                            rows={4}
-                          />
-                        </div>
-
-                        <div className="space-y-2">
-                          <Label className="flex items-center gap-2">
-                            <Wrench className="h-4 w-4" />
-                            Allowed Tools
-                          </Label>
-                          <div className="flex flex-wrap gap-2">
-                            {AVAILABLE_TOOLS.map((tool) => (
-                              <Badge
-                                key={tool.id}
-                                variant={(editingSkill.allowed_tools || []).includes(tool.id) ? 'default' : 'outline'}
-                                className="cursor-pointer"
-                                onClick={() => toggleTool(tool.id, false)}
-                              >
-                                {(editingSkill.allowed_tools || []).includes(tool.id) && <Check className="mr-1 h-3 w-3" />}
-                                {tool.name}
-                              </Badge>
-                            ))}
-                          </div>
-                        </div>
-
-                        <div className="space-y-2">
-                          <Label className="flex items-center gap-2">
-                            <Cpu className="h-4 w-4" />
-                            Model Override
-                          </Label>
-                          <Select
-                            value={editingSkill.model_preference || '__inherit__'}
-                            onValueChange={(value) => setEditingSkill({ ...editingSkill, model_preference: value === '__inherit__' ? null : value })}
-                          >
-                            <SelectTrigger>
-                              <SelectValue placeholder="Use role's model (default)" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="__inherit__">Use role&apos;s model (default)</SelectItem>
-                              {CLAUDE_MODELS.map((model) => {
-                                const tierConfig = modelTierConfigs[model.tier]
-                                return (
-                                  <SelectItem key={model.value} value={model.value}>
-                                    <span className="flex items-center gap-2">
-                                      <span className={tierConfig.colorClass}>{model.label}</span>
-                                      <span className="text-xs text-muted-foreground">({tierConfig.label})</span>
-                                    </span>
-                                  </SelectItem>
-                                )
-                              })}
-                            </SelectContent>
-                          </Select>
-                          <p className="text-xs text-muted-foreground">
-                            Override the role&apos;s model for this skill. Useful for complex skills that need more capable models.
-                          </p>
-                        </div>
+                        <SkillFormFields
+                          values={{
+                            name: editingSkill.name,
+                            description: editingSkill.description,
+                            prompt_template: editingSkill.prompt_template || '',
+                            short_description: editingSkill.short_description || '',
+                            detailed_instructions: editingSkill.detailed_instructions || '',
+                            allowed_tools: editingSkill.allowed_tools || [],
+                            model_preference: editingSkill.model_preference ?? null,
+                          }}
+                          onChange={(values) => setEditingSkill({ ...editingSkill, ...values })}
+                          idPrefix="edit-skill"
+                          onToggleTool={(toolId) => setEditingSkill({
+                            ...editingSkill,
+                            allowed_tools: toggleToolInValues(toolId, editingSkill.allowed_tools || []),
+                          })}
+                        />
 
                         <div className="flex gap-2 pt-2">
                           <Button onClick={handleUpdateSkill} disabled={isPending}>
@@ -695,15 +485,32 @@ export function SkillsManager({ roleId, roleSkills, allSkills, onUpdate }: Skill
                               <Plus className="h-4 w-4" />
                             </Button>
                           )}
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => handleDeleteSkill(skill.id)}
-                            disabled={isPending}
-                            title="Delete skill"
-                          >
-                            <Trash2 className="h-4 w-4 text-destructive" />
-                          </Button>
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                disabled={isPending}
+                                title="Delete skill"
+                              >
+                                <Trash2 className="h-4 w-4 text-destructive" />
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>Delete &ldquo;{skill.name}&rdquo;?</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  This will permanently delete this skill and unlink it from all roles. This action cannot be undone.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                <AlertDialogAction onClick={() => handleDeleteSkill(skill.id)} className="bg-destructive text-white hover:bg-destructive/90">
+                                  Delete
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
                         </div>
                       </div>
                     </div>

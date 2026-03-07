@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { useState } from 'react'
 import { usePathname } from 'next/navigation'
+import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { UserMenu } from './user-menu'
 import { Menu, X, Plus, LayoutDashboard, Settings } from 'lucide-react'
@@ -52,11 +53,12 @@ export function NavbarClient({ variant, user }: NavbarClientProps) {
               <Link
                 key={link.href}
                 href={link.href}
-                className={`flex items-center gap-2 text-sm font-medium transition-colors ${
+                className={cn(
+                  'flex items-center gap-2 text-sm font-medium transition-colors',
                   pathname === link.href || pathname.startsWith(link.href + '/')
                     ? 'text-foreground'
                     : 'text-muted-foreground hover:text-foreground'
-                }`}
+                )}
               >
                 {link.icon && <link.icon className="h-4 w-4" />}
                 {link.label}
@@ -120,11 +122,12 @@ export function NavbarClient({ variant, user }: NavbarClientProps) {
                   <Link
                     key={link.href}
                     href={link.href}
-                    className={`flex items-center gap-2 text-sm font-medium transition-colors ${
+                    className={cn(
+                      'flex items-center gap-2 text-sm font-medium transition-colors',
                       pathname === link.href || pathname.startsWith(link.href + '/')
                         ? 'text-foreground'
                         : 'text-muted-foreground hover:text-foreground'
-                    }`}
+                    )}
                     onClick={() => setMobileMenuOpen(false)}
                   >
                     {link.icon && <link.icon className="h-4 w-4" />}
@@ -157,7 +160,7 @@ export function NavbarClient({ variant, user }: NavbarClientProps) {
                   </Link>
                 ))}
                 <div className="flex flex-col gap-2 pt-2">
-                  <Button asChild variant="outline" size="sm">
+                  <Button asChild variant="ghost" size="sm">
                     <Link href="/login">Sign In</Link>
                   </Button>
                   <Button asChild variant="gradient" size="sm">

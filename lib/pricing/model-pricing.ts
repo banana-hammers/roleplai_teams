@@ -17,47 +17,75 @@ export interface TokenUsage {
   cacheReadTokens?: number
 }
 
-// Anthropic pricing per million tokens (as of 2025)
+// Model pricing per million tokens (as of March 2026)
 const MODEL_PRICING: Record<string, ModelPricing> = {
-  // Opus 4.5 - Most intelligent
+  // Anthropic models
+  'claude-opus-4-6': {
+    input: 5,
+    output: 25,
+    cacheWrite: 6.25,
+    cacheRead: 0.50,
+  },
   'claude-opus-4-5-20251101': {
     input: 5,
     output: 25,
     cacheWrite: 6.25,
     cacheRead: 0.50,
   },
-  // Sonnet 4.5 - Optimal balance
+  'claude-sonnet-4-6': {
+    input: 3,
+    output: 15,
+    cacheWrite: 3.75,
+    cacheRead: 0.30,
+  },
   'claude-sonnet-4-5-20250929': {
     input: 3,
     output: 15,
     cacheWrite: 3.75,
     cacheRead: 0.30,
   },
-  // Haiku 4.5 - Fastest, most cost-efficient
   'claude-haiku-4-5': {
     input: 1,
     output: 5,
     cacheWrite: 1.25,
     cacheRead: 0.10,
   },
-  // Legacy models
-  'claude-3-opus-20240229': {
-    input: 15,
-    output: 75,
-    cacheWrite: 18.75,
-    cacheRead: 1.50,
+  // OpenAI models
+  'gpt-5.2': {
+    input: 1.75,
+    output: 14,
+    cacheWrite: 0,
+    cacheRead: 0,
   },
-  'claude-3-5-sonnet-20241022': {
-    input: 3,
-    output: 15,
-    cacheWrite: 3.75,
-    cacheRead: 0.30,
+  'gpt-5': {
+    input: 1.25,
+    output: 10,
+    cacheWrite: 0,
+    cacheRead: 0,
   },
-  'claude-3-haiku-20240307': {
+  'gpt-5-mini': {
     input: 0.25,
-    output: 1.25,
-    cacheWrite: 0.30,
-    cacheRead: 0.03,
+    output: 2,
+    cacheWrite: 0,
+    cacheRead: 0,
+  },
+  'gpt-5-nano': {
+    input: 0.05,
+    output: 0.40,
+    cacheWrite: 0,
+    cacheRead: 0,
+  },
+  'o3': {
+    input: 2,
+    output: 8,
+    cacheWrite: 0,
+    cacheRead: 0,
+  },
+  'o4-mini': {
+    input: 1.10,
+    output: 4.40,
+    cacheWrite: 0,
+    cacheRead: 0,
   },
 }
 
@@ -68,7 +96,7 @@ const DEFAULT_PRICING: ModelPricing = MODEL_PRICING['claude-haiku-4-5']
  * Get pricing for a specific model.
  * Falls back to default pricing if model is unknown.
  */
-export function getModelPricing(modelName: string): ModelPricing {
+function getModelPricing(modelName: string): ModelPricing {
   return MODEL_PRICING[modelName] || DEFAULT_PRICING
 }
 

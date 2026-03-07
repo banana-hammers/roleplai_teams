@@ -91,7 +91,7 @@ export function Anatomy() {
         <div className="text-center">
           <h2 className="font-display text-3xl font-bold tracking-tight sm:text-4xl">
             Meet Your{" "}
-            <span className="bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+            <span className="bg-linear-to-r from-primary to-accent bg-clip-text text-transparent">
               RoleplAIrs
             </span>
           </h2>

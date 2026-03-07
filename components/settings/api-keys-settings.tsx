@@ -13,7 +13,19 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { Trash2, Plus, Eye, EyeOff } from 'lucide-react'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog'
+import { StatusMessage } from './status-message'
+import { Trash2, Plus, Eye, EyeOff, CheckCircle } from 'lucide-react'
 
 interface ApiKeysSettingsProps {
   apiKeys: Array<{
@@ -36,6 +48,8 @@ export function ApiKeysSettings({ apiKeys: initialKeys }: ApiKeysSettingsProps) 
   const [showKey, setShowKey] = useState(false)
   const [saving, setSaving] = useState(false)
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
+  const [deletingKeyId, setDeletingKeyId] = useState<string | null>(null)
+  const [verifiedKeyId, setVerifiedKeyId] = useState<string | null>(null)
 
   const handleAddKey = async () => {
     if (!newKey.provider || !newKey.key) return
@@ -65,6 +79,7 @@ export function ApiKeysSettings({ apiKeys: initialKeys }: ApiKeysSettingsProps) 
       setApiKeys([...apiKeys, data])
       setNewKey({ provider: '', key: '', label: '' })
       setShowAddForm(false)
+      setVerifiedKeyId(data.id)
       setMessage({ type: 'success', text: 'API key added and encrypted successfully' })
     } catch (error) {
       setMessage({ type: 'error', text: error instanceof Error ? error.message : 'Failed to add API key' })
@@ -74,8 +89,6 @@ export function ApiKeysSettings({ apiKeys: initialKeys }: ApiKeysSettingsProps) 
   }
 
   const handleDeleteKey = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this API key?')) return
-
     try {
       const response = await fetch('/api/user/api-keys', {
         method: 'DELETE',
@@ -88,9 +101,11 @@ export function ApiKeysSettings({ apiKeys: initialKeys }: ApiKeysSettingsProps) 
       }
 
       setApiKeys(apiKeys.filter(k => k.id !== id))
+      setDeletingKeyId(null)
       setMessage({ type: 'success', text: 'API key deleted' })
-    } catch (error) {
+    } catch {
       setMessage({ type: 'error', text: 'Failed to delete API key' })
+      setDeletingKeyId(null)
     }
   }
 
@@ -121,15 +136,39 @@ export function ApiKeysSettings({ apiKeys: initialKeys }: ApiKeysSettingsProps) 
                   <span className="text-xs text-muted-foreground">
                     Added {new Date(key.created_at).toLocaleDateString()}
                   </span>
+                  {verifiedKeyId === key.id && (
+                    <span className="inline-flex items-center gap-1 text-xs text-green-600 dark:text-green-400">
+                      <CheckCircle className="h-3 w-3" />
+                      Verified
+                    </span>
+                  )}
                 </div>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => handleDeleteKey(key.id)}
-                  className="self-end sm:self-auto"
-                >
-                  <Trash2 className="h-4 w-4 text-destructive" />
-                </Button>
+                <AlertDialog open={deletingKeyId === key.id} onOpenChange={(open) => !open && setDeletingKeyId(null)}>
+                  <AlertDialogTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => setDeletingKeyId(key.id)}
+                      className="self-end sm:self-auto"
+                    >
+                      <Trash2 className="h-4 w-4 text-destructive" />
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Delete API key?</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        This will permanently delete your {key.provider} API key{key.label ? ` "${key.label}"` : ''}. Your roles will fall back to system keys.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                      <AlertDialogAction onClick={() => handleDeleteKey(key.id)} className="bg-destructive text-white hover:bg-destructive/90">
+                        Delete
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
               </div>
             ))}
           </div>
@@ -188,6 +227,7 @@ export function ApiKeysSettings({ apiKeys: initialKeys }: ApiKeysSettingsProps) 
                 value={newKey.label}
                 onChange={(e) => setNewKey({ ...newKey, label: e.target.value })}
                 placeholder="e.g., Personal, Work"
+                maxLength={50}
               />
             </div>
 
@@ -207,11 +247,7 @@ export function ApiKeysSettings({ apiKeys: initialKeys }: ApiKeysSettingsProps) 
           </Button>
         )}
 
-        {message && (
-          <p className={`text-sm ${message.type === 'success' ? 'text-green-600' : 'text-red-600'}`}>
-            {message.text}
-          </p>
-        )}
+        <StatusMessage message={message} />
       </CardContent>
     </Card>
   )

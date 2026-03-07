@@ -18,9 +18,7 @@ export function Completion({ aliasName, identity }: CompletionProps) {
   const [error, setError] = useState<string | null>(null)
   const router = useRouter()
 
-  const highPriorities = Object.entries(identity.priorities)
-    .filter(([, level]) => level === 'high')
-    .map(([name]) => name)
+  const highPriorities = identity.priorities || []
 
   const activeBoundaries = Object.entries(identity.boundaries)
     .filter(([key, value]) => key !== 'custom' && value === true)
@@ -71,9 +69,9 @@ export function Completion({ aliasName, identity }: CompletionProps) {
       </div>
 
       {/* Identity Summary Card */}
-      <div className="rounded-lg border-2 border-primary/20 bg-gradient-to-br from-primary/10 to-primary/5 p-6 space-y-4">
+      <div className="rounded-lg border-2 border-primary/20 bg-linear-to-br from-primary/10 to-primary/5 p-6 space-y-4">
         <div className="flex items-center gap-2">
-          <CheckCircle2 className="h-5 w-5 text-green-600" />
+          <CheckCircle2 className="h-5 w-5 text-success" />
           <h3 className="text-lg font-semibold">YOUR IDENTITY</h3>
         </div>
 
@@ -143,7 +141,7 @@ export function Completion({ aliasName, identity }: CompletionProps) {
 
       {/* Error Display */}
       {error && (
-        <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-900 dark:border-red-900 dark:bg-red-950 dark:text-red-100">
+        <div className="rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive">
           {error}
         </div>
       )}

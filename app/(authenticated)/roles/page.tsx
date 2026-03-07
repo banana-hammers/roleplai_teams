@@ -41,7 +41,7 @@ export default function RolesPage() {
       <main className="container px-4 py-8 max-w-5xl mx-auto">
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
-          <h1 className="text-2xl font-display font-bold">Your Roles</h1>
+          <h1 className="text-display-md font-display font-bold">Your Roles</h1>
           {roles.length > 0 && (
             <Button
               onClick={() => router.push('/roles/create')}
@@ -111,8 +111,8 @@ export default function RolesPage() {
             {roles.map((role, index) => (
               <div
                 key={role.id}
-                className="animate-slide-up-fade"
-                style={{ animationDelay: `${index * 50}ms` }}
+                className="animate-slide-up-fade stagger-item"
+                style={{ '--stagger': index, animationDelay: `${index * 50}ms` } as React.CSSProperties}
               >
                 <RoleCard
                   role={role}

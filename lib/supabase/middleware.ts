@@ -34,10 +34,6 @@ export async function updateSession(request: NextRequest) {
   // supabase.auth.getUser(). A simple mistake could make it very hard to debug
   // issues with users being randomly logged out.
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-
   // Public routes that don't require authentication
   const publicRoutes = [
     '/',
@@ -46,12 +42,38 @@ export async function updateSession(request: NextRequest) {
     '/auth',
     '/chat',
     '/about',
+    '/forgot-password',
+    '/reset-password',
+    '/verify-email',
   ]
 
   const isPublicRoute = publicRoutes.some(route =>
     request.nextUrl.pathname === route ||
     request.nextUrl.pathname.startsWith(route + '/')
   )
+
+  let user = null
+  try {
+    const { data } = await supabase.auth.getUser()
+    user = data.user
+  } catch (error) {
+    console.error('Session refresh error:', error)
+    if (!isPublicRoute) {
+      // Clear auth cookies and redirect to login for protected routes
+      const url = request.nextUrl.clone()
+      url.pathname = '/login'
+      const response = NextResponse.redirect(url)
+      // Clear Supabase auth cookies
+      request.cookies.getAll().forEach(({ name }) => {
+        if (name.startsWith('sb-')) {
+          response.cookies.delete(name)
+        }
+      })
+      return response
+    }
+    // For public routes, continue without user context
+    return supabaseResponse
+  }
 
   // Only redirect to login if user is not authenticated AND trying to access a protected route
   if (!user && !isPublicRoute) {

@@ -1,8 +1,7 @@
 'use server'
 
-import { createClient } from '@/lib/supabase/server'
+import { requireAuth } from '@/lib/supabase/auth-helpers'
 import { revalidatePath } from 'next/cache'
-import type { IdentityCore } from '@/types/identity'
 
 export interface UpdateIdentityCoreData {
   voice: string
@@ -21,15 +20,9 @@ export interface UpdateIdentityCoreResult {
 export async function updateIdentityCore(
   data: UpdateIdentityCoreData
 ): Promise<UpdateIdentityCoreResult> {
-  const supabase = await createClient()
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-
-  if (!user) {
-    return { success: false, error: 'Not authenticated' }
-  }
+  const auth = await requireAuth()
+  if ('error' in auth) return { success: false, error: auth.error }
+  const { supabase, user } = auth
 
   try {
     const { error } = await supabase
@@ -58,57 +51,14 @@ export async function updateIdentityCore(
 }
 
 /**
- * Get the user's identity core
- */
-export async function getIdentityCore(): Promise<{
-  success: boolean
-  identityCore?: IdentityCore
-  error?: string
-}> {
-  const supabase = await createClient()
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-
-  if (!user) {
-    return { success: false, error: 'Not authenticated' }
-  }
-
-  try {
-    const { data: identityCore, error } = await supabase
-      .from('identity_cores')
-      .select('*')
-      .eq('user_id', user.id)
-      .maybeSingle()
-
-    if (error) {
-      console.error('Identity core fetch error:', error)
-      return { success: false, error: 'Failed to fetch identity core' }
-    }
-
-    return { success: true, identityCore: identityCore ?? undefined }
-  } catch (error) {
-    console.error('Identity core fetch error:', error)
-    return { success: false, error: 'An unexpected error occurred' }
-  }
-}
-
-/**
  * Replace the user's identity core (used after re-interview)
  */
 export async function replaceIdentityCore(
   data: UpdateIdentityCoreData
 ): Promise<UpdateIdentityCoreResult> {
-  const supabase = await createClient()
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-
-  if (!user) {
-    return { success: false, error: 'Not authenticated' }
-  }
+  const auth = await requireAuth()
+  if ('error' in auth) return { success: false, error: auth.error }
+  const { supabase, user } = auth
 
   try {
     // Upsert - update if exists, insert if not

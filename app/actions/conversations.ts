@@ -1,7 +1,8 @@
 'use server'
 
-import { createClient } from '@/lib/supabase/server'
-import type { Conversation, Message, ConversationWithMessages, MessageRole } from '@/types/conversation'
+import { requireAuth, verifyRoleOwnership } from '@/lib/supabase/auth-helpers'
+import { generateConversationSummary } from '@/lib/ai/generate-summary'
+import type { Conversation, ConversationWithMessages, MessageRole } from '@/types/conversation'
 
 /**
  * Create a new conversation for a role
@@ -11,22 +12,11 @@ export async function createConversation(roleId: string, title?: string): Promis
   conversationId?: string
   error?: string
 }> {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const auth = await requireAuth()
+  if ('error' in auth) return { success: false, error: auth.error }
+  const { supabase, user } = auth
 
-  if (!user) {
-    return { success: false, error: 'Not authenticated' }
-  }
-
-  // Verify role ownership
-  const { data: role, error: roleError } = await supabase
-    .from('roles')
-    .select('id')
-    .eq('id', roleId)
-    .eq('user_id', user.id)
-    .single()
-
-  if (roleError || !role) {
+  if (!await verifyRoleOwnership(supabase, roleId, user.id)) {
     return { success: false, error: 'Role not found' }
   }
 
@@ -60,12 +50,9 @@ export async function getRoleConversations(
   conversations: Conversation[]
   error?: string
 }> {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-
-  if (!user) {
-    return { success: false, conversations: [], error: 'Not authenticated' }
-  }
+  const auth = await requireAuth()
+  if ('error' in auth) return { success: false, conversations: [], error: auth.error }
+  const { supabase, user } = auth
 
   const { data: conversations, error } = await supabase
     .from('conversations')
@@ -93,12 +80,9 @@ export async function getConversationWithMessages(
   conversation?: ConversationWithMessages
   error?: string
 }> {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-
-  if (!user) {
-    return { success: false, error: 'Not authenticated' }
-  }
+  const auth = await requireAuth()
+  if ('error' in auth) return { success: false, error: auth.error }
+  const { supabase, user } = auth
 
   // Fetch conversation
   const { data: conversation, error: convError } = await supabase
@@ -146,12 +130,9 @@ export async function addMessage(
   messageId?: string
   error?: string
 }> {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-
-  if (!user) {
-    return { success: false, error: 'Not authenticated' }
-  }
+  const auth = await requireAuth()
+  if ('error' in auth) return { success: false, error: auth.error }
+  const { supabase, user } = auth
 
   // Verify conversation ownership
   const { data: conversation, error: convError } = await supabase
@@ -197,12 +178,9 @@ export async function updateConversationTitle(
   conversationId: string,
   title: string
 ): Promise<{ success: boolean; error?: string }> {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-
-  if (!user) {
-    return { success: false, error: 'Not authenticated' }
-  }
+  const auth = await requireAuth()
+  if ('error' in auth) return { success: false, error: auth.error }
+  const { supabase, user } = auth
 
   const { error } = await supabase
     .from('conversations')
@@ -224,12 +202,9 @@ export async function updateConversationTitle(
 export async function deleteConversation(
   conversationId: string
 ): Promise<{ success: boolean; error?: string }> {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-
-  if (!user) {
-    return { success: false, error: 'Not authenticated' }
-  }
+  const auth = await requireAuth()
+  if ('error' in auth) return { success: false, error: auth.error }
+  const { supabase, user } = auth
 
   const { error } = await supabase
     .from('conversations')
@@ -243,4 +218,52 @@ export async function deleteConversation(
   }
 
   return { success: true }
+}
+
+/**
+ * Generate and store a summary for a conversation.
+ * Fetches messages, generates a summary via AI, and updates the conversation record.
+ */
+export async function summarizeConversation(
+  conversationId: string
+): Promise<{ success: boolean; summary?: string; error?: string }> {
+  const auth = await requireAuth()
+  if ('error' in auth) return { success: false, error: auth.error }
+  const { supabase, user } = auth
+
+  // Fetch messages for the conversation
+  const { data: messages, error: msgError } = await supabase
+    .from('messages')
+    .select('role, content')
+    .eq('conversation_id', conversationId)
+    .order('created_at', { ascending: true })
+
+  if (msgError || !messages) {
+    return { success: false, error: 'Failed to fetch messages' }
+  }
+
+  // Don't summarize short conversations
+  if (messages.length < 4) {
+    return { success: false, error: 'Not enough messages to summarize' }
+  }
+
+  const summary = await generateConversationSummary(messages)
+
+  if (!summary) {
+    return { success: false, error: 'Failed to generate summary' }
+  }
+
+  // Store the summary
+  const { error: updateError } = await supabase
+    .from('conversations')
+    .update({ summary })
+    .eq('id', conversationId)
+    .eq('user_id', user.id)
+
+  if (updateError) {
+    console.error('Summary update error:', updateError)
+    return { success: false, error: 'Failed to save summary' }
+  }
+
+  return { success: true, summary }
 }

@@ -3,25 +3,38 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 
-export interface SignupFormData {
+interface SignupFormData {
   email: string
   password: string
   confirmPassword: string
 }
 
-export interface SignupResult {
+interface SignupResult {
   success: boolean
   error?: string
 }
 
-export interface LoginFormData {
+interface LoginFormData {
   email: string
   password: string
 }
 
-export interface LoginResult {
+interface LoginResult {
   success: boolean
   error?: string
+}
+
+function validatePassword(password: string): string | null {
+  if (password.length < 8) {
+    return 'Password must be at least 8 characters'
+  }
+  if (!/\d/.test(password)) {
+    return 'Password must contain at least one number'
+  }
+  if (!/[!@#$%^&*(),.?":{}|<>]/.test(password)) {
+    return 'Password must contain at least one special character'
+  }
+  return null
 }
 
 export async function login(formData: LoginFormData): Promise<LoginResult> {
@@ -62,8 +75,17 @@ export async function login(formData: LoginFormData): Promise<LoginResult> {
     .eq('id', authData.user.id)
     .single()
 
-  // Redirect to onboarding if no profile exists or onboarding not completed
-  if (!profile || profile.onboarding_completed === false) {
+  // Profile trigger fallback: create profile if missing
+  if (!profile) {
+    await supabase.from('profiles').insert({
+      id: authData.user.id,
+      email: authData.user.email,
+      onboarding_completed: false,
+    })
+    redirect('/onboarding')
+  }
+
+  if (profile.onboarding_completed === false) {
     redirect('/onboarding')
   } else {
     redirect('/')
@@ -77,16 +99,9 @@ export async function signup(formData: SignupFormData): Promise<SignupResult> {
   }
 
   // Validate password strength
-  if (formData.password.length < 8) {
-    return { success: false, error: 'Password must be at least 8 characters' }
-  }
-
-  if (!/\d/.test(formData.password)) {
-    return { success: false, error: 'Password must contain at least one number' }
-  }
-
-  if (!/[!@#$%^&*(),.?":{}|<>]/.test(formData.password)) {
-    return { success: false, error: 'Password must contain at least one special character' }
+  const passwordError = validatePassword(formData.password)
+  if (passwordError) {
+    return { success: false, error: passwordError }
   }
 
   // Validate email format
@@ -101,6 +116,9 @@ export async function signup(formData: SignupFormData): Promise<SignupResult> {
   const { data: authData, error: authError } = await supabase.auth.signUp({
     email: formData.email,
     password: formData.password,
+    options: {
+      emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL ?? ''}/auth/callback`,
+    },
   })
 
   if (authError) {
@@ -119,12 +137,73 @@ export async function signup(formData: SignupFormData): Promise<SignupResult> {
   }
 
   // Profile is created automatically via database trigger (handle_new_user)
-  // Redirect to onboarding
-  redirect('/onboarding')
+  // Redirect to verify email page
+  redirect(`/verify-email?email=${encodeURIComponent(formData.email)}`)
 }
 
 export async function logout(): Promise<void> {
   const supabase = await createClient()
   await supabase.auth.signOut()
   redirect('/login')
+}
+
+export async function requestPasswordReset({ email }: { email: string }): Promise<{ success: boolean; error?: string }> {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+  if (!emailRegex.test(email)) {
+    return { success: false, error: 'Invalid email format' }
+  }
+
+  const supabase = await createClient()
+
+  const { error } = await supabase.auth.resetPasswordForEmail(email, {
+    redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL ?? ''}/auth/callback?next=/reset-password`,
+  })
+
+  if (error) {
+    console.error('Password reset error:', error)
+  }
+
+  // Always return success for security (don't reveal if email exists)
+  return { success: true }
+}
+
+export async function updatePassword({ password, confirmPassword }: { password: string; confirmPassword: string }): Promise<{ success: boolean; error?: string }> {
+  if (password !== confirmPassword) {
+    return { success: false, error: 'Passwords do not match' }
+  }
+
+  const passwordError = validatePassword(password)
+  if (passwordError) {
+    return { success: false, error: passwordError }
+  }
+
+  const supabase = await createClient()
+
+  const { error } = await supabase.auth.updateUser({ password })
+
+  if (error) {
+    console.error('Update password error:', error)
+    return { success: false, error: 'Failed to update password. Please try again.' }
+  }
+
+  return { success: true }
+}
+
+export async function resendVerificationEmail({ email }: { email: string }): Promise<{ success: boolean; error?: string }> {
+  const supabase = await createClient()
+
+  const { error } = await supabase.auth.resend({
+    type: 'signup',
+    email,
+    options: {
+      emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL ?? ''}/auth/callback`,
+    },
+  })
+
+  if (error) {
+    console.error('Resend verification error:', error)
+    return { success: false, error: 'Failed to resend verification email.' }
+  }
+
+  return { success: true }
 }

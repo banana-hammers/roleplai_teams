@@ -4,6 +4,18 @@ import { useState } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog'
+import { StatusMessage } from './status-message'
 import { Server, Trash2, ExternalLink } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 
@@ -20,10 +32,9 @@ interface McpServersSettingsProps {
 export function McpServersSettings({ mcpServers: initialServers }: McpServersSettingsProps) {
   const [servers, setServers] = useState(initialServers)
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
+  const [deletingServerId, setDeletingServerId] = useState<string | null>(null)
 
-  const handleDeleteServer = async (id: string, name: string) => {
-    if (!confirm(`Are you sure you want to delete "${name}"?`)) return
-
+  const handleDeleteServer = async (id: string) => {
     try {
       const supabase = createClient()
       const { error } = await supabase
@@ -34,9 +45,11 @@ export function McpServersSettings({ mcpServers: initialServers }: McpServersSet
       if (error) throw error
 
       setServers(servers.filter(s => s.id !== id))
+      setDeletingServerId(null)
       setMessage({ type: 'success', text: 'Server deleted' })
     } catch {
       setMessage({ type: 'error', text: 'Failed to delete server' })
+      setDeletingServerId(null)
     }
   }
 
@@ -71,29 +84,52 @@ export function McpServersSettings({ mcpServers: initialServers }: McpServersSet
                       </Badge>
                     </div>
                   </div>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => handleDeleteServer(server.id, server.name)}
-                    className="self-end sm:self-auto"
-                  >
-                    <Trash2 className="h-4 w-4 text-destructive" />
-                  </Button>
+                  <AlertDialog open={deletingServerId === server.id} onOpenChange={(open) => !open && setDeletingServerId(null)}>
+                    <AlertDialogTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => setDeletingServerId(server.id)}
+                        className="self-end sm:self-auto"
+                      >
+                        <Trash2 className="h-4 w-4 text-destructive" />
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Delete &ldquo;{server.name}&rdquo;?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          This will permanently remove this MCP server connection. Any roles using it will lose access to its tools.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={() => handleDeleteServer(server.id)} className="bg-destructive text-white hover:bg-destructive/90">
+                          Delete
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
                 </div>
               ))}
             </div>
           </div>
         ) : (
-          <p className="text-sm text-muted-foreground">
-            No MCP servers connected. Add servers per-role in role settings, or host your own SSE MCP server.
-          </p>
+          <div className="rounded-lg border border-dashed p-6 text-center space-y-3">
+            <Server className="h-8 w-8 mx-auto text-muted-foreground" />
+            <div className="space-y-1">
+              <p className="text-sm font-medium">No MCP servers connected</p>
+              <p className="text-sm text-muted-foreground">
+                MCP servers are managed per-role. Go to a role&apos;s settings to add servers.
+              </p>
+            </div>
+            <Button variant="outline" asChild>
+              <a href="/roles">Go to Roles</a>
+            </Button>
+          </div>
         )}
 
-        {message && (
-          <p className={`text-sm ${message.type === 'success' ? 'text-green-600' : 'text-red-600'}`}>
-            {message.text}
-          </p>
-        )}
+        <StatusMessage message={message} />
 
         {/* Documentation links */}
         <div className="rounded-lg border bg-muted/50 p-4 space-y-3">

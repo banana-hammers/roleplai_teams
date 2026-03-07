@@ -11,11 +11,8 @@
 import type Anthropic from '@anthropic-ai/sdk'
 import { executeWebFetch, formatFetchResult } from './web-fetch'
 
-/**
- * Built-in tool names
- */
-export const BUILTIN_TOOL_NAMES = ['web_search', 'web_fetch'] as const
-export type BuiltinToolName = (typeof BUILTIN_TOOL_NAMES)[number]
+const BUILTIN_TOOL_NAMES = ['web_search', 'web_fetch'] as const
+type BuiltinToolName = (typeof BUILTIN_TOOL_NAMES)[number]
 
 /**
  * Check if a tool name is a built-in tool
@@ -92,15 +89,6 @@ export async function executeBuiltinTool(
 }
 
 /**
- * Check if web tools are available
- * Note: web_search is always available (native Anthropic tool)
- * web_fetch is always available (just uses fetch)
- */
-export function areWebToolsAvailable(): boolean {
-  return true
-}
-
-/**
  * Get all available built-in tools
  * Returns a mixed array of server tools (WebSearchTool20250305) and custom tools (Tool)
  */
@@ -109,4 +97,36 @@ export function getAvailableBuiltinTools(): Anthropic.ToolUnion[] {
     getWebSearchTool(), // Native Anthropic server tool
     ...getCustomToolDefinitions(), // Custom tools we execute ourselves
   ]
+}
+
+export type { GenericToolDefinition } from './types'
+import type { GenericToolDefinition } from './types'
+
+/**
+ * Get built-in tool definitions in provider-agnostic format.
+ * OpenAI doesn't support Anthropic's server tools (web_search), so we skip those.
+ */
+export function getBuiltinToolsForProvider(provider: 'anthropic' | 'openai'): GenericToolDefinition[] {
+  const tools: GenericToolDefinition[] = [
+    {
+      name: 'web_fetch',
+      description:
+        'Fetch and read the content of a web page. Use this when you need to read the full content of a specific URL, such as an article, documentation page, or any web resource.',
+      parameters: {
+        type: 'object',
+        properties: {
+          url: {
+            type: 'string',
+            description: 'The URL to fetch (must be http or https)',
+          },
+        },
+        required: ['url'],
+      },
+    },
+  ]
+
+  // web_search is Anthropic-only (native server tool)
+  // OpenAI models don't get web_search
+
+  return tools
 }

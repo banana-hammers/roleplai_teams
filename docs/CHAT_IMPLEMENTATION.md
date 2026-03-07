@@ -18,7 +18,7 @@ POST /api/chat
 {
   "messages": [...],
   "provider": "openai" | "anthropic",
-  "model": "gpt-4-turbo-preview" | "claude-3-5-sonnet-20241022"
+  "model": "gpt-5-nano" | "claude-haiku-4-5" | etc.
 }
 ```
 
@@ -53,7 +53,7 @@ POST /api/roles/{roleId}/chat
 **Location:** [components/chat/chat-interface.tsx](components/chat/chat-interface.tsx)
 
 Features:
-- Real-time streaming with `useChat` hook from `@ai-sdk/react` (Vercel AI SDK v5)
+- Real-time streaming with `useChat` hook from `@ai-sdk/react` (Vercel AI SDK v6)
 - Uses `DefaultChatTransport` from `ai` package for HTTP streaming
 - Message history display with parts-based rendering
 - Loading states with animated indicators
@@ -106,6 +106,7 @@ Implementation Notes:
 |------|-------------|--------------|
 | `web_search` | Search the web for information | Brave Search or Serper |
 | `web_fetch` | Fetch and extract content from URLs | Built-in |
+| `mcp_*` | External tools from MCP servers | User-hosted SSE servers |
 
 **How it works:**
 1. Role chat endpoint combines built-in tools with custom skills
@@ -118,17 +119,15 @@ Implementation Notes:
 - [lib/tools/web-search.ts](lib/tools/web-search.ts) - Brave/Serper search integration
 - [lib/tools/web-fetch.ts](lib/tools/web-fetch.ts) - URL fetching + HTML parsing
 - [lib/tools/builtin-tools.ts](lib/tools/builtin-tools.ts) - Tool registry + executor
+- [lib/tools/mcp-tools.ts](lib/tools/mcp-tools.ts) - MCP tool integration
+- [lib/mcp/client.ts](lib/mcp/client.ts) - Edge-compatible MCP SSE client
 
 ## 🚧 TODO Items
 
 ### Nice to Have
-1. **Chat History Persistence** - Save conversations to database
-   - New table: `conversations` and `messages`
-   - Load previous chats
+1. **Spend Tracking** - Monitor API usage against `spend_limit`
 
-2. **Spend Tracking** - Monitor API usage against `spend_limit`
-
-3. **Task Creation from Chats** - Convert chat interactions to tracked tasks
+2. **Task Creation from Chats** - Convert chat interactions to tracked tasks
 
 ## Testing
 
@@ -176,7 +175,7 @@ Both API routes use `export const runtime = 'edge'`:
 2. ~~Build authentication UI~~ ✅ Complete
 3. ~~Create role management pages~~ ✅ Complete
 4. ~~Add web tools~~ ✅ Complete (web_search, web_fetch)
-5. **Chat history persistence** - Save conversations to database
+5. ~~Chat history persistence~~ ✅ Complete (conversations + messages tables)
 6. **Spend tracking** - Monitor API usage against spend limits
 
 ## Files Created
@@ -207,9 +206,9 @@ lib/
   rate-limit.ts                   # In-memory rate limiter
 ```
 
-## Migration to AI SDK v5
+## Migration to AI SDK v6
 
-The project has been updated to use Vercel AI SDK v5. Key changes:
+The project uses Vercel AI SDK v6. Key changes from v4:
 
 ### Breaking Changes
 1. **Package Split**: React hooks moved from `ai/react` to `@ai-sdk/react`
@@ -253,10 +252,10 @@ The project has been updated to use Vercel AI SDK v5. Key changes:
 ### Dependencies
 ```json
 {
-  "ai": "^5.0.108",
-  "@ai-sdk/react": "^1.0.0",
-  "@ai-sdk/anthropic": "^2.0.53",
-  "@ai-sdk/openai": "^2.0.77"
+  "ai": "^6.0.116",
+  "@ai-sdk/react": "^3.0.118",
+  "@ai-sdk/anthropic": "^3.0.58",
+  "@ai-sdk/openai": "^3.0.41"
 }
 ```
 

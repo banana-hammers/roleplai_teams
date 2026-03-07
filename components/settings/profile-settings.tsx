@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
 import { createClient } from '@/lib/supabase/client'
+import { StatusMessage } from './status-message'
 
 interface ProfileSettingsProps {
   profile: {
@@ -72,14 +73,11 @@ export function ProfileSettings({ profile, userEmail }: ProfileSettingsProps) {
             value={fullName}
             onChange={(e) => setFullName(e.target.value)}
             placeholder="Enter your full name"
+            maxLength={100}
           />
         </div>
 
-        {message && (
-          <p className={`text-sm ${message.type === 'success' ? 'text-green-600' : 'text-red-600'}`}>
-            {message.text}
-          </p>
-        )}
+        <StatusMessage message={message} />
 
         <Button onClick={handleSave} disabled={saving}>
           {saving ? 'Saving...' : 'Save Changes'}

@@ -1,4 +1,5 @@
 import type { Skill } from '@/types/skill'
+import type { GenericToolDefinition } from '@/lib/tools/types'
 
 // Anthropic tool type (simplified - matches API spec)
 export interface AnthropicTool {
@@ -46,6 +47,27 @@ export function skillsToAnthropicTools(skills: Skill[]): AnthropicTool[] {
 }
 
 /**
+ * Convert skills to provider-agnostic tool format (for OpenAI path)
+ */
+export function skillsToGenericTools(skills: Skill[]): GenericToolDefinition[] {
+  return skills.map(skill => {
+    const schema = ensureValidSchema(skill.input_schema)
+    return {
+      name: skill.name.toLowerCase().replace(/[^a-z0-9_]/g, '_'),
+      description: skill.short_description
+        || (skill.description
+            ? skill.description.slice(0, 150) + (skill.description.length > 150 ? '...' : '')
+            : 'Execute this skill'),
+      parameters: {
+        type: 'object' as const,
+        properties: (schema.properties || {}) as Record<string, unknown>,
+        required: schema.required as string[] | undefined,
+      },
+    }
+  })
+}
+
+/**
  * Find a skill by its tool name (the sanitized version used in API calls)
  */
 export function findSkillByToolName(skills: Skill[], toolName: string): Skill | undefined {
@@ -54,61 +76,3 @@ export function findSkillByToolName(skills: Skill[], toolName: string): Skill | 
   )
 }
 
-/**
- * SECURITY: Maximum length for input values to prevent DoS
- */
-const MAX_INPUT_LENGTH = 100000
-
-/**
- * SECURITY: Sanitize input value for template interpolation
- * - Enforces length limits
- * - Escapes potentially dangerous patterns
- */
-function sanitizeTemplateInput(value: unknown): string {
-  if (value === null || value === undefined) {
-    return ''
-  }
-
-  let str = String(value)
-
-  // Enforce length limit
-  if (str.length > MAX_INPUT_LENGTH) {
-    str = str.slice(0, MAX_INPUT_LENGTH) + '... [truncated]'
-  }
-
-  return str
-}
-
-/**
- * SECURITY: Validate that a key is a safe placeholder name
- */
-function isValidPlaceholderKey(key: string): boolean {
-  // Only allow alphanumeric and underscore
-  return /^[a-zA-Z_][a-zA-Z0-9_]*$/.test(key)
-}
-
-/**
- * Execute a skill by interpolating inputs into the prompt template.
- * Replaces {{placeholder}} with actual values.
- * SECURITY: Sanitizes inputs and validates placeholder keys
- */
-export function executeSkillTool(
-  skill: Skill,
-  inputs: Record<string, unknown>
-): string {
-  let output = skill.prompt_template
-
-  for (const [key, value] of Object.entries(inputs)) {
-    // SECURITY: Validate placeholder key to prevent regex injection
-    if (!isValidPlaceholderKey(key)) {
-      console.warn(`SECURITY: Skipping invalid placeholder key: ${key}`)
-      continue
-    }
-
-    const placeholder = new RegExp(`\\{\\{${key}\\}\\}`, 'g')
-    const sanitizedValue = sanitizeTemplateInput(value)
-    output = output.replace(placeholder, sanitizedValue)
-  }
-
-  return output
-}

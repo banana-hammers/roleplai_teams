@@ -2,65 +2,20 @@
 
 import { useChat } from '@ai-sdk/react'
 import { DefaultChatTransport } from 'ai'
-import { useRoleChat, type Message as RoleMessage, type RateLimitInfo } from '@/lib/hooks/use-role-chat'
+import { useRoleChat, type Message as RoleMessage } from '@/lib/hooks/use-role-chat'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { Card } from '@/components/ui/card'
-import { Separator } from '@/components/ui/separator'
 import { Badge } from '@/components/ui/badge'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo, useRef } from 'react'
 import { MessageBubble } from '@/components/chat/message-bubble'
 import { TypingIndicator } from '@/components/chat/typing-indicator'
 import { ToolResultCard } from '@/components/chat/tool-result-card'
 import { SkillProgressCard } from '@/components/chat/skill-progress-card'
-import { Clock, Search } from 'lucide-react'
+import { RateLimitBanner } from '@/components/chat/rate-limit-banner'
+import { Search } from 'lucide-react'
 import type { ModelTierConfig } from '@/lib/utils/model-tiers'
-
-/**
- * Rate limit banner with countdown timer
- */
-function RateLimitBanner({
-  info,
-  onDismiss,
-}: {
-  info: RateLimitInfo
-  onDismiss: () => void
-}) {
-  const [secondsLeft, setSecondsLeft] = useState(info.retryAfterSeconds)
-
-  useEffect(() => {
-    if (secondsLeft <= 0) {
-      onDismiss()
-      return
-    }
-
-    const timer = setInterval(() => {
-      setSecondsLeft((s) => s - 1)
-    }, 1000)
-
-    return () => clearInterval(timer)
-  }, [secondsLeft, onDismiss])
-
-  return (
-    <div className="flex justify-center my-4">
-      <Card className="border-amber-500 bg-amber-50 dark:bg-amber-950/20 p-4 max-w-md">
-        <div className="flex items-center gap-3">
-          <div className="h-8 w-8 rounded-full bg-amber-100 dark:bg-amber-900 flex items-center justify-center shrink-0">
-            <Clock className="h-4 w-4 text-amber-600" />
-          </div>
-          <div>
-            <p className="text-sm font-medium text-amber-800 dark:text-amber-200">Rate Limited</p>
-            <p className="text-sm text-amber-600 dark:text-amber-400">
-              {secondsLeft > 0
-                ? `Please wait ${secondsLeft}s before trying again`
-                : 'You can try again now'}
-            </p>
-          </div>
-        </div>
-      </Card>
-    </div>
-  )
-}
+import { formatCost } from '@/lib/pricing/model-pricing'
 
 interface ChatInterfaceProps {
   roleId?: string
@@ -71,6 +26,7 @@ interface ChatInterfaceProps {
 export function ChatInterface({ roleId, roleName, tierConfig }: ChatInterfaceProps) {
   const [inputValue, setInputValue] = useState('')
   const [lastMessageCount, setLastMessageCount] = useState(0)
+  const messagesEndRef = useRef<HTMLDivElement>(null)
 
   // Use role-specific hook for role chat, standard useChat for basic chat
   const roleChat = useRoleChat({ roleId: roleId || '' })
@@ -90,6 +46,12 @@ export function ChatInterface({ roleId, roleName, tierConfig }: ChatInterfacePro
   const searchQuery = isRoleChat ? roleChat.searchQuery : null
   const activeSkills = isRoleChat ? roleChat.activeSkills : null
 
+  // Compute running session cost total from role chat messages
+  const sessionCost = useMemo(() => {
+    if (!isRoleChat) return 0
+    return roleChat.messages.reduce((sum, msg) => sum + (msg.usage?.cost ?? 0), 0)
+  }, [isRoleChat, roleChat.messages])
+
   // Track message count for new message animations
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -97,6 +59,11 @@ export function ChatInterface({ roleId, roleName, tierConfig }: ChatInterfacePro
     }, 350)
     return () => clearTimeout(timer)
   }, [messages.length])
+
+  // Auto-scroll to bottom on new messages
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+  }, [messages])
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -124,7 +91,20 @@ export function ChatInterface({ roleId, roleName, tierConfig }: ChatInterfacePro
             </p>
           )}
         </div>
-        <Badge variant="outline">Claude</Badge>
+        <div className="flex items-center gap-2">
+          {sessionCost > 0 && (
+            <span className="text-xs text-muted-foreground font-mono">
+              Session: {formatCost(sessionCost)}
+            </span>
+          )}
+          {tierConfig ? (
+            <Badge variant="outline" className={tierConfig.borderClass}>
+              {tierConfig.label}
+            </Badge>
+          ) : (
+            <Badge variant="outline">AI</Badge>
+          )}
+        </div>
       </div>
 
       {/* Messages */}
@@ -230,12 +210,11 @@ export function ChatInterface({ roleId, roleName, tierConfig }: ChatInterfacePro
         {rateLimitInfo && (
           <RateLimitBanner info={rateLimitInfo} onDismiss={roleChat.clearRateLimitInfo} />
         )}
+        <div ref={messagesEndRef} />
       </div>
 
-      <Separator />
-
       {/* Input */}
-      <form onSubmit={handleSubmit} className="border-t p-4">
+      <form onSubmit={handleSubmit} className="border-t p-4 bg-background/80 backdrop-blur-sm">
         <div className="flex gap-2">
           <Textarea
             value={inputValue}

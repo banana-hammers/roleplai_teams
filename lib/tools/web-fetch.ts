@@ -4,6 +4,8 @@
  * Edge-compatible (no Node.js dependencies)
  */
 
+import { isPrivateHostname } from '@/lib/utils/url-security'
+
 export interface WebFetchResult {
   url: string
   title?: string
@@ -29,13 +31,29 @@ export async function executeWebFetch(url: string): Promise<WebFetchResult> {
       }
     }
 
+    // SECURITY: Block private/internal IPs to prevent SSRF
+    if (isPrivateHostname(parsedUrl.hostname)) {
+      return {
+        url,
+        content: '',
+        error: 'Private/internal URLs are not allowed'
+      }
+    }
+
+    // Timeout after 10 seconds to prevent hanging requests
+    const controller = new AbortController()
+    const timeout = setTimeout(() => controller.abort(), 10000)
+
     const response = await fetch(url, {
       headers: {
         'User-Agent': 'Mozilla/5.0 (compatible; RoleplayAI/1.0; +https://roleplai.com)',
         'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,text/plain;q=0.8,*/*;q=0.7'
       },
-      redirect: 'follow'
+      redirect: 'follow',
+      signal: controller.signal,
     })
+
+    clearTimeout(timeout)
 
     if (!response.ok) {
       return {

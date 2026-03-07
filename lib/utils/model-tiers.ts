@@ -51,76 +51,75 @@ export const modelTierConfigs: Record<ModelTier, ModelTierConfig> = {
   },
 }
 
-// Model to tier mapping based on cost/capability
-const modelTierMap: Record<string, ModelTier> = {
-  // Legendary tier (most expensive/capable)
-  'anthropic/claude-opus-4-20250514': 'legendary',
-  'anthropic/claude-opus-4-5-20251101': 'legendary',
-  'openai/gpt-4o': 'legendary',
-  'openai/o1-preview': 'legendary',
-  'openai/o1': 'legendary',
+// ── Single source of truth for all models ──────────────────────────
 
-  // Epic tier
-  'openai/gpt-4-turbo-preview': 'epic',
-  'openai/gpt-4-turbo': 'epic',
-  'anthropic/claude-3-opus': 'epic',
-  'anthropic/claude-3-opus-20240229': 'epic',
-
-  // Rare tier
-  'anthropic/claude-sonnet-4-5-20250929': 'rare',
-  'anthropic/claude-3-5-sonnet': 'rare',
-  'anthropic/claude-3-5-sonnet-20241022': 'rare',
-  'openai/gpt-4o-mini': 'rare',
-
-  // Common tier (default/base)
-  'anthropic/claude-haiku-4-5': 'common',
-  'anthropic/claude-3-haiku': 'common',
-  'anthropic/claude-3-haiku-20240307': 'common',
-  'openai/gpt-3.5-turbo': 'common',
+export interface ModelRegistryEntry {
+  /** Full provider/model value, e.g. 'anthropic/claude-opus-4-6' */
+  value: string
+  /** Raw model ID, e.g. 'claude-opus-4-6' */
+  modelId: string
+  /** Short display name, e.g. 'Opus 4.6' */
+  displayName: string
+  /** Full label for UI picker, e.g. 'Claude Opus 4.6' */
+  label: string
+  tier: ModelTier
+  /** Whether to show in the model selection UI */
+  selectable: boolean
 }
+
+export const MODEL_REGISTRY: ModelRegistryEntry[] = [
+  // ── Anthropic ──
+  { value: 'anthropic/claude-opus-4-6',           modelId: 'claude-opus-4-6',           displayName: 'Opus 4.6',   label: 'Claude Opus 4.6',   tier: 'legendary', selectable: true  },
+  { value: 'anthropic/claude-opus-4-5-20251101',  modelId: 'claude-opus-4-5-20251101',  displayName: 'Opus 4.5',   label: 'Claude Opus 4.5',   tier: 'legendary', selectable: false },
+  { value: 'anthropic/claude-opus-4-20250514',    modelId: 'claude-opus-4-20250514',    displayName: 'Opus 4',     label: 'Claude Opus 4',     tier: 'epic',      selectable: false },
+  { value: 'anthropic/claude-sonnet-4-6',         modelId: 'claude-sonnet-4-6',         displayName: 'Sonnet 4.6', label: 'Claude Sonnet 4.6', tier: 'rare',      selectable: true  },
+  { value: 'anthropic/claude-sonnet-4-5-20250929',modelId: 'claude-sonnet-4-5-20250929',displayName: 'Sonnet 4.5', label: 'Claude Sonnet 4.5', tier: 'rare',      selectable: false },
+  { value: 'anthropic/claude-haiku-4-5',          modelId: 'claude-haiku-4-5',          displayName: 'Haiku 4.5',  label: 'Claude Haiku 4.5',  tier: 'common',    selectable: true  },
+
+  // ── OpenAI ──
+  { value: 'openai/gpt-5.2',      modelId: 'gpt-5.2',      displayName: 'GPT-5.2',      label: 'GPT-5.2',      tier: 'legendary', selectable: true  },
+  { value: 'openai/gpt-5.2-pro',  modelId: 'gpt-5.2-pro',  displayName: 'GPT-5.2 Pro',  label: 'GPT-5.2 Pro',  tier: 'legendary', selectable: false },
+  { value: 'openai/o3',           modelId: 'o3',            displayName: 'o3',            label: 'o3',            tier: 'legendary', selectable: true  },
+  { value: 'openai/o3-pro',       modelId: 'o3-pro',        displayName: 'o3 Pro',        label: 'o3 Pro',        tier: 'legendary', selectable: false },
+  { value: 'openai/gpt-5',        modelId: 'gpt-5',         displayName: 'GPT-5',         label: 'GPT-5',         tier: 'epic',      selectable: true  },
+  { value: 'openai/gpt-4.1',      modelId: 'gpt-4.1',       displayName: 'GPT-4.1',       label: 'GPT-4.1',       tier: 'epic',      selectable: false },
+  { value: 'openai/o4-mini',      modelId: 'o4-mini',       displayName: 'o4-mini',       label: 'o4-mini',       tier: 'epic',      selectable: true  },
+  { value: 'openai/gpt-4o',       modelId: 'gpt-4o',        displayName: 'GPT-4o',        label: 'GPT-4o',        tier: 'epic',      selectable: false },
+  { value: 'openai/gpt-5-mini',   modelId: 'gpt-5-mini',    displayName: 'GPT-5 Mini',    label: 'GPT-5 Mini',    tier: 'rare',      selectable: true  },
+  { value: 'openai/gpt-4.1-mini', modelId: 'gpt-4.1-mini',  displayName: 'GPT-4.1 Mini',  label: 'GPT-4.1 Mini',  tier: 'rare',      selectable: false },
+  { value: 'openai/gpt-4o-mini',  modelId: 'gpt-4o-mini',   displayName: 'GPT-4o Mini',   label: 'GPT-4o Mini',   tier: 'rare',      selectable: false },
+  { value: 'openai/gpt-5-nano',   modelId: 'gpt-5-nano',    displayName: 'GPT-5 Nano',    label: 'GPT-5 Nano',    tier: 'common',    selectable: true  },
+  { value: 'openai/gpt-4.1-nano', modelId: 'gpt-4.1-nano',  displayName: 'GPT-4.1 Nano',  label: 'GPT-4.1 Nano',  tier: 'common',    selectable: false },
+]
+
+// ── Derived lookups (built once from the registry) ─────────────────
+
+const tierByValue = new Map(MODEL_REGISTRY.map(m => [m.value, m.tier]))
+const displayNameByModelId = new Map(MODEL_REGISTRY.map(m => [m.modelId, m.displayName]))
 
 export function getModelTier(modelPreference: string | null): ModelTierConfig {
   if (!modelPreference) {
     return modelTierConfigs.common
   }
 
-  const tier = modelTierMap[modelPreference] || 'common'
+  const tier = tierByValue.get(modelPreference) || 'common'
   return modelTierConfigs[tier]
-}
-
-// Friendly display names for models
-const friendlyNames: Record<string, string> = {
-  'claude-opus-4-20250514': 'Opus 4',
-  'claude-opus-4-5-20251101': 'Opus 4.5',
-  'claude-sonnet-4-5-20250929': 'Sonnet 4.5',
-  'claude-3-5-sonnet-20241022': 'Sonnet 3.5',
-  'claude-3-opus-20240229': 'Opus 3',
-  'claude-haiku-4-5': 'Haiku 4.5',
-  'claude-3-haiku-20240307': 'Haiku 3',
-  'gpt-4o': 'GPT-4o',
-  'gpt-4-turbo-preview': 'GPT-4 Turbo',
-  'gpt-4-turbo': 'GPT-4 Turbo',
-  'gpt-4o-mini': 'GPT-4o Mini',
-  'gpt-3.5-turbo': 'GPT-3.5',
-  'o1-preview': 'o1 Preview',
-  'o1': 'o1',
 }
 
 export function getModelDisplayName(modelPreference: string | null): string | null {
   if (!modelPreference) return null
 
   const parts = modelPreference.split('/')
-  const model = parts[1] || parts[0]
+  const modelId = parts[1] || parts[0]
 
-  return friendlyNames[model] || (model.length > 14 ? model.slice(0, 14) + '...' : model)
+  return displayNameByModelId.get(modelId) || (modelId.length > 14 ? modelId.slice(0, 14) + '...' : modelId)
 }
 
-// Available Claude models for selection
-export const CLAUDE_MODELS: Array<{ value: string; label: string; tier: ModelTier }> = [
-  { value: 'anthropic/claude-opus-4-5-20251101', label: 'Claude Opus 4.5', tier: 'legendary' },
-  { value: 'anthropic/claude-opus-4-20250514', label: 'Claude Opus 4', tier: 'legendary' },
-  { value: 'anthropic/claude-sonnet-4-5-20250929', label: 'Claude Sonnet 4.5', tier: 'rare' },
-  { value: 'anthropic/claude-3-5-sonnet-20241022', label: 'Claude 3.5 Sonnet', tier: 'rare' },
-  { value: 'anthropic/claude-haiku-4-5', label: 'Claude Haiku 4.5', tier: 'common' },
-  { value: 'anthropic/claude-3-haiku-20240307', label: 'Claude 3 Haiku', tier: 'common' },
-]
+/** Models shown in the UI model picker */
+export const AVAILABLE_MODELS: Array<{ value: string; label: string; tier: ModelTier }> =
+  MODEL_REGISTRY
+    .filter(m => m.selectable)
+    .map(({ value, label, tier }) => ({ value, label, tier }))
+
+/** All known model IDs (for pricing lookups, etc.) */
+export const ALL_MODEL_IDS: string[] = MODEL_REGISTRY.map(m => m.modelId)

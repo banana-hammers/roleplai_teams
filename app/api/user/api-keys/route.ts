@@ -1,5 +1,5 @@
-import { createClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
+import { requireAuthForRoute } from '@/lib/api/route-helpers'
 import { encryptApiKey, isEncryptionConfigured } from '@/lib/crypto/api-key-encryption'
 
 export const runtime = 'edge'
@@ -9,12 +9,9 @@ export const runtime = 'edge'
  * Add a new API key (encrypted server-side)
  */
 export async function POST(req: NextRequest) {
-  const supabase = await createClient()
-  const { data: { user }, error: authError } = await supabase.auth.getUser()
-
-  if (authError || !user) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
+  const auth = await requireAuthForRoute()
+  if (auth instanceof NextResponse) return auth
+  const { supabase, user } = auth
 
   // Check encryption is configured
   if (!isEncryptionConfigured()) {
@@ -96,12 +93,9 @@ export async function POST(req: NextRequest) {
  * List user's API keys (without revealing the actual keys)
  */
 export async function GET() {
-  const supabase = await createClient()
-  const { data: { user }, error: authError } = await supabase.auth.getUser()
-
-  if (authError || !user) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
+  const auth = await requireAuthForRoute()
+  if (auth instanceof NextResponse) return auth
+  const { supabase, user } = auth
 
   const { data, error } = await supabase
     .from('user_api_keys')
@@ -121,12 +115,9 @@ export async function GET() {
  * Delete an API key
  */
 export async function DELETE(req: NextRequest) {
-  const supabase = await createClient()
-  const { data: { user }, error: authError } = await supabase.auth.getUser()
-
-  if (authError || !user) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
+  const auth = await requireAuthForRoute()
+  if (auth instanceof NextResponse) return auth
+  const { supabase, user } = auth
 
   const { id } = await req.json()
 

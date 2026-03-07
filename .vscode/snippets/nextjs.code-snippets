@@ -115,49 +115,53 @@
     ],
     "description": "Supabase query with error handling"
   },
-  "Vercel AI SDK useChat": {
+  "Vercel AI SDK useChat (v5)": {
     "prefix": "usechat",
     "body": [
-      "import { useChat } from 'ai/react'",
+      "import { useChat } from '@ai-sdk/react'",
+      "import { DefaultChatTransport } from 'ai'",
       "",
-      "const { messages, input, handleInputChange, handleSubmit, isLoading } = useChat({",
-      "  api: '${1:/api/chat}',",
-      "  ${2:// Additional options}",
+      "const { messages, sendMessage, status } = useChat({",
+      "  transport: new DefaultChatTransport({",
+      "    api: '${1:/api/chat}',",
+      "    body: { ${2:provider: 'anthropic'} },",
+      "  }),",
       "})",
       "${3}"
     ],
-    "description": "Vercel AI SDK useChat hook"
+    "description": "Vercel AI SDK v5 useChat hook with transport"
   },
   "AI Chat API Route": {
     "prefix": "aichat",
     "body": [
       "import { createClient } from '@/lib/supabase/server'",
-      "import { openai } from '@ai-sdk/openai'",
-      "import { anthropic } from '@ai-sdk/anthropic'",
-      "import { streamText } from 'ai'",
+      "import { streamText, convertToModelMessages } from 'ai'",
+      "import { getSystemModel, errorResponse, DEFAULT_TEMPERATURE } from '@/lib/ai/create-system-model'",
       "",
       "export const runtime = 'edge'",
       "",
       "export async function POST(req: Request) {",
-      "  const { messages, provider = 'openai', model } = await req.json()",
+      "  const { messages } = await req.json()",
       "  const supabase = await createClient()",
       "",
       "  const { data: { user } } = await supabase.auth.getUser()",
       "  if (!user) {",
-      "    return new Response('Unauthorized', { status: 401 })",
+      "    return errorResponse('Unauthorized', 401)",
       "  }",
       "",
+      "  const modelResult = getSystemModel()",
+      "  if ('error' in modelResult) return modelResult.error",
+      "",
       "  const result = streamText({",
-      "    model: provider === 'anthropic' ",
-      "      ? anthropic(model || 'claude-3-5-sonnet-20241022')",
-      "      : openai(model || 'gpt-4-turbo-preview'),",
-      "    messages,",
+      "    model: modelResult.model,",
+      "    messages: convertToModelMessages(messages),",
+      "    temperature: DEFAULT_TEMPERATURE,",
       "  })",
       "",
-      "  return result.toDataStreamResponse()",
+      "  return result.toUIMessageStreamResponse()",
       "}"
     ],
-    "description": "AI Chat API route with streaming"
+    "description": "AI Chat API route with streaming (uses shared utilities)"
   },
   "TypeScript Interface": {
     "prefix": "tsinterface",

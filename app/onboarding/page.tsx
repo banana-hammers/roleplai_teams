@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { Card, CardContent } from '@/components/ui/card'
 import { ProgressIndicator } from '@/components/ui/progress-indicator'
 import { AliasName } from '@/components/onboarding/alias-name'
@@ -10,11 +10,15 @@ import { TestDrive } from '@/components/onboarding/test-drive'
 import { Completion } from '@/components/onboarding/completion'
 import { useOnboardingState } from '@/lib/hooks/use-onboarding-state'
 import { generateIdentityCore, generateBehaviorExamples } from '@/lib/onboarding/generate-identity'
+import { Loader2 } from 'lucide-react'
+import { Button } from '@/components/ui/button'
 
 const TOTAL_STEPS = 5
 
 export default function OnboardingPage() {
   const { state, setState, isHydrated } = useOnboardingState()
+  const [extracting, setExtracting] = useState(false)
+  const [extractionError, setExtractionError] = useState<string | null>(null)
 
   // Generate identity and examples when personality is extracted
   const { identity, examples } = useMemo(() => {
@@ -36,15 +40,10 @@ export default function OnboardingPage() {
     })
   }
 
-  const handleInterviewComplete = async (messages: Array<{ role: string; content: string }>) => {
-    // Save interview messages to state
-    setState({
-      ...state,
-      interviewMessages: messages,
-      currentStep: 3,
-    })
+  const extractPersonality = async (messages: Array<{ role: string; content: string }>) => {
+    setExtracting(true)
+    setExtractionError(null)
 
-    // Extract personality in the background
     try {
       const response = await fetch('/api/onboarding/extract-personality', {
         method: 'POST',
@@ -58,10 +57,25 @@ export default function OnboardingPage() {
           ...prev,
           extractedPersonality: personality,
         }))
+      } else {
+        setExtractionError('Failed to analyze your personality. Please try again.')
       }
     } catch (error) {
       console.error('Failed to extract personality:', error)
+      setExtractionError('Something went wrong. Please try again.')
+    } finally {
+      setExtracting(false)
     }
+  }
+
+  const handleInterviewComplete = async (messages: Array<{ role: string; content: string }>) => {
+    setState({
+      ...state,
+      interviewMessages: messages,
+      currentStep: 3,
+    })
+
+    await extractPersonality(messages)
   }
 
   const handleInterviewBack = () => {
@@ -102,8 +116,10 @@ export default function OnboardingPage() {
   // Show loading state until hydrated to avoid hydration mismatch
   if (!isHydrated) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-background px-4 py-8">
-        <Card className="w-full max-w-2xl">
+      <div className="relative flex min-h-screen items-center justify-center bg-background px-4 py-8 overflow-hidden">
+        <div className="pointer-events-none absolute -top-24 -left-24 h-96 w-96 rounded-full bg-primary/10 blur-3xl" />
+        <div className="pointer-events-none absolute -bottom-24 -right-24 h-96 w-96 rounded-full bg-accent/10 blur-3xl" />
+        <Card className="relative w-full max-w-2xl bg-card/70 backdrop-blur-xl shadow-2xl">
           <CardContent className="pt-6">
             <div className="flex items-center justify-center py-12">
               <div className="animate-pulse text-muted-foreground">Loading...</div>
@@ -115,8 +131,10 @@ export default function OnboardingPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background px-4 py-8">
-      <Card className="w-full max-w-2xl">
+    <div className="relative flex min-h-screen items-center justify-center bg-background px-4 py-8 overflow-hidden">
+      <div className="pointer-events-none absolute -top-24 -left-24 h-96 w-96 rounded-full bg-primary/10 blur-3xl" />
+      <div className="pointer-events-none absolute -bottom-24 -right-24 h-96 w-96 rounded-full bg-accent/10 blur-3xl" />
+      <Card className="relative w-full max-w-2xl bg-card/70 backdrop-blur-xl shadow-2xl">
         <CardContent className="pt-6">
           <ProgressIndicator
             currentStep={state.currentStep}
@@ -136,6 +154,32 @@ export default function OnboardingPage() {
               onComplete={handleInterviewComplete}
               onBack={handleInterviewBack}
             />
+          )}
+
+          {state.currentStep === 3 && !identity && (extracting || extractionError) && (
+            <div className="flex flex-col items-center justify-center py-12 space-y-4">
+              {extracting && (
+                <>
+                  <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                  <p className="text-muted-foreground">Analyzing your personality...</p>
+                </>
+              )}
+              {extractionError && !extracting && (
+                <>
+                  <div className="rounded-lg border border-destructive/30 bg-destructive/10 p-4 text-sm text-destructive text-center">
+                    {extractionError}
+                  </div>
+                  <div className="flex gap-3">
+                    <Button variant="outline" onClick={handleInterviewBack}>
+                      Back to Interview
+                    </Button>
+                    <Button onClick={() => extractPersonality(state.interviewMessages || [])}>
+                      Retry
+                    </Button>
+                  </div>
+                </>
+              )}
+            </div>
           )}
 
           {state.currentStep === 3 && identity && (

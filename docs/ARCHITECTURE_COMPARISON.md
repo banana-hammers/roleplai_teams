@@ -13,14 +13,14 @@ This document compares RoleplayAI Teams' current architecture against Anthropic'
 | Category | Alignment | Notes |
 |----------|-----------|-------|
 | Tool Use API | 85% | Strong foundation with built-in web tools |
-| MCP Integration | N/A | Not supported on Vercel (serverless limitation) |
+| MCP Integration | 85% | SSE transport, role-level, Edge-compatible |
 | Claude Skills | 95% | Exceeds recommendations |
 | Agent Patterns | 75% | Agentic loop in chat endpoint |
 | Prompt Engineering | 70% | Prompt caching implemented |
 | **Multi-Tenant/Cost** | **70%** | **Prompt caching implemented (90% savings)** |
 | Security | 90% | Excellent RLS and encryption |
 
-**Overall**: Production-ready architecture optimized for Vercel serverless deployment.
+**Overall**: Production-ready architecture optimized for Vercel serverless deployment with MCP SSE support.
 
 ---
 
@@ -32,10 +32,11 @@ RoleplayAI Teams is deployed on Vercel, which has specific constraints:
 |---------|---------------|--------------|
 | Edge Runtime | ✅ Yes | All API routes use Edge |
 | Child Processes | ❌ No | Direct Anthropic API (no SDK) |
-| MCP Servers | ❌ No | Built-in web tools instead |
+| MCP Servers (SSE) | ✅ Yes | Edge-compatible SSE client |
+| MCP Servers (stdio) | ❌ No | SSE transport only |
 | Long-running Jobs | ❌ No | Streaming with agentic loop |
 
-This means we use the **Direct Anthropic API** with custom tool implementations rather than the Claude Agent SDK.
+We use the **Direct Anthropic API** with custom tool implementations and an **Edge-compatible MCP SSE client** for external tool integration.
 
 ---
 
@@ -66,13 +67,24 @@ This means we use the **Direct Anthropic API** with custom tool implementations 
 - Dynamic tool registration at runtime
 - 100+ pre-built MCP servers
 
-### Current Status: Not Supported
+### Current Implementation: ✅ SSE Transport
 
-MCP requires spawning child processes, which is not possible on Vercel's serverless architecture.
+MCP is supported via **SSE (Server-Sent Events) transport**, which is Edge-compatible and doesn't require child processes.
 
-**Alternative**: Built-in web tools (`web_search`, `web_fetch`) provide similar functionality for web-based research tasks.
+- ✅ Edge-compatible SSE client (`lib/mcp/client.ts`)
+- ✅ Role-level MCP server assignment (each role has its own servers)
+- ✅ Dynamic tool registration at chat start
+- ✅ Tool prefixing to avoid conflicts (`mcp_{serverName}_{toolName}`)
+- ✅ Test connection UI with tool discovery
+- ✅ Error handling returns to AI + displays to user
+- ⚠️ **Limitation**: stdio transport not supported (requires child processes)
 
-**Future**: If full MCP is needed, deploy to a container platform (Railway, Fly.io, AWS ECS).
+**Key Files**:
+- `lib/mcp/client.ts` - SSE client
+- `lib/mcp/types.ts` - Protocol types
+- `lib/tools/mcp-tools.ts` - Tool registry integration
+- `app/actions/mcp.ts` - Server actions
+- `components/settings/role-mcp-manager.tsx` - Management UI
 
 ---
 
@@ -84,8 +96,7 @@ MCP requires spawning child processes, which is not possible on Vercel's serverl
 - Skills API for programmatic management
 
 ### Current Implementation
-- ✅ Full SKILL.md generation via `lib/skills/skill-to-markdown.ts`
-- ✅ Skills table with UI form → markdown generation
+- ✅ Skills table with progressive disclosure (3-level architecture)
 - ✅ Full CRUD via Supabase + `/api/skills/` routes
 - 📋 **Future**: Natural language quick-create not implemented
 
@@ -206,7 +217,7 @@ system: [
 
 1. **Distributed Rate Limiting** (Redis)
 2. **Teams/Workspaces** (organizations table)
-3. **Full MCP Support** (requires container deployment)
+3. **MCP stdio Transport** (requires container deployment)
 
 ---
 
@@ -219,5 +230,7 @@ system: [
 | Web fetch tool | `lib/tools/web-fetch.ts` |
 | Built-in tools registry | `lib/tools/builtin-tools.ts` |
 | Skill conversion | `lib/skills/to-anthropic-tools.ts` |
-| Skill markdown | `lib/skills/skill-to-markdown.ts` |
+| Skill execution | `lib/skills/execute-skill.ts` |
+| MCP client | `lib/mcp/client.ts` |
+| MCP tools | `lib/tools/mcp-tools.ts` |
 | API key encryption | `lib/crypto/api-key-encryption.ts` |

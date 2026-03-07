@@ -16,11 +16,11 @@ Transform RoleplayAI Teams from a single-user AI identity platform into a produc
 
 | Layer | Score | Status |
 |-------|-------|--------|
-| Agent Definition | 7/10 | Missing versioning, memory settings |
-| Tool Orchestration | 9/10 | MCP SSE integration complete |
+| Agent Definition | 8/10 | Identity core + roles + progressive skills, missing versioning |
+| Tool Orchestration | 9/10 | MCP SSE integration, built-in web tools, agentic loop |
 | Memory System | 6/10 | Chat history complete, no RAG yet |
-| Multi-Tenant | 5/10 | Good isolation, no teams/metering |
-| Builder UI | 7/10 | MCP management UI, skills, lore |
+| Multi-Tenant | 5/10 | Good isolation via RLS, no teams/metering |
+| Builder UI | 8/10 | MCP management, skills CRUD, lore, AI-guided creation |
 
 ---
 
@@ -213,8 +213,11 @@ User
  ├── Conversations (1:many) [✅ implemented]
  │    └── Messages (1:many)
  │
- └── User API Keys (1:many)
-      └── encrypted_key, spend_limit
+ ├── User API Keys (1:many)
+ │    └── encrypted_key, spend_limit
+ │
+ └── MCP Servers (via roles, 1:many) [✅ implemented]
+      └── name, url, headers, enabled
 ```
 
 ### Future Additions

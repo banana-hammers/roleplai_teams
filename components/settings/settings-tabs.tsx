@@ -36,11 +36,11 @@ export function SettingsTabs({ identityCore, profile, apiKeys, mcpServers, userE
     <Tabs defaultValue="profile" className="space-y-6">
       <div className="overflow-x-auto scrollbar-hide -mx-4 px-4 md:mx-0 md:px-0 md:overflow-visible">
         <TabsList className="inline-flex w-max gap-1 md:grid md:w-full md:grid-cols-5">
-          <TabsTrigger value="identity" className="min-w-fit px-4">Identity</TabsTrigger>
-          <TabsTrigger value="profile" className="min-w-fit px-4">Profile</TabsTrigger>
-          <TabsTrigger value="api-keys" className="min-w-fit px-4">API Keys</TabsTrigger>
-          <TabsTrigger value="mcp-servers" className="min-w-fit px-4">MCP Servers</TabsTrigger>
-          <TabsTrigger value="preferences" className="min-w-fit px-4">Preferences</TabsTrigger>
+          <TabsTrigger value="identity" className="min-w-0 px-3 truncate">Identity</TabsTrigger>
+          <TabsTrigger value="profile" className="min-w-0 px-3 truncate">Profile</TabsTrigger>
+          <TabsTrigger value="api-keys" className="min-w-0 px-3 truncate">API Keys</TabsTrigger>
+          <TabsTrigger value="mcp-servers" className="min-w-0 px-3 truncate">MCP</TabsTrigger>
+          <TabsTrigger value="preferences" className="min-w-0 px-3 truncate">Preferences</TabsTrigger>
         </TabsList>
       </div>
 

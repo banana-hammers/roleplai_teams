@@ -1,21 +1,18 @@
 /**
- * Simple in-memory rate limiter for Edge Runtime
+ * Distributed rate limiter using Supabase RPC
  *
- * NOTE: This is a basic implementation. For production at scale,
- * consider using Vercel KV, Upstash Redis, or similar.
- *
- * Limitations:
- * - Memory is not shared across edge instances
- * - Resets on deployment/restart
- * - Not suitable for distributed rate limiting
+ * Uses a Supabase-backed atomic counter for production (shared across Edge instances).
+ * Falls back to in-memory rate limiting if Supabase is unavailable.
  */
+
+import { createClient } from '@/lib/supabase/server'
 
 interface RateLimitEntry {
   count: number
   resetAt: number
 }
 
-// In-memory store (per-instance)
+// In-memory fallback store (per-instance)
 const store = new Map<string, RateLimitEntry>()
 
 // Cleanup old entries periodically
@@ -42,7 +39,39 @@ export interface RateLimitResult {
 }
 
 /**
- * Check rate limit for an identifier
+ * In-memory rate limiter (fallback when Supabase is unavailable)
+ */
+function inMemoryRateLimit(
+  identifier: string,
+  limit: number,
+  windowMs: number
+): RateLimitResult {
+  cleanup()
+
+  const now = Date.now()
+  let entry = store.get(identifier)
+
+  if (!entry || entry.resetAt < now) {
+    entry = {
+      count: 0,
+      resetAt: now + windowMs,
+    }
+  }
+
+  entry.count++
+  store.set(identifier, entry)
+
+  return {
+    success: entry.count <= limit,
+    remaining: Math.max(0, limit - entry.count),
+    reset: entry.resetAt,
+    limit,
+  }
+}
+
+/**
+ * Check rate limit for an identifier using Supabase RPC.
+ * Falls back to in-memory if Supabase is unavailable.
  *
  * @param identifier - Unique identifier (user ID, IP, etc.)
  * @param limit - Maximum requests allowed in the window
@@ -54,40 +83,36 @@ export async function rateLimit(
   limit: number = 60,
   windowMs: number = 60000
 ): Promise<RateLimitResult> {
-  cleanup()
+  try {
+    const supabase = await createClient()
+    const { data, error } = await supabase.rpc('check_rate_limit', {
+      p_key: identifier,
+      p_limit: limit,
+      p_window_ms: windowMs,
+    })
 
-  const now = Date.now()
-  const key = identifier
+    if (error) throw error
 
-  let entry = store.get(key)
+    const row = Array.isArray(data) ? data[0] : data
 
-  // Create new entry if doesn't exist or window expired
-  if (!entry || entry.resetAt < now) {
-    entry = {
-      count: 0,
-      resetAt: now + windowMs,
+    if (!row) throw new Error('No data returned from check_rate_limit')
+
+    return {
+      success: row.success,
+      remaining: row.remaining,
+      reset: new Date(row.reset_at).getTime(),
+      limit,
     }
-  }
-
-  // Increment count
-  entry.count++
-  store.set(key, entry)
-
-  const remaining = Math.max(0, limit - entry.count)
-  const success = entry.count <= limit
-
-  return {
-    success,
-    remaining,
-    reset: entry.resetAt,
-    limit,
+  } catch (err) {
+    console.warn('[RateLimit] Supabase unavailable, falling back to in-memory:', err)
+    return inMemoryRateLimit(identifier, limit, windowMs)
   }
 }
 
 /**
  * Create rate limit headers for response
  */
-export function rateLimitHeaders(result: RateLimitResult): Record<string, string> {
+function rateLimitHeaders(result: RateLimitResult): Record<string, string> {
   return {
     'X-RateLimit-Limit': String(result.limit),
     'X-RateLimit-Remaining': String(result.remaining),
@@ -123,14 +148,7 @@ export function rateLimitExceededResponse(result: RateLimitResult): Response {
 export const RATE_LIMITS = {
   // Chat endpoints - more expensive, lower limits
   chat: { limit: 30, windowMs: 60000 },        // 30 requests/minute
-  agent: { limit: 20, windowMs: 60000 },       // 20 requests/minute
-
-  // API key management - sensitive operations
-  apiKeys: { limit: 10, windowMs: 60000 },     // 10 requests/minute
 
   // General API - higher limits
   default: { limit: 60, windowMs: 60000 },     // 60 requests/minute
-
-  // Auth-related - prevent brute force
-  auth: { limit: 10, windowMs: 300000 },       // 10 requests/5 minutes
 } as const

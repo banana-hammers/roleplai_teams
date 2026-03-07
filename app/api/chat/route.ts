@@ -2,8 +2,9 @@ import { createClient } from '@/lib/supabase/server'
 import { streamText, convertToModelMessages } from 'ai'
 import { createOpenAI } from '@ai-sdk/openai'
 import { createAnthropic } from '@ai-sdk/anthropic'
-import { decryptApiKey, isEncryptionConfigured } from '@/lib/crypto/api-key-encryption'
-import { rateLimit, rateLimitExceededResponse, rateLimitHeaders, RATE_LIMITS } from '@/lib/rate-limit'
+import { rateLimit, rateLimitExceededResponse, RATE_LIMITS } from '@/lib/rate-limit'
+import { resolveApiKey } from '@/lib/ai/resolve-api-key'
+import { errorResponse, DEFAULT_TEMPERATURE } from '@/lib/ai/create-system-model'
 
 export const runtime = 'edge'
 
@@ -11,15 +12,20 @@ export async function POST(req: Request) {
   try {
     const { messages, provider = 'openai', model } = await req.json()
 
+    // SAFETY: Validate messages input
+    if (!Array.isArray(messages) || messages.length === 0) {
+      return errorResponse('Messages must be a non-empty array', 400)
+    }
+    if (messages.length > 200) {
+      return errorResponse('Too many messages', 400)
+    }
+
     // SECURITY: Require authentication to prevent abuse of system API keys
     const supabase = await createClient()
     const { data: { user }, error: authError } = await supabase.auth.getUser()
 
     if (authError || !user) {
-      return new Response(
-        JSON.stringify({ error: 'Unauthorized' }),
-        { status: 401, headers: { 'Content-Type': 'application/json' } }
-      )
+      return errorResponse('Unauthorized', 401)
     }
 
     // SECURITY: Rate limit by user ID
@@ -33,42 +39,10 @@ export async function POST(req: Request) {
       return rateLimitExceededResponse(rateLimitResult)
     }
 
-    let apiKey: string | undefined
-
-    // Check for user's BYO API keys
-    const { data: apiKeys } = await supabase
-      .from('user_api_keys')
-      .select('provider, encrypted_key')
-      .eq('user_id', user.id)
-      .eq('provider', provider)
-      .maybeSingle()
-
-    // Decrypt user's API key if available
-    if (apiKeys?.encrypted_key && isEncryptionConfigured()) {
-      try {
-        apiKey = await decryptApiKey(apiKeys.encrypted_key, user.id)
-      } catch (error) {
-        console.error('Failed to decrypt API key:', error)
-        // Fall through to system key
-      }
-    }
-
-    // Fall back to system API keys
-    if (!apiKey) {
-      if (provider === 'openai') {
-        apiKey = process.env.OPENAI_API_KEY
-      } else if (provider === 'anthropic') {
-        apiKey = process.env.ANTHROPIC_API_KEY
-      }
-    }
+    const apiKey = await resolveApiKey(supabase, user.id, provider)
 
     if (!apiKey) {
-      return new Response(
-        JSON.stringify({
-          error: 'No API key available. Please add your own API key in settings.'
-        }),
-        { status: 400, headers: { 'Content-Type': 'application/json' } }
-      )
+      return errorResponse('No API key available. Please add your own API key in settings.', 400)
     }
 
     // Initialize the appropriate AI provider
@@ -77,32 +51,26 @@ export async function POST(req: Request) {
 
     if (provider === 'openai') {
       const openai = createOpenAI({ apiKey })
-      modelName = model || 'gpt-4-turbo-preview'
+      modelName = model || 'gpt-5-nano'
       aiProvider = openai(modelName)
     } else if (provider === 'anthropic') {
       const anthropic = createAnthropic({ apiKey })
       modelName = model || 'claude-haiku-4-5'
       aiProvider = anthropic(modelName)
     } else {
-      return new Response(
-        JSON.stringify({ error: 'Unsupported provider' }),
-        { status: 400, headers: { 'Content-Type': 'application/json' } }
-      )
+      return errorResponse('Unsupported provider', 400)
     }
 
     // Stream the response
     const result = streamText({
       model: aiProvider,
-      messages: convertToModelMessages(messages),
-      temperature: 0.7,
+      messages: await convertToModelMessages(messages),
+      temperature: DEFAULT_TEMPERATURE,
     })
 
     return result.toUIMessageStreamResponse()
   } catch (error) {
     console.error('Chat API error:', error)
-    return new Response(
-      JSON.stringify({ error: 'Internal server error' }),
-      { status: 500, headers: { 'Content-Type': 'application/json' } }
-    )
+    return errorResponse('Internal server error', 500)
   }
 }

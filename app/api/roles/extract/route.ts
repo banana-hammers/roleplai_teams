@@ -1,8 +1,9 @@
-import { createClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
+import { requireAuthForRoute } from '@/lib/api/route-helpers'
 import { ROLE_EXTRACTION_PROMPT } from '@/lib/constants/role-prompts'
 import { extractionResultSchema, type ExtractionResult } from '@/types/role-creation'
+import { rateLimit, rateLimitExceededResponse, RATE_LIMITS } from '@/lib/rate-limit'
 
 // JSON Schema for tool_use - mirrors extractionResultSchema
 const EXTRACTION_TOOL_SCHEMA: Anthropic.Tool = {
@@ -79,13 +80,17 @@ export const maxDuration = 60 // Allow up to 60 seconds for complex extractions
  * Takes interview messages and extracts structured role config + skills
  */
 export async function POST(req: NextRequest) {
-  const supabase = await createClient()
+  const auth = await requireAuthForRoute()
+  if (auth instanceof NextResponse) return auth
+  const { supabase, user } = auth
 
-  // Verify user is authenticated
-  const { data: { user } } = await supabase.auth.getUser()
-
-  if (!user) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const rateLimitResult = await rateLimit(
+    `roles-extract:${user.id}`,
+    RATE_LIMITS.default.limit,
+    RATE_LIMITS.default.windowMs
+  )
+  if (!rateLimitResult.success) {
+    return rateLimitExceededResponse(rateLimitResult)
   }
 
   const { messages } = await req.json()
@@ -104,7 +109,7 @@ export async function POST(req: NextRequest) {
   // Format interview transcript
   const transcript = messages
     .map((m: { role: string; content: string }) => {
-      const speaker = m.role === 'user' ? 'User' : 'Forge'
+      const speaker = m.role === 'user' ? 'User' : 'Nova'
       return `${speaker}: ${m.content}`
     })
     .join('\n\n')

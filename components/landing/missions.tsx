@@ -82,7 +82,7 @@ export function Missions() {
           </div>
           <h2 className="font-display text-3xl font-bold tracking-tight sm:text-4xl">
             Assemble Your{" "}
-            <span className="bg-gradient-to-r from-missions-accent to-context-accent bg-clip-text text-transparent">
+            <span className="bg-linear-to-r from-missions-accent to-context-accent bg-clip-text text-transparent">
               Party
             </span>
           </h2>

@@ -100,29 +100,29 @@ export function AliasName({ initialValue = '', onNext, onBack }: AliasNameProps)
               className="pr-10"
               autoFocus
             />
-            <div className="absolute right-3 top-1/2 -translate-y-1/2">
-              {checking && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
+            <div className="absolute right-3 top-1/2 -translate-y-1/2" aria-live="polite">
+              {checking && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" aria-label="Checking availability" />}
               {!checking && available === true && (
-                <Check className="h-4 w-4 text-green-600" />
+                <Check className="h-4 w-4 text-success" aria-label="Alias available" />
               )}
               {!checking && available === false && (
-                <X className="h-4 w-4 text-red-600" />
+                <X className="h-4 w-4 text-destructive" aria-label="Alias taken" />
               )}
             </div>
           </div>
           <p className="text-xs text-muted-foreground">
-            3-20 characters, letters, numbers, and underscores only
+            3-20 characters, letters, numbers, and underscores only. Lowercase only.
           </p>
         </div>
 
         {error && (
-          <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-900 dark:border-red-900 dark:bg-red-950 dark:text-red-100">
+          <div className="rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive">
             {error}
           </div>
         )}
 
         {available === false && suggestions.length > 0 && (
-          <div className="rounded-lg border border-blue-200 bg-blue-50 p-4 dark:border-blue-900 dark:bg-blue-950">
+          <div className="rounded-lg border border-primary/30 bg-primary/10 p-4">
             <p className="text-sm font-medium mb-2">That alias is taken. Try these:</p>
             <div className="flex flex-wrap gap-2">
               {suggestions.map((suggestion) => (
@@ -141,7 +141,7 @@ export function AliasName({ initialValue = '', onNext, onBack }: AliasNameProps)
         )}
 
         {available === true && (
-          <div className="rounded-lg border border-green-200 bg-green-50 p-3 text-sm text-green-900 dark:border-green-900 dark:bg-green-950 dark:text-green-100">
+          <div className="rounded-lg border border-success/30 bg-success/10 p-3 text-sm text-success">
             <Check className="inline h-4 w-4 mr-1" />
             @{alias} is available!
           </div>

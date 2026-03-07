@@ -39,7 +39,7 @@ export function RoleCreationComplete({
       </div>
 
       {/* Role summary */}
-      <div className="rounded-lg border-2 border-primary/20 bg-gradient-to-br from-primary/10 to-primary/5 p-6 space-y-4">
+      <div className="rounded-lg border-2 border-primary/20 bg-linear-to-br from-primary/10 to-primary/5 p-6 space-y-4">
         <div>
           <h3 className="text-lg font-semibold mb-2">{role.name}</h3>
           <p className="text-sm text-muted-foreground">{role.description}</p>

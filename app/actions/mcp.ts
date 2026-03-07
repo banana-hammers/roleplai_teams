@@ -1,9 +1,9 @@
 'use server'
 
-import { createClient } from '@/lib/supabase/server'
+import { requireAuth, verifyRoleOwnership } from '@/lib/supabase/auth-helpers'
 import { testMcpConnection as testConnection } from '@/lib/mcp/client'
 import { validateMcpUrl } from '@/lib/mcp/url-validation'
-import type { McpServer, McpServerSSE } from '@/types/mcp'
+import type { McpServerSSE } from '@/types/mcp'
 
 /**
  * Create a new MCP server for a role
@@ -16,12 +16,9 @@ export async function createMcpServer(
     headers?: Record<string, string>
   }
 ): Promise<{ success: boolean; serverId?: string; error?: string }> {
-  const supabase = await createClient()
-  const { data: { user }, error: authError } = await supabase.auth.getUser()
-
-  if (authError || !user) {
-    return { success: false, error: 'Not authenticated' }
-  }
+  const auth = await requireAuth()
+  if ('error' in auth) return { success: false, error: auth.error }
+  const { supabase, user } = auth
 
   // Validate URL (format + SSRF protection)
   const urlValidation = validateMcpUrl(data.url)
@@ -30,14 +27,7 @@ export async function createMcpServer(
   }
 
   // Validate role ownership
-  const { data: role, error: roleError } = await supabase
-    .from('roles')
-    .select('id')
-    .eq('id', roleId)
-    .eq('user_id', user.id)
-    .single()
-
-  if (roleError || !role) {
+  if (!await verifyRoleOwnership(supabase, roleId, user.id)) {
     return { success: false, error: 'Role not found' }
   }
 
@@ -71,78 +61,14 @@ export async function createMcpServer(
 }
 
 /**
- * Update an existing MCP server
- */
-export async function updateMcpServer(
-  serverId: string,
-  data: {
-    name?: string
-    url?: string
-    headers?: Record<string, string>
-  }
-): Promise<{ success: boolean; error?: string }> {
-  const supabase = await createClient()
-  const { data: { user }, error: authError } = await supabase.auth.getUser()
-
-  if (authError || !user) {
-    return { success: false, error: 'Not authenticated' }
-  }
-
-  // Get current server to merge config
-  const { data: current, error: fetchError } = await supabase
-    .from('mcp_servers')
-    .select('config')
-    .eq('id', serverId)
-    .eq('user_id', user.id)
-    .single()
-
-  if (fetchError || !current) {
-    return { success: false, error: 'Server not found' }
-  }
-
-  // Validate URL if being updated (format + SSRF protection)
-  if (data.url) {
-    const urlValidation = validateMcpUrl(data.url)
-    if (!urlValidation.valid) {
-      return { success: false, error: urlValidation.error }
-    }
-  }
-
-  const currentConfig = current.config as McpServerSSE
-  const newConfig: McpServerSSE = {
-    type: 'sse',
-    url: data.url ?? currentConfig.url,
-    headers: data.headers ?? currentConfig.headers,
-  }
-
-  const updateData: Record<string, unknown> = { config: newConfig }
-  if (data.name) updateData.name = data.name
-
-  const { error } = await supabase
-    .from('mcp_servers')
-    .update(updateData)
-    .eq('id', serverId)
-    .eq('user_id', user.id)
-
-  if (error) {
-    return { success: false, error: error.message }
-  }
-
-  return { success: true }
-}
-
-/**
  * Delete an MCP server
  */
 export async function deleteMcpServer(
   serverId: string
 ): Promise<{ success: boolean; error?: string }> {
-  const supabase = await createClient()
-  const { data: { user }, error: authError } = await supabase.auth.getUser()
-
-  if (authError || !user) {
-    return { success: false, error: 'Not authenticated' }
-  }
+  const auth = await requireAuth()
+  if ('error' in auth) return { success: false, error: auth.error }
+  const { supabase, user } = auth
 
   const { error } = await supabase
     .from('mcp_servers')
@@ -164,12 +90,9 @@ export async function toggleMcpServer(
   serverId: string,
   enabled: boolean
 ): Promise<{ success: boolean; error?: string }> {
-  const supabase = await createClient()
-  const { data: { user }, error: authError } = await supabase.auth.getUser()
-
-  if (authError || !user) {
-    return { success: false, error: 'Not authenticated' }
-  }
+  const auth = await requireAuth()
+  if ('error' in auth) return { success: false, error: auth.error }
+  const { supabase, user } = auth
 
   const { error } = await supabase
     .from('mcp_servers')
@@ -219,29 +142,3 @@ export async function testMcpServerConnection(
   }
 }
 
-/**
- * Get MCP servers for a role
- */
-export async function getRoleMcpServers(
-  roleId: string
-): Promise<{ success: boolean; servers: McpServer[]; error?: string }> {
-  const supabase = await createClient()
-  const { data: { user }, error: authError } = await supabase.auth.getUser()
-
-  if (authError || !user) {
-    return { success: false, servers: [], error: 'Not authenticated' }
-  }
-
-  const { data: servers, error } = await supabase
-    .from('mcp_servers')
-    .select('*')
-    .eq('role_id', roleId)
-    .eq('user_id', user.id)
-    .order('name')
-
-  if (error) {
-    return { success: false, servers: [], error: error.message }
-  }
-
-  return { success: true, servers: servers as McpServer[] }
-}

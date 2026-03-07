@@ -1,5 +1,6 @@
 'use client'
 
+import { useState, useEffect } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Label } from '@/components/ui/label'
 import {
@@ -10,15 +11,57 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Badge } from '@/components/ui/badge'
+import { StatusMessage } from './status-message'
+import { AVAILABLE_MODELS } from '@/lib/utils/model-tiers'
 
-const MODELS = [
-  { value: 'anthropic/claude-sonnet-4-5-20250929', label: 'Claude Sonnet 4.5', provider: 'Anthropic' },
-  { value: 'anthropic/claude-opus-4-20250514', label: 'Claude Opus 4', provider: 'Anthropic' },
-  { value: 'openai/gpt-4-turbo-preview', label: 'GPT-4 Turbo', provider: 'OpenAI' },
-  { value: 'openai/gpt-4o', label: 'GPT-4o', provider: 'OpenAI' },
-]
+const STORAGE_KEY = 'roleplai-preferences'
+const DEFAULTS = {
+  defaultModel: 'anthropic/claude-sonnet-4-6',
+  defaultApprovalPolicy: 'smart',
+}
 
 export function PreferencesSettings() {
+  const [defaultModel, setDefaultModel] = useState(DEFAULTS.defaultModel)
+  const [defaultApprovalPolicy, setDefaultApprovalPolicy] = useState(DEFAULTS.defaultApprovalPolicy)
+  const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
+
+  // Load from localStorage on mount
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem(STORAGE_KEY)
+      if (stored) {
+        const parsed = JSON.parse(stored)
+        if (parsed.defaultModel) setDefaultModel(parsed.defaultModel)
+        if (parsed.defaultApprovalPolicy) setDefaultApprovalPolicy(parsed.defaultApprovalPolicy)
+      }
+    } catch {
+      // Ignore parse errors
+    }
+  }, [])
+
+  const savePreferences = (model: string, policy: string) => {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({
+        defaultModel: model,
+        defaultApprovalPolicy: policy,
+      }))
+      setMessage({ type: 'success', text: 'Preferences saved' })
+      setTimeout(() => setMessage(null), 2000)
+    } catch {
+      setMessage({ type: 'error', text: 'Failed to save preferences' })
+    }
+  }
+
+  const handleModelChange = (value: string) => {
+    setDefaultModel(value)
+    savePreferences(value, defaultApprovalPolicy)
+  }
+
+  const handlePolicyChange = (value: string) => {
+    setDefaultApprovalPolicy(value)
+    savePreferences(defaultModel, value)
+  }
+
   return (
     <Card>
       <CardHeader>
@@ -30,17 +73,17 @@ export function PreferencesSettings() {
       <CardContent className="space-y-6">
         <div className="space-y-2">
           <Label>Default Model</Label>
-          <Select defaultValue="anthropic/claude-sonnet-4-5-20250929">
+          <Select value={defaultModel} onValueChange={handleModelChange}>
             <SelectTrigger>
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              {MODELS.map((model) => (
+              {AVAILABLE_MODELS.map((model) => (
                 <SelectItem key={model.value} value={model.value}>
                   <div className="flex items-center gap-2">
                     <span>{model.label}</span>
                     <Badge variant="outline" className="text-xs">
-                      {model.provider}
+                      {model.value.split('/')[0] === 'anthropic' ? 'Anthropic' : 'OpenAI'}
                     </Badge>
                   </div>
                 </SelectItem>
@@ -54,7 +97,7 @@ export function PreferencesSettings() {
 
         <div className="space-y-2">
           <Label>Default Approval Policy</Label>
-          <Select defaultValue="smart">
+          <Select value={defaultApprovalPolicy} onValueChange={handlePolicyChange}>
             <SelectTrigger>
               <SelectValue />
             </SelectTrigger>
@@ -78,6 +121,8 @@ export function PreferencesSettings() {
             </SelectContent>
           </Select>
         </div>
+
+        <StatusMessage message={message} />
 
         <p className="text-xs text-muted-foreground">
           These preferences apply to newly created roles. Existing roles keep their current settings.

@@ -27,8 +27,8 @@ RoleplayAI Teams is a Next.js 16 application that enables users to create person
                           ▼
             ┌──────────────────────────────┐
             │    AI Provider APIs          │
-            │  - OpenAI (GPT-4)            │
-            │  - Anthropic (Claude)        │
+            │  - OpenAI (GPT-5.x)          │
+            │  - Anthropic (Claude 4.x)    │
             └──────────────────────────────┘
 ```
 
@@ -40,31 +40,76 @@ roleplai_teams/
 │   ├── api/                      # API routes (Edge Runtime)
 │   │   ├── chat/                 # Basic chat endpoint
 │   │   │   └── route.ts          # Generic AI chat
-│   │   └── roles/[roleId]/       # Role-specific endpoints
-│   │       └── chat/route.ts     # Chat with identity injection
-│   ├── (auth)/                   # Auth route group
-│   │   ├── login/page.tsx
-│   │   └── signup/page.tsx
+│   │   ├── roles/
+│   │   │   ├── [roleId]/chat/    # Chat with identity injection
+│   │   │   ├── interview/        # Role creation interview (Forge)
+│   │   │   └── extract/          # Role configuration extraction
+│   │   ├── onboarding/           # Onboarding endpoints
+│   │   │   ├── interview/        # Personality interview (Nova)
+│   │   │   ├── extract-personality/ # Personality extraction
+│   │   │   └── test-drive/       # Identity test drive
+│   │   ├── skills/               # Skill interview & extraction
+│   │   └── user/api-keys/        # BYO API key management
+│   ├── (authenticated)/          # Protected route group
+│   │   ├── roles/                # Roles pages
+│   │   │   ├── [roleId]/         # Role chat & settings
+│   │   │   └── create/           # Role creation wizard
+│   │   └── settings/             # User settings
+│   ├── login/page.tsx            # Login page
+│   ├── signup/page.tsx           # Signup page
+│   ├── onboarding/               # Onboarding wizard
+│   ├── auth/                     # Auth callbacks
 │   ├── chat/page.tsx             # Chat demo page
 │   ├── layout.tsx                # Root layout
-│   ├── page.tsx                  # Home page
+│   ├── page.tsx                  # Home/landing page
 │   └── globals.css               # Global styles
 │
 ├── components/                   # React components
 │   ├── ui/                       # shadcn/ui primitives
-│   │   ├── button.tsx
-│   │   ├── input.tsx
-│   │   └── ...                   # Other UI components
-│   └── chat/                     # Chat-specific components
-│       └── chat-interface.tsx    # Main chat UI
+│   ├── chat/                     # Chat components
+│   │   ├── chat-interface.tsx    # Main chat UI
+│   │   ├── interview-chat.tsx    # Interview chat variant
+│   │   └── rate-limit-banner.tsx # Rate limit notification
+│   ├── roles/                    # Role components
+│   │   ├── role-card.tsx         # RPG-style card (tier, skills, traits)
+│   │   ├── role-interview.tsx    # Forge interview
+│   │   └── ...                   # Preview, creation complete
+│   ├── onboarding/               # Onboarding wizard components
+│   ├── settings/                 # Settings components
+│   │   ├── role-settings-form.tsx # Role settings (General/Tools/Skills/MCP)
+│   │   ├── role-mcp-manager.tsx  # MCP server management
+│   │   ├── skills-manager.tsx    # Skills CRUD
+│   │   └── ...                   # API keys, preferences, model selector
+│   └── navigation/               # Navbar, menus
 │
 ├── lib/                          # Shared utilities
+│   ├── ai/                       # AI utilities
 │   ├── supabase/                 # Supabase client configs
 │   │   ├── client.ts             # Browser client
 │   │   ├── server.ts             # Server client (cookies)
 │   │   └── middleware.ts         # Auth session update logic
+│   ├── mcp/                      # MCP integration
+│   │   ├── client.ts             # Edge-compatible SSE client
+│   │   ├── types.ts              # MCP protocol types
+│   │   └── errors.ts             # Error classes
+│   ├── tools/                    # Built-in tools
+│   │   ├── builtin-tools.ts      # Tool registry + executor
+│   │   ├── web-search.ts         # Brave/Serper search
+│   │   ├── web-fetch.ts          # URL fetching + HTML parsing
+│   │   └── mcp-tools.ts          # MCP tool integration
+│   ├── skills/                   # Skill system
+│   │   ├── execute-skill.ts      # Skill execution engine
+│   │   └── to-anthropic-tools.ts # Tool format conversion
+│   ├── prompts/                  # Prompt composition
+│   │   └── system-prompt-builder.ts
+│   ├── crypto/                   # Encryption
+│   │   └── api-key-encryption.ts # AES-256-GCM
+│   ├── hooks/                    # React hooks
+│   │   └── use-role-chat.ts      # Role chat hook
 │   ├── utils/                    # Domain utilities
-│   │   └── model-tiers.ts        # Model tier config (Legendary/Epic/Rare/Common)
+│   │   └── model-tiers.ts        # Model tier config
+│   ├── constants/                # AI prompts, interview config
+│   ├── pricing/                  # Model pricing
 │   └── utils.ts                  # General utilities (cn, etc.)
 │
 ├── types/                        # TypeScript type definitions
@@ -75,25 +120,14 @@ roleplai_teams/
 │
 ├── supabase/                     # Database & migrations
 │   ├── migrations/               # SQL migration files
-│   │   └── 20250101000000_initial_schema.sql
-│   └── config.toml               # Supabase config (if using local)
+│   └── config.toml               # Supabase config
 │
 ├── docs/                         # Documentation
 │   ├── ARCHITECTURE.md           # This file
 │   ├── CHAT_IMPLEMENTATION.md    # Chat system details
-│   └── DEVELOPMENT.md            # Development guide
+│   ├── DEVELOPMENT.md            # Development guide
+│   └── epic-*.md                 # Feature epic specs
 │
-├── .claude/                      # Claude Code context
-│   ├── commands/                 # Custom slash commands
-│   └── README.md                 # Project context for AI
-│
-├── .vscode/                      # VSCode configuration
-│   ├── settings.json
-│   ├── tasks.json
-│   ├── launch.json
-│   └── snippets/
-│
-├── public/                       # Static assets
 ├── proxy.ts                      # Next.js proxy (auth via lib/supabase/middleware.ts)
 └── [config files]                # package.json, tsconfig.json, etc.
 ```
@@ -105,15 +139,12 @@ roleplai_teams/
 **Technology:** React 19, Tailwind CSS 4, shadcn/ui
 
 **Key Components:**
-- `chat-interface.tsx`: Streaming chat with Vercel AI SDK v5
+- `chat-interface.tsx`: Streaming chat with Vercel AI SDK v6
 - UI primitives: Button, Input, Card, Dialog, etc.
 - Role cards: RPG-style display components
 
 **Role Card System (`components/roles/`):**
-- `role-card.tsx`: Main card with tier badge, skills, traits
-- `tier-badge.tsx`: Model tier badge (Legendary/Epic/Rare/Common)
-- `skill-list.tsx`: Resolved skill names with contextual icons
-- `personality-traits.tsx`: Identity facets display
+- `role-card.tsx`: Main card with tier badge, skills, traits (all-in-one component)
 
 **Patterns:**
 - Server Components by default (faster initial load)
@@ -161,7 +192,8 @@ POST /api/roles/{roleId}/chat
 - `skills`: Skill definitions with prompt templates
 - `role_skills`: Junction table linking roles to skills
 - `user_api_keys`: Encrypted BYO API keys
-- `conversations`: Chat history (schema ready)
+- `conversations`: Chat history with messages
+- `mcp_servers`: MCP server configurations (SSE transport, role-level)
 
 **Security:**
 - Row-Level Security (RLS) on all tables
@@ -171,11 +203,11 @@ POST /api/roles/{roleId}/chat
 
 ### 4. AI Integration Layer
 
-**Technology:** Vercel AI SDK v5
+**Technology:** Vercel AI SDK v6
 
 **Providers:**
-- OpenAI: GPT-4, GPT-4 Turbo
-- Anthropic: Claude 3.5 Sonnet, Claude 3 Opus
+- OpenAI: GPT-5.2, GPT-5, GPT-4.1, o3, o4-mini
+- Anthropic: Claude Opus 4.6, Claude Sonnet 4.6, Claude Haiku 4.5
 
 **Flow:**
 1. User sends message
@@ -325,15 +357,19 @@ ANTHROPIC_API_KEY=sk-ant-...
 ## Future Enhancements
 
 ### Completed
-- [x] API key encryption/decryption
+- [x] API key encryption/decryption (AES-256-GCM)
 - [x] Web tools (search, fetch) with agentic loop
 - [x] Prompt caching (90% cost savings)
 - [x] Rate limiting per user
 - [x] RPG-style role cards with model tiers (Legendary/Epic/Rare/Common)
 - [x] Resolved skill names in role display
+- [x] Chat history persistence with conversation list
+- [x] MCP server integration (SSE transport, role-level, test connection UI)
+- [x] Progressive disclosure skills (3-level architecture with agentic tool execution)
+- [x] AI-powered onboarding (Nova personality interview)
+- [x] AI-assisted role creation (Forge role builder with starter skills)
 
 ### Planned Features
-- [ ] Chat history persistence
 - [ ] Team collaboration (shared roles/context)
 - [ ] Spend tracking and limits
 - [ ] Advanced analytics
@@ -342,8 +378,6 @@ ANTHROPIC_API_KEY=sk-ant-...
 
 ### Potential Improvements
 - Redis caching for frequently accessed data
-- WebSocket for bidirectional communication
-- Background jobs for async tasks
 - Distributed rate limiting
 - Audit logging
 

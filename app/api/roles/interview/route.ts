@@ -1,19 +1,19 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextRequest } from 'next/server'
 import { streamText, convertToModelMessages } from 'ai'
-import { createAnthropic } from '@ai-sdk/anthropic'
-import { createOpenAI } from '@ai-sdk/openai'
-import { buildForgeSystemPrompt } from '@/lib/prompts/system-prompt-builder'
+import { buildNovaRolePrompt } from '@/lib/prompts/system-prompt-builder'
 import type { IdentityCore } from '@/types/identity'
+import { getSystemModel, errorResponse, DEFAULT_TEMPERATURE } from '@/lib/ai/create-system-model'
+import { rateLimit, rateLimitExceededResponse, RATE_LIMITS } from '@/lib/rate-limit'
 
 export const runtime = 'edge'
 
 /**
- * AI Role Interview Endpoint with Forge
+ * AI Role Interview Endpoint with Nova
  * POST /api/roles/interview
  *
- * Forge interviews users to design their RoleplAIr.
- * He knows their identity core and builds roles that complement it.
+ * Nova interviews users to design their RoleplAIr.
+ * She knows their identity core and builds roles that complement it.
  */
 export async function POST(req: NextRequest) {
   const supabase = await createClient()
@@ -22,12 +22,21 @@ export async function POST(req: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser()
 
   if (!user) {
-    return new Response('Unauthorized', { status: 401 })
+    return errorResponse('Unauthorized', 401)
+  }
+
+  const rateLimitResult = await rateLimit(
+    `roles-interview:${user.id}`,
+    RATE_LIMITS.default.limit,
+    RATE_LIMITS.default.windowMs
+  )
+  if (!rateLimitResult.success) {
+    return rateLimitExceededResponse(rateLimitResult)
   }
 
   const { messages } = await req.json()
 
-  // Fetch user context for Forge - identity core is important
+  // Fetch user context for Nova - identity core is important
   const [profileResult, identityResult] = await Promise.all([
     supabase.from('profiles').select('full_name').eq('id', user.id).maybeSingle(),
     supabase.from('identity_cores').select('*').eq('user_id', user.id).maybeSingle(),
@@ -36,36 +45,23 @@ export async function POST(req: NextRequest) {
   const userName = profileResult.data?.full_name || undefined
   const identityCore = identityResult.data as IdentityCore | null
 
-  // Build Forge's system prompt with user's identity context
-  const systemPrompt = buildForgeSystemPrompt({
+  // Build Nova's system prompt with user's identity context
+  const systemPrompt = buildNovaRolePrompt({
     userName,
     identityCore,
   })
 
-  // Use Anthropic as primary, OpenAI as fallback
-  const anthropicKey = process.env.ANTHROPIC_API_KEY
-  const openaiKey = process.env.OPENAI_API_KEY
-
-  let model
-
-  if (anthropicKey) {
-    const anthropic = createAnthropic({ apiKey: anthropicKey })
-    model = anthropic('claude-haiku-4-5')
-  } else if (openaiKey) {
-    const openai = createOpenAI({ apiKey: openaiKey })
-    model = openai('gpt-4-turbo-preview')
-  } else {
-    return new Response('No AI provider configured', { status: 500 })
-  }
+  const modelResult = getSystemModel()
+  if ('error' in modelResult) return modelResult.error
 
   // Stream the interview conversation
   const result = streamText({
-    model,
+    model: modelResult.model,
     messages: [
       { role: 'system', content: systemPrompt },
-      ...convertToModelMessages(messages),
+      ...await convertToModelMessages(messages),
     ],
-    temperature: 0.7,
+    temperature: DEFAULT_TEMPERATURE,
   })
 
   return result.toUIMessageStreamResponse()
