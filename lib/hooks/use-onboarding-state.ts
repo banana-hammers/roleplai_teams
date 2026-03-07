@@ -9,6 +9,8 @@ export interface OnboardingLocalState {
   interviewMessages?: Array<{ role: string; content: string }>
   extractedPersonality?: ExtractedPersonality
   testDriveMessages?: Array<{ role: string; content: string }>
+  writingSamples?: string[]
+  writingSamplesProcessed?: boolean
 }
 
 const STORAGE_KEY = 'onboarding_state'

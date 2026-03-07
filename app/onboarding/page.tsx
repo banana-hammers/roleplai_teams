@@ -5,6 +5,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { ProgressIndicator } from '@/components/ui/progress-indicator'
 import { AliasName } from '@/components/onboarding/alias-name'
 import { AIInterview } from '@/components/onboarding/ai-interview'
+import { WritingSamples } from '@/components/onboarding/writing-samples'
 import { IdentitySummary } from '@/components/onboarding/identity-summary'
 import { TestDrive } from '@/components/onboarding/test-drive'
 import { Completion } from '@/components/onboarding/completion'
@@ -12,6 +13,7 @@ import { useOnboardingState } from '@/lib/hooks/use-onboarding-state'
 import { generateIdentityCore, generateBehaviorExamples } from '@/lib/onboarding/generate-identity'
 import { Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import type { StyleProfile } from '@/types/identity'
 
 const TOTAL_STEPS = 5
 
@@ -19,6 +21,7 @@ export default function OnboardingPage() {
   const { state, setState, isHydrated } = useOnboardingState()
   const [extracting, setExtracting] = useState(false)
   const [extractionError, setExtractionError] = useState<string | null>(null)
+  const [analyzingWriting, setAnalyzingWriting] = useState(false)
 
   // Generate identity and examples when personality is extracted
   const { identity, examples } = useMemo(() => {
@@ -113,6 +116,52 @@ export default function OnboardingPage() {
     })
   }
 
+  const handleWritingSamplesSkip = () => {
+    setState(prev => ({
+      ...prev,
+      writingSamplesProcessed: true,
+    }))
+  }
+
+  const handleWritingSamplesAnalyze = async (samples: string[]) => {
+    setAnalyzingWriting(true)
+    try {
+      const response = await fetch('/api/onboarding/analyze-writing', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ samples }),
+      })
+
+      if (response.ok) {
+        const styleProfile: StyleProfile = await response.json()
+        setState(prev => ({
+          ...prev,
+          writingSamples: samples,
+          writingSamplesProcessed: true,
+          extractedPersonality: prev.extractedPersonality
+            ? { ...prev.extractedPersonality, style_profile: { ...prev.extractedPersonality.style_profile, ...styleProfile } }
+            : prev.extractedPersonality,
+        }))
+      } else {
+        // Graceful degradation: skip on failure
+        setState(prev => ({
+          ...prev,
+          writingSamples: samples,
+          writingSamplesProcessed: true,
+        }))
+      }
+    } catch {
+      // Graceful degradation: skip on error
+      setState(prev => ({
+        ...prev,
+        writingSamples: samples,
+        writingSamplesProcessed: true,
+      }))
+    } finally {
+      setAnalyzingWriting(false)
+    }
+  }
+
   // Show loading state until hydrated to avoid hydration mismatch
   if (!isHydrated) {
     return (
@@ -182,7 +231,15 @@ export default function OnboardingPage() {
             </div>
           )}
 
-          {state.currentStep === 3 && identity && (
+          {state.currentStep === 3 && identity && !state.writingSamplesProcessed && (
+            <WritingSamples
+              onSkip={handleWritingSamplesSkip}
+              onAnalyze={handleWritingSamplesAnalyze}
+              loading={analyzingWriting}
+            />
+          )}
+
+          {state.currentStep === 3 && identity && state.writingSamplesProcessed && (
             <IdentitySummary
               aliasName={state.aliasName || ''}
               identity={identity}
@@ -204,6 +261,7 @@ export default function OnboardingPage() {
             <Completion
               aliasName={state.aliasName || ''}
               identity={identity}
+              writingSamples={state.writingSamples}
             />
           )}
         </CardContent>

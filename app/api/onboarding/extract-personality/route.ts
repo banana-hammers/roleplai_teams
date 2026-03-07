@@ -14,6 +14,23 @@ const personalitySchema = z.object({
   boundaries: z.array(z.enum(BOUNDARY_TYPES)),
   customBoundaries: z.array(z.string()).optional(),
   confidence: z.number().min(0).max(100),
+  cognitive_style: z.object({
+    decision_approach: z.enum(['intuitive', 'analytical', 'collaborative', 'decisive']).optional(),
+    uncertainty_response: z.enum(['explore', 'research', 'ask_others', 'make_best_guess']).optional(),
+    explanation_preference: z.enum(['big_picture_first', 'details_first', 'examples_first', 'analogies']).optional(),
+    feedback_style: z.enum(['direct', 'sandwich', 'questions', 'supportive']).optional(),
+    context_need: z.enum(['minimal', 'moderate', 'comprehensive']).optional(),
+  }).optional(),
+})
+
+const styleSchema = z.object({
+  sentence_length: z.enum(['short', 'medium', 'long', 'varied']).optional(),
+  vocabulary_level: z.enum(['simple', 'moderate', 'advanced', 'technical']).optional(),
+  formality: z.enum(['casual', 'balanced', 'formal', 'professional']).optional(),
+  punctuation_habits: z.array(z.string()).optional(),
+  formatting_prefs: z.array(z.string()).optional(),
+  signature_phrases: z.array(z.string()).optional(),
+  tone_markers: z.array(z.string()).optional(),
 })
 
 /**
@@ -80,20 +97,59 @@ Boundaries (select all that apply):
 - no_condescension: Never talk down to people
 - stay_on_topic: Stay focused without tangents
 
+Cognitive style dimensions to extract:
+- decision_approach: How they make decisions (intuitive, analytical, collaborative, decisive)
+- uncertainty_response: What they do when unsure (explore, research, ask_others, make_best_guess)
+- explanation_preference: How they like things explained (big_picture_first, details_first, examples_first, analogies)
+- feedback_style: How they give/receive feedback (direct, sandwich, questions, supportive)
+- context_need: How much context they want (minimal, moderate, comprehensive)
+
 Conversation to analyze:
 ${JSON.stringify(messages, null, 2)}
 
 Extract the personality profile. For priorities, return EXACTLY 3 values in order of importance (first = most important).
+Also extract cognitive_style based on how they describe their thinking and decision-making.
 Return with high confidence (70-100).`
 
-  try {
-    const result = await generateObject({
-      model,
-      schema: personalitySchema,
-      prompt: extractionPrompt,
-    })
+  // Filter to user messages only for style analysis
+  const userMessages = messages.filter((m: { role: string }) => m.role === 'user')
+  const stylePrompt = `Analyze HOW this person writes based on their messages. Focus on writing style, not content.
 
-    return NextResponse.json(result.object)
+User messages to analyze:
+${JSON.stringify(userMessages, null, 2)}
+
+Extract their writing style profile:
+- sentence_length: Are their sentences short, medium, long, or varied?
+- vocabulary_level: Is their vocabulary simple, moderate, advanced, or technical?
+- formality: Is their writing casual, balanced, formal, or professional?
+- punctuation_habits: Notable punctuation patterns (e.g., "uses ellipsis...", "exclamation marks!", "em dashes", "no periods")
+- formatting_prefs: Formatting tendencies (e.g., "uses bullet points", "writes in paragraphs", "short fragments")
+- signature_phrases: Recurring phrases or expressions they use (e.g., "honestly", "I think", "basically")
+- tone_markers: Emotional indicators in their writing (e.g., "enthusiastic", "measured", "self-deprecating", "matter-of-fact")`
+
+  try {
+    const [personalityResult, styleResult] = await Promise.all([
+      generateObject({
+        model,
+        schema: personalitySchema,
+        prompt: extractionPrompt,
+      }),
+      generateObject({
+        model,
+        schema: styleSchema,
+        prompt: stylePrompt,
+      }).catch((err) => {
+        console.warn('Style extraction failed, continuing without it:', err)
+        return null
+      }),
+    ])
+
+    const result = {
+      ...personalityResult.object,
+      ...(styleResult ? { style_profile: styleResult.object } : {}),
+    }
+
+    return NextResponse.json(result)
   } catch (error) {
     console.error('Error extracting personality:', error)
     return NextResponse.json(

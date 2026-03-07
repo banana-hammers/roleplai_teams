@@ -9,6 +9,8 @@ import { AIAvatar } from './ai-avatar'
 import { CharacterAvatar, isCharacterName } from './character-avatar'
 import { User } from 'lucide-react'
 import type { ModelTierConfig } from '@/lib/utils/model-tiers'
+import type { StyleProfile, CognitiveStyle } from '@/types/identity'
+import { RefinementPopover } from './refinement-popover'
 
 export interface MessageBubbleProps {
   role: 'user' | 'assistant'
@@ -19,6 +21,9 @@ export interface MessageBubbleProps {
   tierConfig?: ModelTierConfig
   className?: string
   formattedCost?: string
+  showRefinement?: boolean
+  currentStyleProfile?: StyleProfile
+  currentCognitiveStyle?: CognitiveStyle
 }
 
 // Tier-specific border colors for assistant messages
@@ -38,6 +43,9 @@ export const MessageBubble = memo(function MessageBubble({
   tierConfig,
   className,
   formattedCost,
+  showRefinement = false,
+  currentStyleProfile,
+  currentCognitiveStyle,
 }: MessageBubbleProps) {
   const isUser = role === 'user'
   const tierBorder = !isUser && tierConfig ? tierBorderColors[tierConfig.tier] : ''
@@ -45,7 +53,7 @@ export const MessageBubble = memo(function MessageBubble({
   return (
     <div
       className={cn(
-        'flex gap-3',
+        'flex gap-3 group',
         isUser ? 'justify-end' : '',
         isGrouped ? 'py-1' : 'py-3',
         !isUser && tierBorder,
@@ -155,10 +163,21 @@ export const MessageBubble = memo(function MessageBubble({
           </ReactMarkdown>
         </div>
 
-        {/* Cost badge for assistant messages */}
-        {!isUser && formattedCost && (
-          <div className="mt-2 text-[10px] text-muted-foreground font-mono">
-            {formattedCost}
+        {/* Cost badge and refinement for assistant messages */}
+        {!isUser && (formattedCost || showRefinement) && (
+          <div className="mt-2 flex items-center gap-2">
+            {formattedCost && (
+              <span className="text-[10px] text-muted-foreground font-mono">
+                {formattedCost}
+              </span>
+            )}
+            {showRefinement && (
+              <RefinementPopover
+                messageContent={content}
+                currentStyleProfile={currentStyleProfile}
+                currentCognitiveStyle={currentCognitiveStyle}
+              />
+            )}
           </div>
         )}
       </div>

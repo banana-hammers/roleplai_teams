@@ -26,7 +26,7 @@ import {
   replaceIdentityCore,
   type UpdateIdentityCoreData,
 } from '@/app/actions/identity'
-import type { IdentityCore } from '@/types/identity'
+import type { IdentityCore, StyleProfile, CognitiveStyle, RefinementEntry } from '@/types/identity'
 import { StatusMessage } from './status-message'
 import {
   Pencil,
@@ -39,6 +39,10 @@ import {
   CheckCircle2,
   AlertTriangle,
   MessageSquare,
+  ChevronRight,
+  History,
+  PenLine,
+  Brain,
 } from 'lucide-react'
 import {
   VOICE_TYPES,
@@ -65,7 +69,7 @@ const VOICE_DISPLAY_LABELS: Record<VoiceType, string> = {
   energetic_enthusiastic: 'Energetic & Enthusiastic',
 }
 
-type EditingSection = 'voice' | 'values' | 'code' | null
+type EditingSection = 'voice' | 'values' | 'code' | 'style' | 'cognitive' | null
 
 interface IdentitySettingsProps {
   identityCore: IdentityCore | null
@@ -84,6 +88,11 @@ export function IdentitySettings({ identityCore }: IdentitySettingsProps) {
   const [editPriorities, setEditPriorities] = useState<string[]>([])
   const [editBoundaries, setEditBoundaries] = useState<Record<string, boolean | string[]>>({})
   const [newCustomBoundary, setNewCustomBoundary] = useState('')
+
+  // Style & cognitive edit state
+  const [editStyleProfile, setEditStyleProfile] = useState<StyleProfile>({})
+  const [editCognitiveStyle, setEditCognitiveStyle] = useState<CognitiveStyle>({})
+  const [showRefinementLog, setShowRefinementLog] = useState(false)
 
   // Re-interview state
   const [showConfirmDialog, setShowConfirmDialog] = useState(false)
@@ -135,6 +144,8 @@ export function IdentitySettings({ identityCore }: IdentitySettingsProps) {
       setEditBoundaries({ ...boundaries })
       setNewCustomBoundary('')
     }
+    if (section === 'style') setEditStyleProfile({ ...(identityCore.style_profile as StyleProfile || {}) })
+    if (section === 'cognitive') setEditCognitiveStyle({ ...(identityCore.cognitive_style as CognitiveStyle || {}) })
     setEditingSection(section)
     setMessage(null)
   }
@@ -151,6 +162,8 @@ export function IdentitySettings({ identityCore }: IdentitySettingsProps) {
       voice: editingSection === 'voice' ? editVoice : voice,
       priorities: editingSection === 'values' ? editPriorities : priorities,
       boundaries: editingSection === 'code' ? editBoundaries : boundaries,
+      ...(editingSection === 'style' ? { style_profile: editStyleProfile } : {}),
+      ...(editingSection === 'cognitive' ? { cognitive_style: editCognitiveStyle } : {}),
     }
 
     const result = await updateIdentityCore(data)
@@ -667,6 +680,245 @@ export function IdentitySettings({ identityCore }: IdentitySettingsProps) {
             </div>
           )}
         </div>
+
+        {/* Writing Style Section */}
+        <div
+          className={`rounded-xl bg-card/80 backdrop-blur-sm border-l-4 border-l-rose-500 border border-border p-4 transition-all duration-300 ${
+            editingSection === 'style' ? 'ring-2 ring-rose-500/30' : 'hover:shadow-lg'
+          }`}
+        >
+          <div className="flex items-center justify-between mb-2">
+            <h3 className="text-sm font-semibold uppercase tracking-wider text-rose-500 flex items-center gap-1.5">
+              <PenLine className="h-3.5 w-3.5" />
+              Writing Style
+            </h3>
+            {editingSection !== 'style' ? (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => startEditing('style')}
+                disabled={editingSection !== null}
+              >
+                <Pencil className="h-3.5 w-3.5 mr-1" />
+                Edit
+              </Button>
+            ) : (
+              <div className="flex gap-1">
+                <Button variant="ghost" size="sm" onClick={cancelEditing} disabled={isSaving}>
+                  <X className="h-3.5 w-3.5 mr-1" />Cancel
+                </Button>
+                <Button size="sm" onClick={saveSection} disabled={isSaving}>
+                  <Check className="h-3.5 w-3.5 mr-1" />{isSaving ? 'Saving...' : 'Save'}
+                </Button>
+              </div>
+            )}
+          </div>
+
+          {editingSection !== 'style' ? (
+            <div className="space-y-2">
+              {(() => {
+                const sp = identityCore.style_profile as StyleProfile | null
+                if (!sp || Object.keys(sp).length === 0) {
+                  return <p className="text-sm text-muted-foreground">No writing style data yet. Complete a writing sample or chat to build this.</p>
+                }
+                return (
+                  <div className="flex flex-wrap gap-2">
+                    {sp.sentence_length && <span className="text-xs px-2 py-0.5 rounded-full bg-rose-500/10 text-rose-700 dark:text-rose-400">{sp.sentence_length} sentences</span>}
+                    {sp.vocabulary_level && <span className="text-xs px-2 py-0.5 rounded-full bg-rose-500/10 text-rose-700 dark:text-rose-400">{sp.vocabulary_level} vocabulary</span>}
+                    {sp.formality && <span className="text-xs px-2 py-0.5 rounded-full bg-rose-500/10 text-rose-700 dark:text-rose-400">{sp.formality} tone</span>}
+                    {sp.tone_markers?.map(m => <span key={m} className="text-xs px-2 py-0.5 rounded-full bg-rose-500/10 text-rose-700 dark:text-rose-400">{m}</span>)}
+                    {sp.signature_phrases && sp.signature_phrases.length > 0 && (
+                      <div className="w-full text-xs text-muted-foreground mt-1">
+                        Phrases: {sp.signature_phrases.map(p => `"${p}"`).join(', ')}
+                      </div>
+                    )}
+                  </div>
+                )
+              })()}
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label className="text-xs font-medium text-muted-foreground">Sentence Length</label>
+                <div className="flex flex-wrap gap-1 mt-1">
+                  {(['short', 'medium', 'long', 'varied'] as const).map(v => (
+                    <button key={v} type="button" onClick={() => setEditStyleProfile(p => ({ ...p, sentence_length: v }))}
+                      className={`text-xs px-2 py-1 rounded-full border transition-colors ${editStyleProfile.sentence_length === v ? 'border-rose-500 bg-rose-500/10' : 'border-border hover:border-rose-500/50'}`}>
+                      {v}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <label className="text-xs font-medium text-muted-foreground">Vocabulary</label>
+                <div className="flex flex-wrap gap-1 mt-1">
+                  {(['simple', 'moderate', 'advanced', 'technical'] as const).map(v => (
+                    <button key={v} type="button" onClick={() => setEditStyleProfile(p => ({ ...p, vocabulary_level: v }))}
+                      className={`text-xs px-2 py-1 rounded-full border transition-colors ${editStyleProfile.vocabulary_level === v ? 'border-rose-500 bg-rose-500/10' : 'border-border hover:border-rose-500/50'}`}>
+                      {v}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <label className="text-xs font-medium text-muted-foreground">Formality</label>
+                <div className="flex flex-wrap gap-1 mt-1">
+                  {(['casual', 'balanced', 'formal', 'professional'] as const).map(v => (
+                    <button key={v} type="button" onClick={() => setEditStyleProfile(p => ({ ...p, formality: v }))}
+                      className={`text-xs px-2 py-1 rounded-full border transition-colors ${editStyleProfile.formality === v ? 'border-rose-500 bg-rose-500/10' : 'border-border hover:border-rose-500/50'}`}>
+                      {v}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Thinking Style Section */}
+        <div
+          className={`rounded-xl bg-card/80 backdrop-blur-sm border-l-4 border-l-purple-500 border border-border p-4 transition-all duration-300 ${
+            editingSection === 'cognitive' ? 'ring-2 ring-purple-500/30' : 'hover:shadow-lg'
+          }`}
+        >
+          <div className="flex items-center justify-between mb-2">
+            <h3 className="text-sm font-semibold uppercase tracking-wider text-purple-500 flex items-center gap-1.5">
+              <Brain className="h-3.5 w-3.5" />
+              Thinking Style
+            </h3>
+            {editingSection !== 'cognitive' ? (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => startEditing('cognitive')}
+                disabled={editingSection !== null}
+              >
+                <Pencil className="h-3.5 w-3.5 mr-1" />
+                Edit
+              </Button>
+            ) : (
+              <div className="flex gap-1">
+                <Button variant="ghost" size="sm" onClick={cancelEditing} disabled={isSaving}>
+                  <X className="h-3.5 w-3.5 mr-1" />Cancel
+                </Button>
+                <Button size="sm" onClick={saveSection} disabled={isSaving}>
+                  <Check className="h-3.5 w-3.5 mr-1" />{isSaving ? 'Saving...' : 'Save'}
+                </Button>
+              </div>
+            )}
+          </div>
+
+          {editingSection !== 'cognitive' ? (
+            <div className="space-y-2">
+              {(() => {
+                const cs = identityCore.cognitive_style as CognitiveStyle | null
+                if (!cs || Object.keys(cs).length === 0) {
+                  return <p className="text-sm text-muted-foreground">No thinking style data yet. Complete the interview or chat to build this.</p>
+                }
+                return (
+                  <div className="flex flex-wrap gap-2">
+                    {cs.decision_approach && <span className="text-xs px-2 py-0.5 rounded-full bg-purple-500/10 text-purple-700 dark:text-purple-400">{cs.decision_approach} decisions</span>}
+                    {cs.uncertainty_response && <span className="text-xs px-2 py-0.5 rounded-full bg-purple-500/10 text-purple-700 dark:text-purple-400">{cs.uncertainty_response.replace(/_/g, ' ')} under uncertainty</span>}
+                    {cs.explanation_preference && <span className="text-xs px-2 py-0.5 rounded-full bg-purple-500/10 text-purple-700 dark:text-purple-400">{cs.explanation_preference.replace(/_/g, ' ')}</span>}
+                    {cs.feedback_style && <span className="text-xs px-2 py-0.5 rounded-full bg-purple-500/10 text-purple-700 dark:text-purple-400">{cs.feedback_style} feedback</span>}
+                    {cs.context_need && <span className="text-xs px-2 py-0.5 rounded-full bg-purple-500/10 text-purple-700 dark:text-purple-400">{cs.context_need} context</span>}
+                  </div>
+                )
+              })()}
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 gap-3">
+              <div>
+                <label className="text-xs font-medium text-muted-foreground">Decision Approach</label>
+                <div className="flex flex-wrap gap-1 mt-1">
+                  {(['intuitive', 'analytical', 'collaborative', 'decisive'] as const).map(v => (
+                    <button key={v} type="button" onClick={() => setEditCognitiveStyle(p => ({ ...p, decision_approach: v }))}
+                      className={`text-xs px-2 py-1 rounded-full border transition-colors ${editCognitiveStyle.decision_approach === v ? 'border-purple-500 bg-purple-500/10' : 'border-border hover:border-purple-500/50'}`}>
+                      {v}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <label className="text-xs font-medium text-muted-foreground">Under Uncertainty</label>
+                <div className="flex flex-wrap gap-1 mt-1">
+                  {(['explore', 'research', 'ask_others', 'make_best_guess'] as const).map(v => (
+                    <button key={v} type="button" onClick={() => setEditCognitiveStyle(p => ({ ...p, uncertainty_response: v }))}
+                      className={`text-xs px-2 py-1 rounded-full border transition-colors ${editCognitiveStyle.uncertainty_response === v ? 'border-purple-500 bg-purple-500/10' : 'border-border hover:border-purple-500/50'}`}>
+                      {v.replace(/_/g, ' ')}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <label className="text-xs font-medium text-muted-foreground">Explanation Preference</label>
+                <div className="flex flex-wrap gap-1 mt-1">
+                  {(['big_picture_first', 'details_first', 'examples_first', 'analogies'] as const).map(v => (
+                    <button key={v} type="button" onClick={() => setEditCognitiveStyle(p => ({ ...p, explanation_preference: v }))}
+                      className={`text-xs px-2 py-1 rounded-full border transition-colors ${editCognitiveStyle.explanation_preference === v ? 'border-purple-500 bg-purple-500/10' : 'border-border hover:border-purple-500/50'}`}>
+                      {v.replace(/_/g, ' ')}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <label className="text-xs font-medium text-muted-foreground">Feedback Style</label>
+                <div className="flex flex-wrap gap-1 mt-1">
+                  {(['direct', 'sandwich', 'questions', 'supportive'] as const).map(v => (
+                    <button key={v} type="button" onClick={() => setEditCognitiveStyle(p => ({ ...p, feedback_style: v }))}
+                      className={`text-xs px-2 py-1 rounded-full border transition-colors ${editCognitiveStyle.feedback_style === v ? 'border-purple-500 bg-purple-500/10' : 'border-border hover:border-purple-500/50'}`}>
+                      {v}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <label className="text-xs font-medium text-muted-foreground">Context Need</label>
+                <div className="flex flex-wrap gap-1 mt-1">
+                  {(['minimal', 'moderate', 'comprehensive'] as const).map(v => (
+                    <button key={v} type="button" onClick={() => setEditCognitiveStyle(p => ({ ...p, context_need: v }))}
+                      className={`text-xs px-2 py-1 rounded-full border transition-colors ${editCognitiveStyle.context_need === v ? 'border-purple-500 bg-purple-500/10' : 'border-border hover:border-purple-500/50'}`}>
+                      {v}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Refinement History */}
+        {(() => {
+          const log = (identityCore.refinement_log as RefinementEntry[] | null) || []
+          if (log.length === 0) return null
+          return (
+            <div className="rounded-xl border border-border p-4">
+              <button
+                type="button"
+                onClick={() => setShowRefinementLog(!showRefinementLog)}
+                className="flex items-center gap-2 w-full text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+              >
+                <History className="h-4 w-4" />
+                <span>Refinement History ({log.length})</span>
+                <ChevronRight className={`h-4 w-4 ml-auto transition-transform ${showRefinementLog ? 'rotate-90' : ''}`} />
+              </button>
+              {showRefinementLog && (
+                <div className="mt-3 space-y-2 max-h-60 overflow-y-auto">
+                  {log.slice().reverse().slice(0, 20).map((entry, idx) => (
+                    <div key={idx} className="flex items-start gap-2 text-xs border-l-2 border-muted pl-3 py-1">
+                      <div className="flex-1">
+                        <p className="text-foreground">{entry.correction}</p>
+                        <p className="text-muted-foreground mt-0.5">
+                          {new Date(entry.timestamp).toLocaleDateString()} via {entry.source.replace(/_/g, ' ')}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )
+        })()}
 
         {/* Re-interview footer */}
         <div className="flex items-center justify-between rounded-xl border border-dashed border-border p-4">

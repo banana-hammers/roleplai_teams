@@ -82,30 +82,42 @@ export type Database = {
       identity_cores: {
         Row: {
           boundaries: Json | null
+          cognitive_style: Json | null
           created_at: string | null
           id: string
           priorities: string[] | null
+          refinement_log: Json | null
+          style_profile: Json | null
           updated_at: string | null
           user_id: string
           voice: string
+          writing_samples: string[] | null
         }
         Insert: {
           boundaries?: Json | null
+          cognitive_style?: Json | null
           created_at?: string | null
           id?: string
           priorities?: string[] | null
+          refinement_log?: Json | null
+          style_profile?: Json | null
           updated_at?: string | null
           user_id: string
           voice: string
+          writing_samples?: string[] | null
         }
         Update: {
           boundaries?: Json | null
+          cognitive_style?: Json | null
           created_at?: string | null
           id?: string
           priorities?: string[] | null
+          refinement_log?: Json | null
+          style_profile?: Json | null
           updated_at?: string | null
           user_id?: string
           voice?: string
+          writing_samples?: string[] | null
         }
         Relationships: [
           {
@@ -268,6 +280,27 @@ export type Database = {
           id?: string
           onboarding_completed?: boolean
           updated_at?: string | null
+        }
+        Relationships: []
+      }
+      rate_limit_entries: {
+        Row: {
+          count: number
+          key: string
+          window_ms: number
+          window_start: string
+        }
+        Insert: {
+          count?: number
+          key: string
+          window_ms: number
+          window_start?: string
+        }
+        Update: {
+          count?: number
+          key?: string
+          window_ms?: number
+          window_start?: string
         }
         Relationships: []
       }
@@ -505,12 +538,15 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      get_monthly_spend: {
-        Args: {
-          p_user_id: string
-        }
-        Returns: number
+      check_rate_limit: {
+        Args: { p_key: string; p_limit: number; p_window_ms: number }
+        Returns: {
+          remaining: number
+          reset_at: string
+          success: boolean
+        }[]
       }
+      get_monthly_spend: { Args: never; Returns: number }
     }
     Enums: {
       approval_policy: "always" | "never" | "smart"

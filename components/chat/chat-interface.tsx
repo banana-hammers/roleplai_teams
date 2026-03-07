@@ -147,6 +147,7 @@ export function ChatInterface({ roleId, roleName, tierConfig }: ChatInterfacePro
                 isGrouped={isGrouped}
                 tierConfig={tierConfig}
                 formattedCost={formattedCost}
+                showRefinement={isRoleChat && message.role === 'assistant'}
               />
 
               {/* Tool calls display (role chat only) */}

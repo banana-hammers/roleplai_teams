@@ -11,9 +11,10 @@ import { useRouter } from 'next/navigation'
 interface CompletionProps {
   aliasName: string
   identity: IdentityCore
+  writingSamples?: string[]
 }
 
-export function Completion({ aliasName, identity }: CompletionProps) {
+export function Completion({ aliasName, identity, writingSamples }: CompletionProps) {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const router = useRouter()
@@ -32,6 +33,7 @@ export function Completion({ aliasName, identity }: CompletionProps) {
       const result = await completeOnboarding({
         alias: aliasName,
         identity,
+        writingSamples,
       })
 
       if (!result.success) {

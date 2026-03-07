@@ -1,4 +1,5 @@
 import { VOICE_DESCRIPTIONS, type VoiceType, type PriorityValue, type BoundaryType } from '@/lib/constants/interview-prompts'
+import type { StyleProfile, CognitiveStyle } from '@/types/identity'
 
 export interface ExtractedPersonality {
   voice: VoiceType
@@ -6,12 +7,16 @@ export interface ExtractedPersonality {
   boundaries: BoundaryType[]
   customBoundaries?: string[]
   confidence?: number
+  cognitive_style?: CognitiveStyle
+  style_profile?: StyleProfile
 }
 
 export interface IdentityCore {
   voice: string // Full descriptive text
   priorities: string[] // Ordered array of top 3 priorities ["accuracy", "empathy", "clarity"]
   boundaries: Record<string, boolean | string[]> // { no_speculation: true, custom: ["..."] }
+  style_profile?: StyleProfile
+  cognitive_style?: CognitiveStyle
 }
 
 export interface BehaviorExample {
@@ -45,11 +50,21 @@ export function generateIdentityCore(personality: ExtractedPersonality): Identit
     boundaries.custom = personality.customBoundaries
   }
 
-  return {
+  const result: IdentityCore = {
     voice,
     priorities,
     boundaries,
   }
+
+  if (personality.style_profile && Object.keys(personality.style_profile).length > 0) {
+    result.style_profile = personality.style_profile
+  }
+
+  if (personality.cognitive_style && Object.keys(personality.cognitive_style).length > 0) {
+    result.cognitive_style = personality.cognitive_style
+  }
+
+  return result
 }
 
 /**

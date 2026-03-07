@@ -6,6 +6,7 @@ import type { IdentityCore } from '@/lib/onboarding/generate-identity'
 export interface CompleteOnboardingData {
   alias: string
   identity: IdentityCore
+  writingSamples?: string[]
 }
 
 export interface CompleteOnboardingResult {
@@ -40,14 +41,19 @@ export async function completeOnboarding(
     }
 
     // Create or update identity core (upsert for idempotency on double-click/retry)
+    const identityData: Record<string, unknown> = {
+      user_id: user.id,
+      voice: data.identity.voice,
+      priorities: data.identity.priorities,
+      boundaries: data.identity.boundaries,
+    }
+    if (data.identity.style_profile) identityData.style_profile = data.identity.style_profile
+    if (data.identity.cognitive_style) identityData.cognitive_style = data.identity.cognitive_style
+    if (data.writingSamples && data.writingSamples.length > 0) identityData.writing_samples = data.writingSamples
+
     const { error: identityError } = await supabase
       .from('identity_cores')
-      .upsert({
-        user_id: user.id,
-        voice: data.identity.voice,
-        priorities: data.identity.priorities,
-        boundaries: data.identity.boundaries,
-      }, { onConflict: 'user_id' })
+      .upsert(identityData, { onConflict: 'user_id' })
 
     if (identityError) {
       console.error('Identity core creation error:', identityError)

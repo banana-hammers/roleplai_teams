@@ -2,11 +2,14 @@
 
 import { requireAuth } from '@/lib/supabase/auth-helpers'
 import { revalidatePath } from 'next/cache'
+import type { StyleProfile, CognitiveStyle } from '@/types/identity'
 
 export interface UpdateIdentityCoreData {
   voice: string
   priorities: string[] // Ordered array of top 3 priorities
   boundaries: Record<string, boolean | string[]>
+  style_profile?: StyleProfile
+  cognitive_style?: CognitiveStyle
 }
 
 export interface UpdateIdentityCoreResult {
@@ -25,14 +28,18 @@ export async function updateIdentityCore(
   const { supabase, user } = auth
 
   try {
+    const updateData: Record<string, unknown> = {
+      voice: data.voice,
+      priorities: data.priorities,
+      boundaries: data.boundaries,
+      updated_at: new Date().toISOString(),
+    }
+    if (data.style_profile !== undefined) updateData.style_profile = data.style_profile
+    if (data.cognitive_style !== undefined) updateData.cognitive_style = data.cognitive_style
+
     const { error } = await supabase
       .from('identity_cores')
-      .update({
-        voice: data.voice,
-        priorities: data.priorities,
-        boundaries: data.boundaries,
-        updated_at: new Date().toISOString(),
-      })
+      .update(updateData)
       .eq('user_id', user.id)
 
     if (error) {
@@ -62,14 +69,18 @@ export async function replaceIdentityCore(
 
   try {
     // Upsert - update if exists, insert if not
+    const upsertData: Record<string, unknown> = {
+      user_id: user.id,
+      voice: data.voice,
+      priorities: data.priorities,
+      boundaries: data.boundaries,
+      updated_at: new Date().toISOString(),
+    }
+    if (data.style_profile !== undefined) upsertData.style_profile = data.style_profile
+    if (data.cognitive_style !== undefined) upsertData.cognitive_style = data.cognitive_style
+
     const { error } = await supabase.from('identity_cores').upsert(
-      {
-        user_id: user.id,
-        voice: data.voice,
-        priorities: data.priorities,
-        boundaries: data.boundaries,
-        updated_at: new Date().toISOString(),
-      },
+      upsertData,
       {
         onConflict: 'user_id',
       }

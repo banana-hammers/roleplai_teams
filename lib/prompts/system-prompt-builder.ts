@@ -5,7 +5,7 @@
  * for Nova, Forge, and RoleplAIrs with natural language personality.
  */
 
-import type { IdentityCore, Lore } from '@/types/identity'
+import type { IdentityCore, Lore, StyleProfile, CognitiveStyle } from '@/types/identity'
 import type { Role, ResolvedSkill, ApprovalPolicy } from '@/types/role'
 import type { ExistingSkillContext, ForgeSkillContext } from '@/types/skill-creation'
 import { detectVoiceType, getVoiceFingerprint } from '@/lib/constants/interview-prompts'
@@ -212,6 +212,137 @@ Adapt your voice to these situations while maintaining your core style:
 }
 
 // ============================================================================
+// Style Profile Builder
+// ============================================================================
+
+const SENTENCE_LENGTH_DESCRIPTIONS: Record<string, string> = {
+  short: 'You keep sentences brief and punchy.',
+  medium: 'You write in balanced, mid-length sentences.',
+  long: 'You tend toward longer, detailed sentences.',
+  varied: 'You mix sentence lengths naturally for rhythm.',
+}
+
+const VOCABULARY_LEVEL_DESCRIPTIONS: Record<string, string> = {
+  simple: 'You use everyday language that anyone can follow.',
+  moderate: 'You use a mix of common and moderately advanced vocabulary.',
+  advanced: 'You draw on a rich, sophisticated vocabulary.',
+  technical: 'You lean into domain-specific terminology when relevant.',
+}
+
+const FORMALITY_DESCRIPTIONS: Record<string, string> = {
+  casual: 'You write casually, like talking to a friend.',
+  balanced: 'You strike a balance between casual and formal.',
+  formal: 'You maintain a formal, polished tone.',
+  professional: 'You write in a crisp, professional register.',
+}
+
+/**
+ * Builds a writing style section from a StyleProfile.
+ */
+export function buildStyleProfileSection(styleProfile: StyleProfile): string {
+  const lines: string[] = []
+
+  if (styleProfile.sentence_length && SENTENCE_LENGTH_DESCRIPTIONS[styleProfile.sentence_length]) {
+    lines.push(`- Sentence length: ${SENTENCE_LENGTH_DESCRIPTIONS[styleProfile.sentence_length]}`)
+  }
+  if (styleProfile.vocabulary_level && VOCABULARY_LEVEL_DESCRIPTIONS[styleProfile.vocabulary_level]) {
+    lines.push(`- Vocabulary: ${VOCABULARY_LEVEL_DESCRIPTIONS[styleProfile.vocabulary_level]}`)
+  }
+  if (styleProfile.formality && FORMALITY_DESCRIPTIONS[styleProfile.formality]) {
+    lines.push(`- Formality: ${FORMALITY_DESCRIPTIONS[styleProfile.formality]}`)
+  }
+  if (styleProfile.punctuation_habits && styleProfile.punctuation_habits.length > 0) {
+    lines.push(`- Punctuation habits: ${styleProfile.punctuation_habits.join(', ')}`)
+  }
+  if (styleProfile.formatting_prefs && styleProfile.formatting_prefs.length > 0) {
+    lines.push(`- Formatting preferences: ${styleProfile.formatting_prefs.join(', ')}`)
+  }
+  if (styleProfile.signature_phrases && styleProfile.signature_phrases.length > 0) {
+    lines.push(`- Signature phrases: ${styleProfile.signature_phrases.map(p => `"${p}"`).join(', ')}`)
+  }
+  if (styleProfile.tone_markers && styleProfile.tone_markers.length > 0) {
+    lines.push(`- Tone markers: ${styleProfile.tone_markers.join(', ')}`)
+  }
+
+  if (lines.length === 0) return ''
+
+  return `<writing_style>
+Your writing patterns:
+${lines.join('\n')}
+
+Mirror these patterns naturally. They override generic voice patterns where they conflict.
+</writing_style>`
+}
+
+// ============================================================================
+// Cognitive Style Builder
+// ============================================================================
+
+const DECISION_APPROACH_DESCRIPTIONS: Record<string, string> = {
+  intuitive: 'You trust gut feelings and pattern recognition to guide decisions.',
+  analytical: 'You break problems down systematically and weigh evidence carefully.',
+  collaborative: 'You prefer to think things through with others before deciding.',
+  decisive: 'You make quick, confident decisions and commit to them.',
+}
+
+const UNCERTAINTY_RESPONSE_DESCRIPTIONS: Record<string, string> = {
+  explore: 'When uncertain, you explore possibilities and brainstorm openly.',
+  research: 'When uncertain, you dig into data and gather information first.',
+  ask_others: 'When uncertain, you seek input and perspectives from others.',
+  make_best_guess: 'When uncertain, you go with the best available option and adjust later.',
+}
+
+const EXPLANATION_PREFERENCE_DESCRIPTIONS: Record<string, string> = {
+  big_picture_first: 'You start with the big picture, then drill into details.',
+  details_first: 'You build up from specifics to the broader context.',
+  examples_first: 'You lead with concrete examples to ground the explanation.',
+  analogies: 'You explain through analogies and comparisons to familiar concepts.',
+}
+
+const FEEDBACK_STYLE_DESCRIPTIONS: Record<string, string> = {
+  direct: 'You give feedback straight — clear, honest, no sugar-coating.',
+  sandwich: 'You frame feedback with positives around constructive points.',
+  questions: 'You guide people to insights through questions rather than statements.',
+  supportive: 'You emphasize encouragement and frame feedback gently.',
+}
+
+const CONTEXT_NEED_DESCRIPTIONS: Record<string, string> = {
+  minimal: 'You prefer minimal context — just the essentials to get started.',
+  moderate: 'You like a reasonable amount of background before diving in.',
+  comprehensive: 'You want thorough context and background before proceeding.',
+}
+
+/**
+ * Builds a cognitive style section from a CognitiveStyle.
+ */
+export function buildCognitiveStyleSection(cognitiveStyle: CognitiveStyle): string {
+  const lines: string[] = []
+
+  if (cognitiveStyle.decision_approach && DECISION_APPROACH_DESCRIPTIONS[cognitiveStyle.decision_approach]) {
+    lines.push(`- Decision-making: ${DECISION_APPROACH_DESCRIPTIONS[cognitiveStyle.decision_approach]}`)
+  }
+  if (cognitiveStyle.uncertainty_response && UNCERTAINTY_RESPONSE_DESCRIPTIONS[cognitiveStyle.uncertainty_response]) {
+    lines.push(`- Handling uncertainty: ${UNCERTAINTY_RESPONSE_DESCRIPTIONS[cognitiveStyle.uncertainty_response]}`)
+  }
+  if (cognitiveStyle.explanation_preference && EXPLANATION_PREFERENCE_DESCRIPTIONS[cognitiveStyle.explanation_preference]) {
+    lines.push(`- Explaining things: ${EXPLANATION_PREFERENCE_DESCRIPTIONS[cognitiveStyle.explanation_preference]}`)
+  }
+  if (cognitiveStyle.feedback_style && FEEDBACK_STYLE_DESCRIPTIONS[cognitiveStyle.feedback_style]) {
+    lines.push(`- Giving feedback: ${FEEDBACK_STYLE_DESCRIPTIONS[cognitiveStyle.feedback_style]}`)
+  }
+  if (cognitiveStyle.context_need && CONTEXT_NEED_DESCRIPTIONS[cognitiveStyle.context_need]) {
+    lines.push(`- Context needs: ${CONTEXT_NEED_DESCRIPTIONS[cognitiveStyle.context_need]}`)
+  }
+
+  if (lines.length === 0) return ''
+
+  return `<cognitive_style>
+How you process and communicate information:
+${lines.join('\n')}
+</cognitive_style>`
+}
+
+// ============================================================================
 // Personality Summary Builder
 // ============================================================================
 
@@ -243,6 +374,28 @@ function buildPersonalitySummary(
       .map(([key]) => key.replace(/_/g, ' '))
     if (activeBoundaries.length > 0) {
       parts.push(`You ${activeBoundaries.slice(0, 2).join(' and ')}`)
+    }
+  }
+
+  // Style profile summary
+  if (identityCore?.style_profile) {
+    const sp = identityCore.style_profile
+    const styleNotes: string[] = []
+    if (sp.formality) styleNotes.push(sp.formality)
+    if (sp.sentence_length) styleNotes.push(`${sp.sentence_length} sentences`)
+    if (styleNotes.length > 0) {
+      parts.push(`Writing style: ${styleNotes.join(', ')}`)
+    }
+  }
+
+  // Cognitive style summary
+  if (identityCore?.cognitive_style) {
+    const cs = identityCore.cognitive_style
+    const cogNotes: string[] = []
+    if (cs.decision_approach) cogNotes.push(`${cs.decision_approach} decision-maker`)
+    if (cs.explanation_preference) cogNotes.push(`explains ${cs.explanation_preference.replace(/_/g, ' ')}`)
+    if (cogNotes.length > 0) {
+      parts.push(`Thinking style: ${cogNotes.join(', ')}`)
     }
   }
 
@@ -295,17 +448,20 @@ ${greeting}
 </user_context>
 
 <task>
-Interview with 5-7 conversational questions to understand their personality and preferences.
+Interview with 6-8 conversational questions to understand their personality and preferences.
 
 What you're discovering:
 1. Communication style (direct, warm, analytical, playful, calm, energetic)
 2. Core values (accuracy, creativity, efficiency, empathy, logic, growth)
 3. Boundaries (what they won't compromise on)
+4. Decision-making and thinking style (how they approach problems, handle uncertainty, prefer explanations)
 
 Guidelines:
 - Be conversational, not clinical
 - Ask follow-up questions based on their answers
 - Make observations about patterns you notice
+- Include at least one scenario-based question (e.g., "Imagine you're stuck on a decision with no clear answer - what do you do?")
+- Pay attention to HOW the user writes, not just what they say - their sentence length, vocabulary, punctuation, and formality reveal personality
 - After gathering enough, conclude gracefully: "I have a clear picture of who you are..."
 </task>
 
@@ -485,6 +641,22 @@ You were created by ${userName}. Their identity core shapes your foundation.
     parts.push(voiceSection)
   }
 
+  // 5b. Writing style from identity core
+  if (identityCore?.style_profile) {
+    const styleSection = buildStyleProfileSection(identityCore.style_profile)
+    if (styleSection) {
+      parts.push(styleSection)
+    }
+  }
+
+  // 5c. Cognitive style from identity core
+  if (identityCore?.cognitive_style) {
+    const cognitiveSection = buildCognitiveStyleSection(identityCore.cognitive_style)
+    if (cognitiveSection) {
+      parts.push(cognitiveSection)
+    }
+  }
+
   // 6. Priorities (converted to natural language)
   const prioritiesSection = convertPrioritiesToNaturalLanguage(identityCore?.priorities)
   if (prioritiesSection) {
@@ -569,6 +741,7 @@ In every response:
 3. Respect your <boundaries> without exception
 4. Adapt your tone to the situation using <tone_adaptation> guidance
 5. Act on user requests directly - only ask for clarification when genuinely needed
+6. Match the <writing_style> patterns when present — these reflect how your user naturally communicates
 
 Your voice should feel authentic, not forced. Let your signature phrases and patterns emerge naturally.
 </behavioral_anchor>`)

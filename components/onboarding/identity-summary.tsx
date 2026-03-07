@@ -87,6 +87,57 @@ export function IdentitySummary({
             ))}
           </ul>
         </div>
+
+        {identity.style_profile && Object.keys(identity.style_profile).length > 0 && (
+          <div>
+            <h3 className="text-sm font-semibold text-muted-foreground mb-2">HOW YOU WRITE</h3>
+            <div className="flex flex-wrap gap-2">
+              {identity.style_profile.sentence_length && (
+                <Badge variant="outline">{identity.style_profile.sentence_length} sentences</Badge>
+              )}
+              {identity.style_profile.vocabulary_level && (
+                <Badge variant="outline">{identity.style_profile.vocabulary_level} vocabulary</Badge>
+              )}
+              {identity.style_profile.formality && (
+                <Badge variant="outline">{identity.style_profile.formality} tone</Badge>
+              )}
+              {identity.style_profile.tone_markers?.map((marker) => (
+                <Badge key={marker} variant="secondary">{marker}</Badge>
+              ))}
+              {identity.style_profile.punctuation_habits?.map((habit) => (
+                <Badge key={habit} variant="outline" className="text-xs">{habit}</Badge>
+              ))}
+            </div>
+            {identity.style_profile.signature_phrases && identity.style_profile.signature_phrases.length > 0 && (
+              <p className="text-xs text-muted-foreground mt-2">
+                Signature phrases: {identity.style_profile.signature_phrases.map(p => `"${p}"`).join(', ')}
+              </p>
+            )}
+          </div>
+        )}
+
+        {identity.cognitive_style && Object.keys(identity.cognitive_style).length > 0 && (
+          <div>
+            <h3 className="text-sm font-semibold text-muted-foreground mb-2">HOW YOU THINK</h3>
+            <div className="flex flex-wrap gap-2">
+              {identity.cognitive_style.decision_approach && (
+                <Badge variant="outline">{identity.cognitive_style.decision_approach.replace(/_/g, ' ')} decisions</Badge>
+              )}
+              {identity.cognitive_style.uncertainty_response && (
+                <Badge variant="outline">{identity.cognitive_style.uncertainty_response.replace(/_/g, ' ')} under uncertainty</Badge>
+              )}
+              {identity.cognitive_style.explanation_preference && (
+                <Badge variant="outline">{identity.cognitive_style.explanation_preference.replace(/_/g, ' ')}</Badge>
+              )}
+              {identity.cognitive_style.feedback_style && (
+                <Badge variant="outline">{identity.cognitive_style.feedback_style} feedback</Badge>
+              )}
+              {identity.cognitive_style.context_need && (
+                <Badge variant="outline">{identity.cognitive_style.context_need} context</Badge>
+              )}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Behavior Examples */}

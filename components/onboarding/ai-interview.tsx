@@ -17,14 +17,14 @@ export function AIInterview({ onComplete, onBack }: AIInterviewProps) {
       initialMessage="Hi! I'm ready to start."
       title="AI Personality Interview"
       subtitle="Let's chat! I'll ask you a few questions to understand your personality."
-      estimatedQuestions="~7"
+      estimatedQuestions="~8"
       startingLabel="Starting interview..."
       inputPlaceholder="Type your answer..."
       completionMessage="Interview complete! Ready to see your identity profile."
       completeButtonLabel="Continue to Identity Preview"
       completionConfig={{
-        minMessages: 7,
-        maxMessages: 9,
+        minMessages: 8,
+        maxMessages: 11,
         completionPhrases: [
           'have everything',
           'show you your identity',
