@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -29,6 +30,7 @@ function GitHubIcon() {
 }
 
 export default function LoginPage() {
+  const router = useRouter()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
@@ -42,10 +44,14 @@ export default function LoginPage() {
     try {
       const result = await login({ email, password })
 
+      if (result.success && result.redirectTo) {
+        router.push(result.redirectTo)
+        return
+      }
+
       if (!result.success && result.error) {
         setError(result.error)
       }
-      // If successful, the server action will redirect to /onboarding or /
     } catch (err) {
       console.error('Login error:', err)
       setError('An unexpected error occurred. Please try again.')

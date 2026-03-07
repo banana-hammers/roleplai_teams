@@ -12,6 +12,7 @@ interface SignupFormData {
 interface SignupResult {
   success: boolean
   error?: string
+  redirectTo?: string
 }
 
 interface LoginFormData {
@@ -22,6 +23,7 @@ interface LoginFormData {
 interface LoginResult {
   success: boolean
   error?: string
+  redirectTo?: string
 }
 
 function validatePassword(password: string): string | null {
@@ -82,13 +84,13 @@ export async function login(formData: LoginFormData): Promise<LoginResult> {
       email: authData.user.email,
       onboarding_completed: false,
     })
-    redirect('/onboarding')
+    return { success: true, redirectTo: '/onboarding' }
   }
 
   if (profile.onboarding_completed === false) {
-    redirect('/onboarding')
+    return { success: true, redirectTo: '/onboarding' }
   } else {
-    redirect('/')
+    return { success: true, redirectTo: '/' }
   }
 }
 
@@ -137,8 +139,7 @@ export async function signup(formData: SignupFormData): Promise<SignupResult> {
   }
 
   // Profile is created automatically via database trigger (handle_new_user)
-  // Redirect to verify email page
-  redirect(`/verify-email?email=${encodeURIComponent(formData.email)}`)
+  return { success: true, redirectTo: `/verify-email?email=${encodeURIComponent(formData.email)}` }
 }
 
 export async function logout(): Promise<void> {
