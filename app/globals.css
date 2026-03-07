@@ -301,6 +301,68 @@
   }
 }
 
+/* Nova idle pulse */
+@keyframes nova-pulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+}
+
+/* Nova sparkle icon animation */
+@keyframes nova-sparkle {
+  0%, 100% {
+    transform: scale(1) rotate(0deg);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.15) rotate(15deg);
+    opacity: 0.85;
+  }
+}
+
+/* Nova typing glow */
+@keyframes pulse-glow-nova {
+  0%, 100% {
+    box-shadow: 0 0 8px oklch(0.65 0.2 220), 0 0 16px oklch(0.65 0.2 220);
+    transform: scale(1);
+  }
+  50% {
+    box-shadow: 0 0 16px oklch(0.65 0.2 220), 0 0 32px oklch(0.65 0.2 220);
+    transform: scale(1.06);
+  }
+}
+
+/* Forge hammering pulse */
+@keyframes forge-hammer {
+  0%, 100% {
+    transform: scale(1) rotate(0deg);
+  }
+  40% {
+    transform: scale(1.1) rotate(-3deg);
+  }
+  60% {
+    transform: scale(0.95) rotate(1deg);
+  }
+}
+
+/* Forge ember particles rising */
+@keyframes ember-rise {
+  0% {
+    transform: translateY(0) scale(1);
+    opacity: 0;
+  }
+  20% {
+    opacity: 0.8;
+  }
+  100% {
+    transform: translateY(-12px) scale(0.3);
+    opacity: 0;
+  }
+}
+
 /* Typing dots wave animation */
 @keyframes typing-wave {
   0%, 60%, 100% {

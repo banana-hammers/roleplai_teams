@@ -3,6 +3,7 @@
 import { cn } from '@/lib/utils'
 import { TierAvatar } from '@/components/roles/tier-avatar'
 import { AIAvatar } from './ai-avatar'
+import { CharacterAvatar, isCharacterName } from './character-avatar'
 import type { ModelTierConfig } from '@/lib/utils/model-tiers'
 
 // Tier-specific dot colors for typing indicator
@@ -27,8 +28,16 @@ export interface TypingIndicatorProps {
   className?: string
 }
 
+// Character-specific dot colors
+const characterDotColors: Record<string, string> = {
+  Nova: 'bg-cyan-400/60',
+  Forge: 'bg-orange-400/60',
+}
+
 export function TypingIndicator({ senderName = 'Assistant', tierConfig, className }: TypingIndicatorProps) {
-  const dotColor = tierConfig ? tierDotColors[tierConfig.tier] : 'bg-muted-foreground/60'
+  const dotColor = isCharacterName(senderName)
+    ? characterDotColors[senderName]
+    : tierConfig ? tierDotColors[tierConfig.tier] : 'bg-muted-foreground/60'
   const borderColor = tierConfig ? tierBorderColors[tierConfig.tier] : ''
 
   return (
@@ -43,7 +52,9 @@ export function TypingIndicator({ senderName = 'Assistant', tierConfig, classNam
     >
       {/* Avatar column - matches message bubble */}
       <div className="shrink-0 w-8">
-        {tierConfig ? (
+        {isCharacterName(senderName) ? (
+          <CharacterAvatar character={senderName} state="typing" size="sm" />
+        ) : tierConfig ? (
           <TierAvatar tier={tierConfig} size="sm" />
         ) : (
           <AIAvatar state="typing" size="sm" />

@@ -13,7 +13,7 @@ export const runtime = 'edge'
  * POST /api/roles/interview
  *
  * Nova interviews users to design their RoleplAIr.
- * She knows their identity core and builds roles that complement it.
+ * Nova knows their identity core and builds roles that complement it.
  */
 export async function POST(req: NextRequest) {
   const supabase = await createClient()
@@ -36,7 +36,7 @@ export async function POST(req: NextRequest) {
 
   const { messages } = await req.json()
 
-  // Fetch user context for Nova - identity core is important
+  // Fetch user context - identity core is important
   const [profileResult, identityResult] = await Promise.all([
     supabase.from('profiles').select('full_name').eq('id', user.id).maybeSingle(),
     supabase.from('identity_cores').select('*').eq('user_id', user.id).maybeSingle(),

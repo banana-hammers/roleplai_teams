@@ -12,7 +12,7 @@ export const runtime = 'edge'
  * POST /api/onboarding/interview
  *
  * Nova interviews users to understand their personality.
- * She's aware of who she's talking to and adapts her approach.
+ * Nova is aware of who they're talking to and adapts their approach.
  */
 export async function POST(req: NextRequest) {
   const supabase = await createClient()
@@ -35,7 +35,7 @@ export async function POST(req: NextRequest) {
 
   const { messages } = await req.json()
 
-  // Fetch user context for Nova
+  // Fetch user context
   const [profileResult, rolesResult, identityResult] = await Promise.all([
     supabase.from('profiles').select('full_name').eq('id', user.id).maybeSingle(),
     supabase.from('roles').select('id', { count: 'exact' }).eq('user_id', user.id),

@@ -4,7 +4,7 @@
 
 RoleplAI Teams — AI identity management platform where users create **RoleplAIrs** (AI agents) with consistent personalities. Built with Next.js 16, Supabase, Vercel AI SDK v6, Edge Runtime.
 
-**AI Characters**: Nova (onboarding interviewer), Forge (role builder)
+**AI Characters**: Nova (agent generator — creates RoleplAIrs), Forge (skill creator — crafts abilities for agents)
 **Co-founders**: Ryan (CEO), Anthony (CTO), Rob (COO), Thomas (CDS) — all use Claude Code. Describe features in plain English; Claude builds them safely.
 
 ## Development Commands

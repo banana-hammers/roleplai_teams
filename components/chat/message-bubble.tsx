@@ -6,6 +6,7 @@ import remarkGfm from 'remark-gfm'
 import { cn } from '@/lib/utils'
 import { TierAvatar } from '@/components/roles/tier-avatar'
 import { AIAvatar } from './ai-avatar'
+import { CharacterAvatar, isCharacterName } from './character-avatar'
 import { User } from 'lucide-react'
 import type { ModelTierConfig } from '@/lib/utils/model-tiers'
 
@@ -57,7 +58,9 @@ export const MessageBubble = memo(function MessageBubble({
       {!isUser && (
         <div className="shrink-0 w-8">
           {!isGrouped && (
-            tierConfig ? (
+            isCharacterName(senderName) ? (
+              <CharacterAvatar character={senderName} state="idle" size="sm" />
+            ) : tierConfig ? (
               <TierAvatar tier={tierConfig} size="sm" />
             ) : (
               <AIAvatar state="idle" size="sm" />
