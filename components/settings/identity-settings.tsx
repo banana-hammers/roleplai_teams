@@ -1,6 +1,8 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
+import { useStatusMessage } from '@/lib/hooks/use-status-message'
 import {
   Card,
   CardContent,
@@ -76,12 +78,10 @@ interface IdentitySettingsProps {
 }
 
 export function IdentitySettings({ identityCore }: IdentitySettingsProps) {
+  const router = useRouter()
   const [editingSection, setEditingSection] = useState<EditingSection>(null)
   const [isSaving, setIsSaving] = useState(false)
-  const [message, setMessage] = useState<{
-    type: 'success' | 'error'
-    text: string
-  } | null>(null)
+  const { statusMessage: message, setStatusMessage: setMessage } = useStatusMessage(3000)
 
   // Local edit state
   const [editVoice, setEditVoice] = useState('')
@@ -158,19 +158,19 @@ export function IdentitySettings({ identityCore }: IdentitySettingsProps) {
     setIsSaving(true)
     setMessage(null)
 
-    const data: UpdateIdentityCoreData = {
-      voice: editingSection === 'voice' ? editVoice : voice,
-      priorities: editingSection === 'values' ? editPriorities : priorities,
-      boundaries: editingSection === 'code' ? editBoundaries : boundaries,
-      ...(editingSection === 'style' ? { style_profile: editStyleProfile } : {}),
-      ...(editingSection === 'cognitive' ? { cognitive_style: editCognitiveStyle } : {}),
-    }
+    const data: UpdateIdentityCoreData = {}
+    if (editingSection === 'voice') data.voice = editVoice
+    if (editingSection === 'values') data.priorities = editPriorities
+    if (editingSection === 'code') data.boundaries = editBoundaries
+    if (editingSection === 'style') data.style_profile = editStyleProfile
+    if (editingSection === 'cognitive') data.cognitive_style = editCognitiveStyle
 
     const result = await updateIdentityCore(data)
 
     if (result.success) {
       setMessage({ type: 'success', text: 'Identity updated successfully!' })
       setEditingSection(null)
+      router.refresh()
     } else {
       setMessage({
         type: 'error',
@@ -190,6 +190,7 @@ export function IdentitySettings({ identityCore }: IdentitySettingsProps) {
     if (result.success) {
       setMessage({ type: 'success', text: 'Identity replaced successfully!' })
       setShowReInterview(false)
+      router.refresh()
     } else {
       setMessage({
         type: 'error',

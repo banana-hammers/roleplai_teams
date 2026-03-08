@@ -65,7 +65,6 @@ describe('buildRoleSystemPrompt', () => {
     model_preference: 'anthropic/claude-haiku-4-5',
     approval_policy: 'smart',
     identity_facets: {},
-    identity_core_id: null,
     created_at: '',
     updated_at: '',
   }

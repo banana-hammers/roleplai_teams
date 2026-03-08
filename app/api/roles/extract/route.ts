@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
 import { requireAuthForRoute } from '@/lib/api/route-helpers'
-import { ROLE_EXTRACTION_PROMPT } from '@/lib/constants/role-prompts'
+import { ROLE_EXTRACTION_PROMPT } from '@/lib/prompts/extraction-prompts'
 import { extractionResultSchema, type ExtractionResult } from '@/types/role-creation'
 import { rateLimit, rateLimitExceededResponse, RATE_LIMITS } from '@/lib/rate-limit'
 
@@ -69,8 +69,8 @@ const EXTRACTION_TOOL_SCHEMA: Anthropic.Tool = {
   },
 }
 
-// Node.js runtime required for Anthropic SDK compatibility on Vercel
-export const runtime = 'nodejs'
+// Edge runtime per project convention (Anthropic SDK works in Edge)
+export const runtime = 'edge'
 export const maxDuration = 60 // Allow up to 60 seconds for complex extractions
 
 /**

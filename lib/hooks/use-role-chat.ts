@@ -225,7 +225,6 @@ export function useRoleChat({ roleId, conversationId: initialConversationId, onC
                     : m
                 ))
               } else if (event.type === 'tool_call_start') {
-                console.log('[Chat] tool_call_start:', { id: event.id, tool: event.tool, isServerTool: event.isServerTool })
                 currentToolCalls.push({ id: event.id, name: event.tool, status: 'running' })
                 assistantToolCalls = [...currentToolCalls]
                 setMessages(prev => prev.map(m =>
@@ -267,8 +266,7 @@ export function useRoleChat({ roleId, conversationId: initialConversationId, onC
                 }
                 setError(event.message)
               } else if (event.type === 'retry') {
-                // Server is retrying after rate limit, log for debugging
-                console.log(`[Chat] Server retry: attempt ${event.attempt}, waiting ${event.delayMs}ms`)
+                // Server is retrying after rate limit
               } else if (event.type === 'warning') {
                 // Tool-level warning (e.g., skill hit rate limit but returned error text)
                 console.warn(`[Chat] Warning: ${event.message}`)
@@ -280,7 +278,6 @@ export function useRoleChat({ roleId, conversationId: initialConversationId, onC
                 setMcpErrors(event.errors || [])
               } else if (event.type === 'usage') {
                 // Token usage and cost data
-                console.log('[Chat] Received usage event:', event)
                 assistantUsage = {
                   inputTokens: event.inputTokens,
                   outputTokens: event.outputTokens,
@@ -300,13 +297,6 @@ export function useRoleChat({ roleId, conversationId: initialConversationId, onC
                 serverSavedMessage = true
               } else if (event.type === 'skill_start') {
                 // Skill execution starting - create progress tracker
-                console.log('[Chat] skill_start received:', {
-                  skillId: event.skillId,
-                  skillName: event.skillName,
-                  toolName: event.toolName,
-                  toolId: event.toolId,
-                  currentToolCalls: currentToolCalls.map(t => ({ id: t.id, name: t.name, hasProgress: !!t.skillProgress }))
-                })
                 const skillProgress: SkillProgress = {
                   skillId: event.skillId,
                   skillName: event.skillName,
@@ -332,13 +322,6 @@ export function useRoleChat({ roleId, conversationId: initialConversationId, onC
                   // Fallback to name matching - find tool without skillProgress
                   toolIndex = currentToolCalls.findIndex(t => t.name === toolNameToMatch && !t.skillProgress)
                 }
-                console.log('[Chat] skill_start matching:', {
-                  toolNameToMatch,
-                  toolId: event.toolId,
-                  toolIndex,
-                  found: toolIndex !== -1,
-                  matchMethod: event.toolId && toolIndex !== -1 ? 'id' : 'name'
-                })
                 if (toolIndex !== -1) {
                   currentToolCalls[toolIndex].skillProgress = skillProgress
                   assistantToolCalls = [...currentToolCalls]

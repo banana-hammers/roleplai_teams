@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useStatusMessage } from '@/lib/hooks/use-status-message'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Label } from '@/components/ui/label'
 import {
@@ -23,7 +24,7 @@ const DEFAULTS = {
 export function PreferencesSettings() {
   const [defaultModel, setDefaultModel] = useState(DEFAULTS.defaultModel)
   const [defaultApprovalPolicy, setDefaultApprovalPolicy] = useState(DEFAULTS.defaultApprovalPolicy)
-  const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
+  const { statusMessage: message, setStatusMessage: setMessage } = useStatusMessage(2000)
 
   // Load from localStorage on mount
   useEffect(() => {
@@ -46,7 +47,6 @@ export function PreferencesSettings() {
         defaultApprovalPolicy: policy,
       }))
       setMessage({ type: 'success', text: 'Preferences saved' })
-      setTimeout(() => setMessage(null), 2000)
     } catch {
       setMessage({ type: 'error', text: 'Failed to save preferences' })
     }

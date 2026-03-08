@@ -1,4 +1,8 @@
 import { z } from 'zod'
+import type { SkillExample } from '@/types/skill'
+
+// Re-export for convenience
+export type { SkillExample }
 
 // Mode for skill creation/editing via Forge
 export type SkillInterviewMode = 'create' | 'edit'
@@ -8,8 +12,6 @@ export const skillExampleSchema = z.object({
   input: z.string().describe('Example input values as a description or JSON'),
   output: z.string().describe('Expected output for this input'),
 })
-
-export type SkillExample = z.infer<typeof skillExampleSchema>
 
 // Extracted skill from Forge conversation (includes progressive disclosure fields)
 export const forgeExtractedSkillSchema = z.object({

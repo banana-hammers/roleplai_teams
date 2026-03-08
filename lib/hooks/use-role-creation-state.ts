@@ -1,7 +1,8 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useCallback } from 'react'
 import type { RoleCreationLocalState, ExtractionResult, ExtractedRoleConfig } from '@/types/role-creation'
+import { useLocalStorage } from '@/lib/hooks/use-local-storage'
 
 const STORAGE_KEY = 'role_creation_state'
 const DEFAULT_STATE: RoleCreationLocalState = { currentStep: 1 }
@@ -10,43 +11,17 @@ const DEFAULT_STATE: RoleCreationLocalState = { currentStep: 1 }
  * Hook for managing ephemeral role creation state in localStorage
  */
 export function useRoleCreationState() {
-  // Always start with default state to avoid hydration mismatch
-  const [state, setState] = useState<RoleCreationLocalState>(DEFAULT_STATE)
-  const [isHydrated, setIsHydrated] = useState(false)
-
-  // Load from localStorage after hydration (client-side only)
-  useEffect(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY)
-      if (saved) {
-        setState(JSON.parse(saved))
-      }
-    } catch (error) {
-      console.error('Failed to load role creation state:', error)
-    }
-    setIsHydrated(true)
-  }, [])
-
-  // Auto-save to localStorage on changes (only after hydration)
-  useEffect(() => {
-    if (isHydrated) {
-      try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(state))
-      } catch (error) {
-        console.error('Failed to save role creation state:', error)
-      }
-    }
-  }, [state, isHydrated])
+  const { value: state, setValue: setState, isHydrated, removeValue } = useLocalStorage<RoleCreationLocalState>(STORAGE_KEY, DEFAULT_STATE)
 
   // Update state helper
   const updateState = useCallback((updates: Partial<RoleCreationLocalState>) => {
     setState(prev => ({ ...prev, ...updates }))
-  }, [])
+  }, [setState])
 
   // Set interview messages
   const setInterviewMessages = useCallback((messages: Array<{ role: string; content: string }>) => {
     setState(prev => ({ ...prev, interviewMessages: messages }))
-  }, [])
+  }, [setState])
 
   // Set extracted config
   const setExtractedConfig = useCallback((config: ExtractionResult) => {
@@ -57,7 +32,7 @@ export function useRoleCreationState() {
       extractedConfig: config,
       selectedSkillIds,
     }))
-  }, [])
+  }, [setState])
 
   // Toggle skill selection
   const toggleSkill = useCallback((index: number) => {
@@ -73,7 +48,7 @@ export function useRoleCreationState() {
           : [...currentSelected, indexStr],
       }
     })
-  }, [])
+  }, [setState])
 
   // Update edited role
   const updateEditedRole = useCallback((updates: Partial<ExtractedRoleConfig>) => {
@@ -81,7 +56,7 @@ export function useRoleCreationState() {
       ...prev,
       editedRole: { ...prev.editedRole, ...updates },
     }))
-  }, [])
+  }, [setState])
 
   // Get merged role config (original + edits)
   const getMergedRoleConfig = useCallback((): ExtractedRoleConfig | null => {
@@ -104,20 +79,17 @@ export function useRoleCreationState() {
   // Go to step
   const goToStep = useCallback((step: number) => {
     setState(prev => ({ ...prev, currentStep: step }))
-  }, [])
+  }, [setState])
 
   // Set created role ID
   const setCreatedRoleId = useCallback((roleId: string) => {
     setState(prev => ({ ...prev, createdRoleId: roleId }))
-  }, [])
+  }, [setState])
 
   // Clear localStorage on completion
   const clearState = useCallback(() => {
-    if (typeof window !== 'undefined') {
-      localStorage.removeItem(STORAGE_KEY)
-    }
-    setState(DEFAULT_STATE)
-  }, [])
+    removeValue()
+  }, [removeValue])
 
   // Reset to step 1 (for "Let Me Adjust" flow)
   const resetToInterview = useCallback(() => {
@@ -125,7 +97,7 @@ export function useRoleCreationState() {
       currentStep: 1,
       interviewMessages: prev.interviewMessages, // Keep messages
     }))
-  }, [])
+  }, [setState])
 
   return {
     state,

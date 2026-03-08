@@ -7,6 +7,7 @@ import {
   type ForgeExtractedSkill,
 } from '@/types/skill-creation'
 import { rateLimit, rateLimitExceededResponse, RATE_LIMITS } from '@/lib/rate-limit'
+import { buildSkillExtractionPrompt } from '@/lib/prompts/extraction-prompts'
 
 // JSON Schema for tool_use - mirrors forgeExtractedSkillSchema
 const SKILL_EXTRACTION_TOOL_SCHEMA: Anthropic.Tool = {
@@ -65,52 +66,8 @@ const SKILL_EXTRACTION_TOOL_SCHEMA: Anthropic.Tool = {
   },
 }
 
-// Build the extraction prompt
-function buildExtractionPrompt(
-  transcript: string,
-  mode: 'create' | 'edit',
-  existingSkillContext?: string
-): string {
-  const modeContext =
-    mode === 'edit' && existingSkillContext
-      ? `You are updating an existing skill. Here is the current definition:
-
-${existingSkillContext}
-
-Based on the conversation, update the skill with the requested changes. Preserve fields that weren't discussed unless they conflict with the changes.`
-      : `You are creating a new skill from scratch based on the conversation.`
-
-  return `You are extracting a structured skill definition from a conversation between a user and Forge (a skill designer AI).
-
-${modeContext}
-
-<interview_transcript>
-${transcript}
-</interview_transcript>
-
-Based on this conversation, extract a complete skill definition. Include:
-1. A clear, action-oriented name
-2. A short description (~50 chars) for quick reference
-3. A full description explaining what the skill does
-4. A prompt template with {{placeholders}} for any inputs
-5. Detailed instructions for how to execute the skill well
-6. Any tools the skill should use (web_search, web_fetch, or MCP tools mentioned)
-7. At least one example input/output pair
-
-For the prompt_template:
-- Use {{placeholder_name}} syntax for inputs
-- Make it specific and actionable
-- Include context about expected output format
-
-For examples:
-- Provide realistic input/output pairs
-- Show what a successful execution looks like
-
-Use the extract_skill tool to provide the structured output.`
-}
-
-// Node.js runtime required for Anthropic SDK compatibility on Vercel
-export const runtime = 'nodejs'
+// Edge runtime per project convention (Anthropic SDK works in Edge)
+export const runtime = 'edge'
 export const maxDuration = 60 // Allow up to 60 seconds for complex extractions
 
 /**
@@ -172,7 +129,7 @@ export async function POST(req: NextRequest) {
   }
 
   // Build the extraction prompt
-  const extractionPrompt = buildExtractionPrompt(
+  const extractionPrompt = buildSkillExtractionPrompt(
     transcript,
     mode || 'create',
     existingSkillContext

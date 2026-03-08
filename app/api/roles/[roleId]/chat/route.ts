@@ -43,6 +43,38 @@ import type { IdentityCore, Lore } from '@/types/identity'
 import type { Role, ResolvedSkill } from '@/types/role'
 import type { GenericToolDefinition } from '@/lib/tools/types'
 
+/** Message format received from the client */
+interface ChatMessage {
+  role: 'user' | 'assistant'
+  content: string
+}
+
+/** Anthropic stream event with usage in message_start */
+interface AnthropicMessageStartUsage {
+  input_tokens?: number
+  cache_creation_input_tokens?: number
+  cache_read_input_tokens?: number
+}
+
+/** Anthropic stream event with usage in message_delta */
+interface AnthropicMessageDeltaUsage {
+  output_tokens?: number
+}
+
+/** AI SDK tool definition with execute function */
+interface AISDKToolDefinition {
+  description: string
+  parameters: ReturnType<typeof jsonSchema>
+  execute: (input: Record<string, unknown>) => Promise<string>
+}
+
+/** Conversation summary from database */
+interface ConversationSummary {
+  title: string
+  summary: string | null
+  updated_at: string
+}
+
 export const runtime = 'edge'
 
 /**
@@ -50,6 +82,44 @@ export const runtime = 'edge'
  */
 function sseEvent(encoder: TextEncoder, data: Record<string, unknown>): Uint8Array {
   return encoder.encode(`data: ${JSON.stringify(data)}\n\n`)
+}
+
+/**
+ * Execute a simple skill (no agentic tools) and emit SSE progress events.
+ * Shared between OpenAI and Anthropic streaming paths.
+ */
+function executeSimpleSkillWithEvents(
+  skill: Skill,
+  input: Record<string, unknown>,
+  linkedLore: Lore[],
+  encoder: TextEncoder,
+  controller: ReadableStreamDefaultController,
+  toolContext?: { toolId?: string; toolName?: string },
+): string {
+  const skillExecutionId = `skill-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`
+
+  controller.enqueue(sseEvent(encoder, {
+    type: 'skill_start',
+    skillId: skillExecutionId,
+    skillName: skill.name,
+    ...(toolContext?.toolId && { toolId: toolContext.toolId }),
+    toolName: toolContext?.toolName,
+    inputs: input,
+    maxIterations: 1,
+    isSimple: true,
+  }))
+
+  const result = executeSkillSimple(skill, input, linkedLore)
+
+  controller.enqueue(sseEvent(encoder, {
+    type: 'skill_complete',
+    skillId: skillExecutionId,
+    skillName: skill.name,
+    result: result.slice(0, 500),
+    totalIterations: 1,
+  }))
+
+  return result
 }
 
 /**
@@ -66,15 +136,13 @@ function toAISDKTools(
   encoder: TextEncoder,
   controller: ReadableStreamDefaultController,
 ) {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const tools: Record<string, any> = {}
+  const tools: Record<string, AISDKToolDefinition> = {}
 
   // Add built-in tools (web_fetch for OpenAI)
   for (const bt of genericBuiltinTools) {
     tools[bt.name] = {
       description: bt.description,
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      parameters: jsonSchema(bt.parameters as any),
+      parameters: jsonSchema(bt.parameters as Record<string, unknown>),
       execute: async (input: Record<string, unknown>) => {
         return executeBuiltinTool(bt.name, input)
       },
@@ -85,8 +153,7 @@ function toAISDKTools(
   for (const st of genericSkillTools) {
     tools[st.name] = {
       description: st.description,
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      parameters: jsonSchema(st.parameters as any),
+      parameters: jsonSchema(st.parameters as Record<string, unknown>),
       execute: async (input: Record<string, unknown>) => {
         const skill = findSkillByToolName(skills, st.name)
         if (!skill) return `Error: Unknown skill "${st.name}"`
@@ -102,29 +169,10 @@ function toAISDKTools(
         }
 
         // Simple execution for OpenAI (no agentic nested loop)
-        const skillExecutionId = `skill-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`
-
-        controller.enqueue(sseEvent(encoder, {
-          type: 'skill_start',
-          skillId: skillExecutionId,
-          skillName: skill.name,
-          toolName: st.name,
-          inputs: input,
-          maxIterations: 1,
-          isSimple: true,
-        }))
-
-        const result = executeSkillSimple(skill, input, linkedLore)
-
-        controller.enqueue(sseEvent(encoder, {
-          type: 'skill_complete',
-          skillId: skillExecutionId,
-          skillName: skill.name,
-          result: result.slice(0, 500),
-          totalIterations: 1,
-        }))
-
-        return result
+        return executeSimpleSkillWithEvents(
+          skill, input, linkedLore, encoder, controller,
+          { toolName: st.name },
+        )
       },
     }
   }
@@ -133,8 +181,7 @@ function toAISDKTools(
   for (const mt of genericMcpTools) {
     tools[mt.name] = {
       description: mt.description,
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      parameters: jsonSchema(mt.parameters as any),
+      parameters: jsonSchema(mt.parameters as Record<string, unknown>),
       execute: async (input: Record<string, unknown>) => {
         return executeMcpTool(mt.name, input, mcpToolMappings)
       },
@@ -258,8 +305,9 @@ export async function POST(
     const roleLore = roleLoreResult.data
 
     // Extract skills from nested select (no second query needed)
-    const skills: Skill[] = (roleSkillLinksResult.data || [])
-      .map((link: any) => link.skills)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const skills: Skill[] = (roleSkillLinksResult.data || [] as any[])
+      .map((link: { skills: Skill | null }) => link.skills)
       .filter(Boolean) as Skill[]
 
     // Get MCP tools from enabled servers
@@ -267,7 +315,8 @@ export async function POST(
     const { tools: mcpTools, toolMappings: mcpToolMappings, errors: mcpErrors } = await getMcpToolsFromServers(mcpServers)
 
     // Convert lore to proper format
-    const loreItems: Lore[] = roleLore?.map((rl: any) => rl.lore as Lore).filter(Boolean) || []
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const loreItems: Lore[] = (roleLore as any[] || []).map((rl: { lore: Lore | null }) => rl.lore as Lore).filter(Boolean)
 
     // Convert skills to resolved format for prompt (with short_description for Level 1)
     const resolvedSkills: ResolvedSkill[] = skills.map(s => ({
@@ -282,8 +331,8 @@ export async function POST(
 
     // Convert recent summaries for memory lite
     const pastConversations = (recentSummariesResult.data || [])
-      .filter((c: any) => c.summary)
-      .map((c: any) => ({
+      .filter((c: ConversationSummary) => c.summary)
+      .map((c: ConversationSummary) => ({
         title: c.title,
         summary: c.summary as string,
         date: new Date(c.updated_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
@@ -340,10 +389,7 @@ export async function POST(
     }
   } catch (error) {
     console.error('Role chat API error:', error)
-    return new Response(
-      JSON.stringify({ error: 'Internal server error' }),
-      { status: 500, headers: { 'Content-Type': 'application/json' } }
-    )
+    return errorResponse('Internal server error', 500)
   }
 }
 
@@ -353,7 +399,7 @@ interface OpenAIStreamParams {
   apiKey: string
   modelName: string
   systemPrompt: string
-  messages: any[]
+  messages: ChatMessage[]
   skills: Skill[]
   mcpTools: Anthropic.Tool[]
   mcpToolMappings: Map<string, McpToolServerMapping>
@@ -395,7 +441,7 @@ function streamOpenAI(params: OpenAIStreamParams): Response {
         )
 
         // Convert messages to AI SDK format
-        const aiMessages = messages.map((m: any) => ({
+        const aiMessages = messages.map((m: ChatMessage) => ({
           role: m.role as 'user' | 'assistant',
           content: m.content,
         }))
@@ -405,7 +451,8 @@ function streamOpenAI(params: OpenAIStreamParams): Response {
           model: openai(modelName),
           system: systemPrompt,
           messages: aiMessages,
-          tools: Object.keys(aiSdkTools).length > 0 ? aiSdkTools : undefined,
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          tools: Object.keys(aiSdkTools).length > 0 ? aiSdkTools as any : undefined,
           stopWhen: stepCountIs(5),
           temperature: DEFAULT_TEMPERATURE,
         })
@@ -536,17 +583,34 @@ interface AnthropicStreamParams {
   apiKey: string
   modelName: string
   systemPrompt: string
-  messages: any[]
+  messages: ChatMessage[]
   skills: Skill[]
   mcpTools: Anthropic.Tool[]
   mcpToolMappings: Map<string, McpToolServerMapping>
   mcpErrors: Array<{ serverName: string; message: string }>
-  role: any
+  role: Role
   supabase: Awaited<ReturnType<typeof createClient>>
   conversationId?: string
   provider: string
 }
 
+/**
+ * Anthropic streaming path with agentic tool loop.
+ *
+ * Flow:
+ * 1. Convert messages to Anthropic format and initialize the agentic loop
+ * 2. Stream the Anthropic response, emitting SSE events for text deltas,
+ *    tool call starts, server tool results (web_search), and usage tracking
+ * 3. When tool calls are detected, execute them:
+ *    - Server tools (web_search): handled by Anthropic, results come as content blocks
+ *    - Built-in tools (web_fetch): executed via executeBuiltinTool()
+ *    - MCP tools: routed to the user's MCP server via executeMcpTool()
+ *    - Skills (simple): executed via executeSimpleSkillWithEvents()
+ *    - Skills (agentic): executed via executeSkillWithTools() with nested tool loop
+ * 4. Tool results are appended to messages and the loop continues (max 10 iterations)
+ * 5. When no more tool calls, emit usage/cost data and persist the assistant message
+ * 6. Rate limit errors trigger retry with exponential backoff (max 3 retries)
+ */
 function streamAnthropic(params: AnthropicStreamParams): Response {
   const {
     apiKey, modelName, systemPrompt, messages, skills,
@@ -587,7 +651,7 @@ function streamAnthropic(params: AnthropicStreamParams): Response {
         const anthropic = new Anthropic({ apiKey })
 
         // Convert messages to Anthropic format
-        const anthropicMessages: Anthropic.MessageParam[] = messages.map((m: any) => ({
+        const anthropicMessages: Anthropic.MessageParam[] = messages.map((m: ChatMessage) => ({
           role: m.role as 'user' | 'assistant',
           content: m.content
         }))
@@ -638,7 +702,6 @@ function streamAnthropic(params: AnthropicStreamParams): Response {
               maxDelayMs: 30000,
               onlyRateLimits: true,
               onRetry: (attempt, _error, delayMs) => {
-                console.log(`[Chat] Rate limit hit, retry ${attempt} in ${Math.round(delayMs / 1000)}s`)
                 // Notify client of retry
                 controller.enqueue(sseEvent(encoder, {
                   type: 'retry',
@@ -685,9 +748,8 @@ function streamAnthropic(params: AnthropicStreamParams): Response {
                 }))
               } else if (event.content_block.type === 'web_search_tool_result') {
                 // Server tool result - emit tool_result event for the web_search tool
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                const resultBlock = event.content_block as any
-                const toolUseId = resultBlock.tool_use_id as string
+                const resultBlock = event.content_block as unknown as { tool_use_id: string; content: unknown }
+                const toolUseId = resultBlock.tool_use_id
                 const originalInput = serverToolInputs.get(toolUseId)
 
                 // Format the search results for display
@@ -745,19 +807,17 @@ function streamAnthropic(params: AnthropicStreamParams): Response {
               }
             } else if (event.type === 'message_delta') {
               // Capture usage data from the message delta event
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              const deltaEvent = event as any
-              if (deltaEvent.usage) {
-                totalOutputTokens += deltaEvent.usage.output_tokens || 0
+              const deltaUsage = (event as unknown as { usage?: AnthropicMessageDeltaUsage }).usage
+              if (deltaUsage) {
+                totalOutputTokens += deltaUsage.output_tokens || 0
               }
             } else if (event.type === 'message_start') {
               // Capture initial usage (input tokens, cache tokens)
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              const startEvent = event as any
-              if (startEvent.message?.usage) {
-                totalInputTokens += startEvent.message.usage.input_tokens || 0
-                totalCacheCreationTokens += startEvent.message.usage.cache_creation_input_tokens || 0
-                totalCacheReadTokens += startEvent.message.usage.cache_read_input_tokens || 0
+              const startUsage = (event as unknown as { message?: { usage?: AnthropicMessageStartUsage } }).message?.usage
+              if (startUsage) {
+                totalInputTokens += startUsage.input_tokens || 0
+                totalCacheCreationTokens += startUsage.cache_creation_input_tokens || 0
+                totalCacheReadTokens += startUsage.cache_read_input_tokens || 0
               }
             } else if (event.type === 'message_stop') {
               // Message complete
@@ -888,7 +948,7 @@ function streamAnthropic(params: AnthropicStreamParams): Response {
                         },
                         // Streaming progress callbacks
                         onSkillStart: () => {
-                          console.log(`[Skill] Starting execution: ${skill.name}`)
+                          // Skill execution started (progress tracked via SSE events)
                         },
                         onIteration: (iteration, maxIterations) => {
                           controller.enqueue(sseEvent(encoder, {
@@ -947,32 +1007,11 @@ function streamAnthropic(params: AnthropicStreamParams): Response {
                         }
                       })
                     } else {
-                      // Simple skill - emit progress events for UI consistency
-                      const skillExecutionId = `skill-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`
-
-                      // Emit skill_start
-                      controller.enqueue(sseEvent(encoder, {
-                        type: 'skill_start',
-                        skillId: skillExecutionId,
-                        skillName: skill.name,
-                        toolId: tc.id,
-                        toolName: tc.name,
-                        inputs: tc.input,
-                        maxIterations: 1,
-                        isSimple: true,
-                      }))
-
-                      // Simple execution with Level 2+3 context
-                      result = executeSkillSimple(skill, tc.input, linkedLore)
-
-                      // Emit skill_complete
-                      controller.enqueue(sseEvent(encoder, {
-                        type: 'skill_complete',
-                        skillId: skillExecutionId,
-                        skillName: skill.name,
-                        result: result.slice(0, 500),
-                        totalIterations: 1,
-                      }))
+                      // Simple skill - use shared helper for progress events
+                      result = executeSimpleSkillWithEvents(
+                        skill, tc.input, linkedLore, encoder, controller,
+                        { toolId: tc.id, toolName: tc.name },
+                      )
                     }
                   } else {
                     result = `Error: Unknown tool "${tc.name}"`
@@ -1030,7 +1069,6 @@ function streamAnthropic(params: AnthropicStreamParams): Response {
           cacheReadTokens: totalCacheReadTokens,
         }
         const cost = calculateMessageCost(modelName, usage)
-        console.log('[Chat] Usage data:', { model: modelName, usage, cost, formattedCost: formatCost(cost) })
         controller.enqueue(sseEvent(encoder, {
           type: 'usage',
           ...usage,

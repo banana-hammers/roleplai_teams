@@ -36,8 +36,6 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=...
 OPENAI_API_KEY=sk-...              # System fallback
 ANTHROPIC_API_KEY=sk-ant-...        # System fallback
 ENCRYPTION_MASTER_KEY=...           # Min 32 chars
-BRAVE_API_KEY=...                   # Optional: web search
-SERPER_API_KEY=...                  # Optional: alt web search
 ```
 
 ## Files to Never Delete

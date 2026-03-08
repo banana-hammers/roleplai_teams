@@ -12,6 +12,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { SlidersHorizontal, Loader2 } from 'lucide-react'
 import { submitRefinement } from '@/app/actions/refinement'
+import { useStatusMessage } from '@/lib/hooks/use-status-message'
 import type { StyleProfile, CognitiveStyle } from '@/types/identity'
 
 const QUICK_OPTIONS = [
@@ -37,7 +38,7 @@ export function RefinementPopover({
   const [loading, setLoading] = useState(false)
   const [showCustom, setShowCustom] = useState(false)
   const [customText, setCustomText] = useState('')
-  const [feedback, setFeedback] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
+  const { statusMessage: feedback, setStatusMessage: setFeedback } = useStatusMessage(2000)
 
   const handleCorrection = async (correction: string) => {
     setLoading(true)
@@ -71,7 +72,6 @@ export function RefinementPopover({
         setFeedback({ type: 'success', text: 'Identity updated' })
         setShowCustom(false)
         setCustomText('')
-        setTimeout(() => setFeedback(null), 2000)
       } else {
         setFeedback({ type: 'error', text: result.error || 'Failed to save' })
       }
