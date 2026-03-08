@@ -28,7 +28,7 @@ interface RoleChatPageProps {
 }
 
 // Generate conversation starters based on skills
-function getConversationStarters(skills: Skill[], _role: Role): string[] {
+function getConversationStarters(skills: Skill[], _role?: Role): string[] {
   const starters: string[] = []
 
   // Skill-based starters
@@ -78,6 +78,7 @@ export default function RoleChatPage({ params }: RoleChatPageProps) {
   // Sync conversationId from hook to state
   useEffect(() => {
     if (conversationId && conversationId !== activeConversationId) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- syncing external hook state
       setActiveConversationId(conversationId)
     }
   }, [conversationId, activeConversationId])

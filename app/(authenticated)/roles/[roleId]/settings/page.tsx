@@ -40,6 +40,7 @@ export default async function RoleSettingsPage({ params }: RoleSettingsPageProps
     .eq('role_id', roleId)
 
   // Transform roleSkills to match expected type (Supabase returns nested objects)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Supabase nested select returns dynamic shape
   const roleSkills = (roleSkillsData || []).map((rs: any) => ({
     skill_id: rs.skill_id,
     config_overrides: rs.config_overrides,

@@ -48,6 +48,7 @@ export function TestDrive({ identity, onConfirm, onAdjust }: TestDriveProps) {
   // Track user message count
   useEffect(() => {
     const userMessages = messages.filter(m => m.role === 'user')
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- deriving count from messages
     setMessageCount(userMessages.length)
   }, [messages])
 
@@ -83,7 +84,7 @@ export function TestDrive({ identity, onConfirm, onAdjust }: TestDriveProps) {
           </h2>
         </div>
         <p className="text-muted-foreground">
-          Let's see how this feels! Ask me anything to test your new identity.
+          Let&apos;s see how this feels! Ask me anything to test your new identity.
         </p>
       </div>
 
@@ -100,7 +101,7 @@ export function TestDrive({ identity, onConfirm, onAdjust }: TestDriveProps) {
                 onClick={() => handlePromptClick(prompt)}
                 className="text-xs"
               >
-                "{prompt}"
+                &ldquo;{prompt}&rdquo;
               </Button>
             ))}
           </div>
@@ -162,7 +163,7 @@ export function TestDrive({ identity, onConfirm, onAdjust }: TestDriveProps) {
           <div className="text-center">
             <p className="text-sm font-medium mb-2">How does this feel?</p>
             <p className="text-xs text-muted-foreground">
-              You've tested your identity with {messageCount} {messageCount === 1 ? 'question' : 'questions'}.
+              You&apos;ve tested your identity with {messageCount} {messageCount === 1 ? 'question' : 'questions'}.
               Ready to continue?
             </p>
           </div>

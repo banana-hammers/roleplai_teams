@@ -8,7 +8,6 @@
 const ALGORITHM = 'AES-GCM'
 const KEY_LENGTH = 256
 const IV_LENGTH = 12 // 96 bits for GCM
-const SALT_LENGTH = 16
 
 /**
  * Derive an encryption key from the master key and user ID

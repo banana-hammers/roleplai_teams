@@ -102,6 +102,7 @@ export function InterviewChat({
   // Track question count and detect completion
   useEffect(() => {
     const assistantMessages = messages.filter(m => m.role === 'assistant')
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- deriving count from messages
     setQuestionCount(assistantMessages.length)
 
     if (assistantMessages.length >= completionConfig.minMessages) {

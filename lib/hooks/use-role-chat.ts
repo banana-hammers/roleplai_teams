@@ -199,7 +199,7 @@ export function useRoleChat({ roleId, conversationId: initialConversationId, onC
       const reader = response.body.getReader()
       const decoder = new TextDecoder()
       let buffer = ''
-      let currentToolCalls: Array<{ id?: string; name: string; input?: Record<string, unknown>; result?: string; status?: 'running' | 'completed' | 'error'; skillProgress?: SkillProgress }> = []
+      const currentToolCalls: Array<{ id?: string; name: string; input?: Record<string, unknown>; result?: string; status?: 'running' | 'completed' | 'error'; skillProgress?: SkillProgress }> = []
 
       while (true) {
         const { done, value } = await reader.read()
@@ -534,7 +534,7 @@ export function useRoleChat({ roleId, conversationId: initialConversationId, onC
         id: m.id,
         role: m.role as 'user' | 'assistant',
         content: m.content,
-        toolCalls: m.metadata?.toolCalls || undefined,
+        toolCalls: (m.metadata?.toolCalls as Message['toolCalls']) || undefined,
         usage: m.metadata?.usage as MessageUsage | undefined,
       }))
 

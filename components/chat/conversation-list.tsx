@@ -66,12 +66,14 @@ export function ConversationList({
   }, [roleId])
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- async data fetch on mount
     loadConversations()
   }, [loadConversations])
 
   // Reload conversations when active conversation changes (new conversation created)
   useEffect(() => {
     if (activeConversationId && !conversations.find(c => c.id === activeConversationId)) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- async data fetch on change
       loadConversations()
     }
   }, [activeConversationId, conversations, loadConversations])

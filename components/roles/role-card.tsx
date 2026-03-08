@@ -107,7 +107,7 @@ export function RoleCard({ role, isSelected, onSelect, className }: RoleCardProp
           tabIndex={0}
           title="Clone role"
           onClick={handleClone}
-          onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') handleClone(e as any) }}
+          onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') handleClone(e as unknown as React.MouseEvent) }}
           className={cn(
             'shrink-0 p-1.5 rounded-lg',
             'text-muted-foreground/50 hover:text-foreground',

@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import Link from 'next/link'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -124,7 +125,7 @@ export function McpServersSettings({ mcpServers: initialServers }: McpServersSet
               </p>
             </div>
             <Button variant="outline" asChild>
-              <a href="/roles">Go to Roles</a>
+              <Link href="/roles">Go to Roles</Link>
             </Button>
           </div>
         )}

@@ -109,7 +109,7 @@ export function Completion({ aliasName, identity, writingSamples }: CompletionPr
 
       {/* What's Next Section */}
       <div className="rounded-lg border bg-muted/50 p-6 space-y-4">
-        <h3 className="text-lg font-semibold">What's next?</h3>
+        <h3 className="text-lg font-semibold">What&apos;s next?</h3>
 
         <div className="space-y-3 text-sm">
           <p>

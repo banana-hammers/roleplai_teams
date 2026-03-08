@@ -5,8 +5,8 @@ export interface Skill {
   name: string
   description: string
   prompt_template: string
-  input_schema: Record<string, any>
-  tool_constraints: Record<string, any>
+  input_schema: Record<string, unknown>
+  tool_constraints: Record<string, unknown>
   version: number
   created_at: string
   updated_at: string

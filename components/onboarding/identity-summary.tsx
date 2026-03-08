@@ -39,7 +39,7 @@ export function IdentitySummary({
           </h2>
         </div>
         <p className="text-muted-foreground">
-          Here's your identity! Let me show you how this translates to real conversations...
+          Here&apos;s your identity! Let me show you how this translates to real conversations...
         </p>
       </div>
 
@@ -157,7 +157,7 @@ export function IdentitySummary({
             </p>
             <div className="rounded bg-background p-3 text-sm">
               <span className="font-medium">AI Response:</span>{' '}
-              <span className="text-muted-foreground">"{example.response}"</span>
+              <span className="text-muted-foreground">&ldquo;{example.response}&rdquo;</span>
             </div>
             <div className="flex flex-wrap gap-1">
               {example.traits.filter(Boolean).map((trait, tidx) => (

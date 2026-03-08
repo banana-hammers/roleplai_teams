@@ -6,8 +6,8 @@
 
 import type Anthropic from '@anthropic-ai/sdk'
 import type { McpServer } from '@/types/mcp'
-import type { McpTool, McpToolServerMapping } from '@/lib/mcp/types'
-import { McpConnectionError, McpErrorInfo, toMcpErrorInfo, formatMcpErrorForAI } from '@/lib/mcp/errors'
+import type { McpToolServerMapping } from '@/lib/mcp/types'
+import { McpErrorInfo, toMcpErrorInfo, formatMcpErrorForAI } from '@/lib/mcp/errors'
 import { listMcpTools, callMcpTool } from '@/lib/mcp/client'
 import { isSseServer } from '@/types/mcp'
 

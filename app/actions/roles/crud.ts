@@ -119,9 +119,12 @@ export async function getUserRolesWithSkills() {
   }
 
   // Transform nested data to match the existing RoleWithSkills shape
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Supabase nested select returns dynamic shape
   const enrichedRoles = roles.map((role: any) => {
     const resolved_skills = (role.role_skills || [])
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Supabase nested join type
       .map((rs: any) => rs.skills)
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- filter narrows type
       .filter((s: any): s is { id: string; name: string; description: string | null } => s !== undefined && s !== null)
 
     const { role_skills: _rs, role_lore: roleLore, ...roleData } = role

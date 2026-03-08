@@ -153,7 +153,7 @@ export function Missions() {
                       <span className="text-muted-foreground"> handing off to </span>
                       <span className="font-medium">{mission.handoff.to}</span>
                       <p className="mt-1 text-xs text-muted-foreground">
-                        "{mission.handoff.message}"
+                        &ldquo;{mission.handoff.message}&rdquo;
                       </p>
                     </div>
                   </div>

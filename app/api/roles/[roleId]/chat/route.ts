@@ -657,7 +657,7 @@ function streamAnthropic(params: AnthropicStreamParams): Response {
         }))
 
         // Agentic loop: keep going until no more tool calls
-        let currentMessages = [...anthropicMessages]
+        const currentMessages = [...anthropicMessages]
         let continueLoop = true
         let loopIterations = 0
         const MAX_LOOP_ITERATIONS = 10

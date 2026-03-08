@@ -106,7 +106,7 @@ import type { GenericToolDefinition } from './types'
  * Get built-in tool definitions in provider-agnostic format.
  * OpenAI doesn't support Anthropic's server tools (web_search), so we skip those.
  */
-export function getBuiltinToolsForProvider(provider: 'anthropic' | 'openai'): GenericToolDefinition[] {
+export function getBuiltinToolsForProvider(_provider: 'anthropic' | 'openai'): GenericToolDefinition[] {
   const tools: GenericToolDefinition[] = [
     {
       name: 'web_fetch',

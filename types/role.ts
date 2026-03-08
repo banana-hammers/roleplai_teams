@@ -6,7 +6,7 @@ export interface Role {
   name: string
   description: string
   instructions: string
-  identity_facets: Record<string, any>
+  identity_facets: Record<string, unknown>
   approval_policy: ApprovalPolicy
   model_preference: string | null
   created_at: string

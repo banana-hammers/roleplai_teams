@@ -225,7 +225,7 @@ export function ChatInterface({ roleId, roleName, tierConfig }: ChatInterfacePro
             onKeyDown={(e) => {
               if (e.key === 'Enter' && !e.shiftKey) {
                 e.preventDefault()
-                handleSubmit(e as any)
+                handleSubmit(e as unknown as React.FormEvent<HTMLFormElement>)
               }
             }}
           />
