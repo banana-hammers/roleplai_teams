@@ -13,12 +13,16 @@ export default function RolesPage() {
   const router = useRouter()
   const [roles, setRoles] = useState<RoleWithSkills[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     async function loadRoles() {
       const result = await getUserRolesWithSkills()
       if (result.success) {
         setRoles(result.roles as RoleWithSkills[])
+      } else {
+        console.error('Failed to load roles:', result.error)
+        setError(result.error || 'Failed to load roles')
       }
       setIsLoading(false)
     }
@@ -54,7 +58,13 @@ export default function RolesPage() {
           )}
         </div>
 
-        {roles.length === 0 ? (
+        {error && (
+          <div className="mb-6 rounded-lg border border-destructive/50 bg-destructive/10 p-4 text-destructive text-sm">
+            {error}
+          </div>
+        )}
+
+        {roles.length === 0 && !error ? (
           /* Enhanced empty state */
           <div className="flex flex-col items-center justify-center min-h-[60vh] px-4">
             {/* Animated illustration */}

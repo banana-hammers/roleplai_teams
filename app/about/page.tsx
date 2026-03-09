@@ -5,17 +5,20 @@ import { Button } from "@/components/ui/button";
 import {
   ArrowRight,
   Fingerprint,
-  Trash2,
-  TrendingUp,
+  MapPin,
   Monitor,
   Cloud,
   Bot,
+  Shield,
+  TrendingUp,
+  Users,
+  Zap,
 } from "lucide-react";
 
 export const metadata = {
-  title: "About | Roleplai Teams",
+  title: "About | RoleplAI Teams — AI for Canadian SaaS Startups",
   description:
-    "80+ years building products that work. We cut through AI hype to build technology that elevates what humans can do.",
+    "Built in Canada for scaling SaaS teams. RoleplAI Teams gives early-stage startups AI agents that carry their voice and expertise — so lean teams ship like large ones.",
 };
 
 const eras = [
@@ -23,40 +26,64 @@ const eras = [
     icon: Monitor,
     era: "Computers",
     decade: "1980s",
-    description: "One person could produce professional work that once required entire departments",
+    description:
+      "A solo founder could produce professional work that once required an entire department",
   },
   {
     icon: Cloud,
     era: "SaaS",
     decade: "2000s",
-    description: "Distributed teams could collaborate in real-time with tools once reserved for enterprises",
+    description:
+      "Startups could compete with enterprises using the same tools at a fraction of the cost",
   },
   {
     icon: Bot,
     era: "AI Agents",
     decade: "Now",
-    description: "You can delegate open-ended work to AI that carries your voice and judgment",
+    description:
+      "A lean startup team can delegate open-ended work to AI that carries their brand voice and domain expertise",
   },
 ];
 
 const pillars = [
   {
     icon: Fingerprint,
-    title: "Your Voice, Amplified",
+    title: "Brand Voice at Scale",
     description:
-      "RoleplAIrs carry your expertise and values into every interaction. No more generic AI outputs that sound like everyone else.",
+      "Every RoleplAIr carries the startup's unique voice. Customer support, sales outreach, and content stay on-brand without a review loop.",
   },
   {
     icon: TrendingUp,
-    title: "Evolve How You Work",
+    title: "Ship More With Less",
     description:
-      "Technology should fit your workflow, not the other way around. RoleplAIrs learn your patterns and adapt to how your team actually operates.",
+      "A 5-person startup gets the output velocity of a much larger team. RoleplAIrs handle drafting, research, customer responses — so founders focus on strategy.",
   },
   {
-    icon: Trash2,
-    title: "Focus on What Matters",
+    icon: Zap,
+    title: "Compound Over Time",
     description:
-      "The tedious disappears. You spend time on meaningful, creative work — the parts of your job that drew you here in the first place.",
+      "Unlike prompt-and-pray tools, RoleplAIrs improve as the team uses them. Skills, lore, and identity build up into a durable knowledge asset.",
+  },
+];
+
+const canadianPoints = [
+  {
+    icon: MapPin,
+    title: "Canadian-Founded, Canadian-Hosted",
+    description:
+      "Data residency and privacy compliance matter. Built by a Canadian team that understands PIPEDA and provincial privacy requirements.",
+  },
+  {
+    icon: Users,
+    title: "Designed for Lean Teams",
+    description:
+      "Purpose-built for the 3–15 person SaaS companies that make up incubator cohorts. Not enterprise bloatware scaled down.",
+  },
+  {
+    icon: Shield,
+    title: "BYO API Keys, Control Costs",
+    description:
+      "Startups bring their own AI provider keys and control costs directly. No hidden markup on API calls.",
   },
 ];
 
@@ -98,16 +125,16 @@ export default function AboutPage() {
 
           <div className="mx-auto max-w-4xl px-6 py-24 text-center sm:py-32">
             <h1 className="font-display text-4xl font-bold tracking-tight sm:text-5xl lg:text-6xl">
-              Technology Has Always{" "}
+              Give Every Portfolio Company a{" "}
               <span className="bg-linear-to-r from-primary via-indigo-400 to-accent bg-clip-text text-transparent">
-                Elevated
-              </span>{" "}
-              What Humans Can Do
+                10x Team
+              </span>
             </h1>
             <p className="mx-auto mt-6 max-w-2xl text-lg text-muted-foreground sm:text-xl">
-              From computers to SaaS to AI — each era amplified human
-              capabilities. We&apos;re building the next chapter: computers that
-              think on your behalf and handle the open-ended work.
+              Your startups are hiring cautiously and shipping fast. RoleplAI
+              Teams gives lean SaaS teams AI agents that carry their
+              founders&apos; voice and expertise — so a team of 5 operates like
+              a team of 50.
             </p>
           </div>
         </section>
@@ -147,10 +174,10 @@ export default function AboutPage() {
           <div className="mx-auto max-w-4xl px-6">
             <div className="text-center">
               <h2 className="font-display text-2xl font-bold tracking-tight sm:text-3xl">
-                The Problem With Most AI Tools
+                Your Startups Tried AI. Here&apos;s Why It Didn&apos;t Stick.
               </h2>
               <p className="mt-2 text-xl font-medium text-primary">
-                They Create More Work, Not Less
+                Generic Tools Create More Work for Lean Teams
               </p>
             </div>
 
@@ -161,7 +188,11 @@ export default function AboutPage() {
                     <span className="text-sm font-bold">1</span>
                   </div>
                   <p className="text-lg text-muted-foreground">
-                    <span className="font-medium text-foreground">They generate slop</span> — generic outputs that sound like everyone else and require constant editing.
+                    <span className="font-medium text-foreground">
+                      Generic outputs dilute brand
+                    </span>{" "}
+                    — AI-generated content strips away the differentiation
+                    startups worked hard to build.
                   </p>
                 </div>
                 <div className="flex items-start gap-3">
@@ -169,7 +200,11 @@ export default function AboutPage() {
                     <span className="text-sm font-bold">2</span>
                   </div>
                   <p className="text-lg text-muted-foreground">
-                    <span className="font-medium text-foreground">They replace human judgment</span> instead of enhancing it. You end up reviewing AI work instead of doing meaningful work.
+                    <span className="font-medium text-foreground">
+                      Founders become AI editors
+                    </span>{" "}
+                    — Instead of building product and closing deals, founders
+                    spend hours fixing AI output.
                   </p>
                 </div>
                 <div className="flex items-start gap-3">
@@ -177,29 +212,36 @@ export default function AboutPage() {
                     <span className="text-sm font-bold">3</span>
                   </div>
                   <p className="text-lg text-muted-foreground">
-                    <span className="font-medium text-foreground">They don&apos;t understand your context</span> — your voice, your standards, how your team actually operates.
+                    <span className="font-medium text-foreground">
+                      Zero context about the business
+                    </span>{" "}
+                    — Off-the-shelf AI doesn&apos;t know the startup&apos;s ICP,
+                    tone, or competitive landscape.
                   </p>
                 </div>
               </div>
 
               <div className="mt-8 border-t border-border/50 pt-6">
                 <p className="text-lg font-medium text-foreground">
-                  We built RoleplAIrs differently. AI that learns YOUR voice, YOUR workflows, YOUR standards — and gets better the more you use it.
+                  RoleplAI Teams is different. Each startup creates AI agents
+                  that learn their voice, their market, and their workflows —
+                  and get better over time.
                 </p>
               </div>
             </div>
           </div>
         </section>
 
-        {/* Our Philosophy */}
+        {/* Why Incubators Choose RoleplAI Teams */}
         <section className="border-y border-border/40 bg-muted/20 py-16 sm:py-24">
           <div className="mx-auto max-w-6xl px-6">
             <div className="text-center">
               <h2 className="font-display text-2xl font-bold tracking-tight sm:text-3xl">
-                What We Believe
+                Why Incubators Choose RoleplAI Teams
               </h2>
               <p className="mt-4 max-w-2xl mx-auto text-lg text-muted-foreground">
-                The &ldquo;yes, and...&rdquo; culture that makes collaboration magical is the same spirit behind the Agile Manifesto: individuals and interactions over processes and tools. That&apos;s how we build.
+                Your portfolio companies need tools that deliver ROI in weeks,
+                not months. Here&apos;s what we&apos;ve built for them.
               </p>
             </div>
 
@@ -219,32 +261,69 @@ export default function AboutPage() {
           </div>
         </section>
 
-        {/* Our Vision */}
+        {/* Built for the Canadian SaaS Ecosystem */}
         <section className="py-16 sm:py-24">
+          <div className="mx-auto max-w-6xl px-6">
+            <div className="text-center">
+              <h2 className="font-display text-2xl font-bold tracking-tight sm:text-3xl">
+                Built for the Canadian SaaS Ecosystem
+              </h2>
+            </div>
+
+            <div className="mt-12 grid gap-8 md:grid-cols-3">
+              {canadianPoints.map((point) => (
+                <div
+                  key={point.title}
+                  className="relative rounded-xl border border-border/50 bg-card p-6 text-center"
+                >
+                  <div className="mx-auto mb-4 flex size-14 items-center justify-center rounded-2xl bg-primary/10">
+                    <point.icon className="size-7 text-primary" />
+                  </div>
+                  <h3 className="mt-1 text-xl font-semibold">{point.title}</h3>
+                  <p className="mt-3 text-sm text-muted-foreground">
+                    {point.description}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* Why We're Building This */}
+        <section className="border-y border-border/40 bg-muted/20 py-16 sm:py-24">
           <div className="mx-auto max-w-4xl px-6">
             <div className="text-center">
               <h2 className="font-display text-2xl font-bold tracking-tight sm:text-3xl">
                 Why We&apos;re Building This
               </h2>
               <p className="mx-auto mt-8 max-w-3xl text-xl text-muted-foreground">
-                We&apos;ve watched AI hype cycles come and go. We know what lasts: technology that makes humans more capable, not less relevant.
+                We&apos;ve spent 80+ combined years building products at
+                startups and enterprises. We know what scales: technology that
+                makes small teams dangerous, not tools that require a small team
+                just to manage them.
               </p>
               <p className="mx-auto mt-6 max-w-3xl text-xl font-medium text-foreground">
-                RoleplAIrs are AI agents that think on your behalf — handling open-ended tasks while carrying your voice, your expertise, and your standards. Technology doing what it was always meant to do.
+                RoleplAI Teams is the AI platform we wish existed when we were
+                scaling our own companies. AI agents that carry your
+                founders&apos; judgment, learn your startups&apos; domains, and
+                compound in value — not another chatbot with a blank prompt.
               </p>
             </div>
           </div>
         </section>
 
         {/* Team Section */}
-        <section className="border-y border-border/40 bg-muted/20 py-16 sm:py-24">
+        <section className="py-16 sm:py-24">
           <div className="mx-auto max-w-6xl px-6">
             <div className="text-center">
               <h2 className="font-display text-2xl font-bold tracking-tight sm:text-3xl">
                 The Team
               </h2>
               <p className="mt-4 max-w-2xl mx-auto text-lg text-muted-foreground">
-                80+ combined years building products that work. We&apos;ve seen every hype cycle and learned what actually matters: technology that elevates humans.
+                A Canadian founding team with 80+ combined years building
+                products that ship. We&apos;ve scaled systems at EA, led product
+                at startups and enterprises, and published ML research. We know
+                what hype looks like — and what works.
               </p>
             </div>
 
@@ -284,17 +363,22 @@ export default function AboutPage() {
 
           <div className="mx-auto max-w-4xl px-6 text-center">
             <h2 className="font-display text-2xl font-bold tracking-tight sm:text-3xl">
-              Ready to Elevate Your Team?
+              Let&apos;s Talk About Your Portfolio
             </h2>
             <p className="mt-4 text-lg text-muted-foreground">
-              Meet Nova, your AI guide. In 5 minutes, capture your voice and start building AI that actually sounds like you.
+              We partner with incubators to roll out RoleplAI Teams across
+              cohorts. Book a call to see how your startups can ship faster with
+              AI agents that actually know their business.
             </p>
-            <div className="mt-8">
+            <div className="mt-8 flex items-center justify-center gap-4">
               <Button asChild variant="gradient" size="lg" className="gap-2">
-                <Link href="/signup">
-                  Get Started
+                <Link href="/contact">
+                  Book a Demo
                   <ArrowRight className="size-4" />
                 </Link>
+              </Button>
+              <Button asChild variant="outline" size="lg">
+                <Link href="/signup">Try It Free</Link>
               </Button>
             </div>
           </div>

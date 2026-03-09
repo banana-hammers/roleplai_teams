@@ -97,6 +97,7 @@ export function IdentitySettings({ identityCore }: IdentitySettingsProps) {
   // Re-interview state
   const [showConfirmDialog, setShowConfirmDialog] = useState(false)
   const [showReInterview, setShowReInterview] = useState(false)
+  const [reInterviewKey, setReInterviewKey] = useState(0)
 
   if (!identityCore) {
     return (
@@ -259,6 +260,7 @@ export function IdentitySettings({ identityCore }: IdentitySettingsProps) {
         </CardHeader>
         <CardContent>
           <IdentityReInterview
+            key={reInterviewKey}
             onComplete={handleSaveReInterview}
             onCancel={() => setShowReInterview(false)}
           />
@@ -963,6 +965,7 @@ export function IdentitySettings({ identityCore }: IdentitySettingsProps) {
               <AlertDialogAction
                 onClick={() => {
                   setShowConfirmDialog(false)
+                  setReInterviewKey(k => k + 1)
                   setShowReInterview(true)
                 }}
               >

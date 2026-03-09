@@ -7,6 +7,7 @@ const footerLinks = {
   ],
   Company: [
     { name: "About", href: "/about" },
+    { name: "Blog", href: "/blog" },
   ],
 };
 
@@ -51,7 +52,7 @@ export function Footer() {
         <div className="mt-12 border-t border-border/40 pt-8">
           <p className="text-center text-sm text-muted-foreground">
             &copy; {new Date().getFullYear()} Roleplai Teams. All rights
-            reserved.
+            reserved. Canadian-founded.
           </p>
         </div>
       </div>

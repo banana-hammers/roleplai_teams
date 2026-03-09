@@ -102,13 +102,12 @@ export async function getUserRolesWithSkills() {
 
   const identityVoice = identityCore?.voice || null
 
-  // Single query: fetch roles with nested skills and lore counts
+  // Fetch roles with nested skills (role_lore queried separately due to FK naming issue)
   const { data: roles, error: rolesError } = await supabase
     .from('roles')
     .select(`
       *,
-      role_skills(skill_id, skills(id, name, description)),
-      role_lore(lore_id)
+      role_skills(skill_id, skills(id, name, description))
     `)
     .eq('user_id', user.id)
     .order('created_at', { ascending: false })
@@ -116,6 +115,23 @@ export async function getUserRolesWithSkills() {
   if (rolesError || !roles) {
     console.error('Error fetching roles:', rolesError)
     return { success: false, error: 'Failed to fetch roles', roles: [] }
+  }
+
+  // Fetch lore counts per role in a single query
+  const roleIds = roles.map((r) => r.id)
+  let loreCounts: Record<string, number> = {}
+  if (roleIds.length > 0) {
+    const { data: loreRows } = await supabase
+      .from('role_lore')
+      .select('role_id')
+      .in('role_id', roleIds)
+
+    if (loreRows) {
+      loreCounts = loreRows.reduce<Record<string, number>>((acc, row) => {
+        acc[row.role_id] = (acc[row.role_id] || 0) + 1
+        return acc
+      }, {})
+    }
   }
 
   // Transform nested data to match the existing RoleWithSkills shape
@@ -127,12 +143,12 @@ export async function getUserRolesWithSkills() {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any -- filter narrows type
       .filter((s: any): s is { id: string; name: string; description: string | null } => s !== undefined && s !== null)
 
-    const { role_skills: _rs, role_lore: roleLore, ...roleData } = role
+    const { role_skills: _rs, ...roleData } = role
 
     return {
       ...roleData,
       resolved_skills,
-      lore_count: (roleLore || []).length,
+      lore_count: loreCounts[role.id] || 0,
       identity_voice: identityVoice,
     }
   })

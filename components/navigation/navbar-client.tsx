@@ -26,6 +26,7 @@ export function NavbarClient({ variant, user }: NavbarClientProps) {
 
   // Landing nav links (only shown on landing/about pages when not authenticated)
   const landingLinks = [
+    { href: '/blog', label: 'Blog' },
     { href: '/about', label: 'About' },
   ]
 

@@ -38,43 +38,43 @@ export type IndustryData = {
   phaseThree: PhaseThreeData;
 };
 
-// Single tech-focused example for all landing page content
+// SaaS startup-focused example for all landing page content
 const techData: IndustryData = {
-  label: "Tech",
+  label: "SaaS Startup",
   icon: Code2,
   roleplAIr: {
-    name: "Tech Lead Assistant",
-    description: "Your voice, amplified",
+    name: "Founder's Right Hand",
+    description: "Wears every hat, knows every context",
   },
-  lore: ["Architecture Docs", "Code Standards", "Team Playbook"],
+  lore: ["ICP & Personas", "Brand Voice Guide", "Competitive Landscape"],
   skills: [
-    { name: "Code Review", progress: 85 },
-    { name: "Documentation", progress: 70 },
+    { name: "Outbound Messaging", progress: 85 },
+    { name: "Customer Onboarding", progress: 70 },
   ],
   mission: {
-    name: "Launch New Feature",
-    description: "Cross-functional collaboration",
+    name: "Close First 10 Customers",
+    description: "Coordinated sales & onboarding",
     progress: 65,
     team: [
-      { name: "Tech Lead", color: "bg-roles-accent", owner: "you" },
-      { name: "Product", color: "bg-skills-accent", owner: "teammate" },
-      { name: "Design", color: "bg-identity-accent", owner: "teammate" },
+      { name: "Sales Agent", color: "bg-roles-accent", owner: "you" },
+      { name: "Onboarding", color: "bg-skills-accent", owner: "you" },
+      { name: "Support", color: "bg-identity-accent", owner: "teammate" },
     ],
     handoff: {
-      from: "Tech Lead",
-      to: "Product",
-      message: "Implementation ready for review",
+      from: "Sales Agent",
+      to: "Onboarding",
+      message: "Deal closed — kicking off implementation",
     },
   },
   phaseTwo: {
     benefits: [
-      "Learns your team's coding standards",
-      "Remembers architectural decisions",
-      "Adapts to your review style",
+      "Learns your startup's ICP and messaging",
+      "Remembers every customer conversation",
+      "Adapts to your founder's voice",
     ],
   },
   phaseThree: {
-    collaborationHighlight: "Your engineering + teammate's product = aligned execution",
+    collaborationHighlight: "Your sales agent + onboarding agent = zero-gap handoffs",
   },
 };
 

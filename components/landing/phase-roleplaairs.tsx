@@ -50,25 +50,25 @@ const components: {
   {
     icon: Fingerprint,
     name: "Identity Core",
-    description: "Your voice and expertise, carried into every interaction",
+    description: "Your founder's voice carried into every customer touchpoint",
     color: "identity-accent",
   },
   {
     icon: BookOpen,
     name: "Lore",
-    description: "The context that makes your team unique",
+    description: "Your ICP, competitive landscape, brand guidelines — context that makes output startup-ready",
     color: "context-accent",
   },
   {
     icon: Zap,
     name: "Skills",
-    description: "Capabilities that evolve with your workflow",
+    description: "Capabilities that compound as your team uses them — not prompt-and-pray",
     color: "skills-accent",
   },
   {
     icon: Wrench,
     name: "Tools",
-    description: "Integrations coming soon",
+    description: "Connect your startup's stack via MCP integrations",
     color: "muted",
     muted: true,
   },
@@ -84,12 +84,12 @@ export function PhaseRoleplAIrs() {
         <div className="text-center">
           <h2 className="font-display text-3xl font-bold tracking-tight sm:text-4xl lg:text-5xl">
             <span className="bg-linear-to-r from-roles-accent to-accent bg-clip-text text-transparent">
-              Evolve
+              Build
             </span>{" "}
-            How Your Team Works
+            AI Agents That Evolve With Your Startup
           </h2>
           <p className="mt-4 text-lg text-muted-foreground">
-            Build AI collaborators that carry your voice and adapt to your workflow
+            RoleplAIrs learn your business and grow with your team — not generic bots you have to re-prompt every time
           </p>
         </div>
 

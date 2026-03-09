@@ -50,25 +50,25 @@ const features: {
   {
     icon: Users2,
     title: "Cross-Functional Teams",
-    description: "Bring together RoleplAIrs across roles and disciplines",
+    description: "Sales, support, marketing — RoleplAIrs that cover every function",
     color: "roles-accent",
   },
   {
     icon: AtSign,
     title: "Seamless Handoffs",
-    description: "Context flows between team members without repetition",
+    description: "Context flows from outbound to onboarding without repetition",
     color: "context-accent",
   },
   {
     icon: TrendingUp,
     title: "Shared Progress",
-    description: "Everyone sees the same picture, always in sync",
+    description: "Everyone sees the same picture — investors, founders, team",
     color: "skills-accent",
   },
   {
     icon: CalendarClock,
     title: "Async Collaboration",
-    description: "Work moves forward even when you're not online",
+    description: "Your startup ships around the clock, even with a lean team",
     color: "missions-accent",
   },
 ];
@@ -92,10 +92,10 @@ export function PhaseMissions() {
             <span className="bg-linear-to-r from-missions-accent to-context-accent bg-clip-text text-transparent">
               Scale
             </span>{" "}
-            Across Your Organization
+            As Your Startup Grows
           </h2>
           <p className="mt-4 text-lg text-muted-foreground">
-            When everyone has a RoleplAIr, the whole team moves faster
+            Your sales RoleplAIr hands off to onboarding seamlessly — every agent shares context, nothing falls through the cracks
           </p>
         </div>
 

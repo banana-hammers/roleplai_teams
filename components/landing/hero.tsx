@@ -16,25 +16,28 @@ export function Hero() {
         <div className="flex flex-col items-center text-center">
           {/* Headline */}
           <h1 className="max-w-4xl font-display text-5xl font-bold tracking-tight sm:text-6xl lg:text-7xl">
-            Elevate What Your{" "}
+            AI Agents That Carry Your{" "}
             <span className="bg-linear-to-r from-primary via-indigo-400 to-accent bg-clip-text text-transparent">
-              Team Can Do
+              Startup&apos;s Voice
             </span>
           </h1>
 
           {/* Subheadline */}
           <p className="mt-6 max-w-2xl text-lg text-muted-foreground sm:text-xl">
-            Not another AI tool that does the work for you.
-            <br />
-            RoleplAIrs amplify your team&apos;s voice, expertise, and creativity.
+            Your lean team is hiring cautiously and shipping fast. RoleplAIrs are AI agents that know your brand, your market, and your workflows — so a team of 5 ships like a team of 50.
           </p>
 
           {/* CTA */}
-          <div className="mt-10">
+          <div className="mt-10 flex flex-col items-center gap-3 sm:flex-row">
             <Button asChild variant="gradient" size="lg" className="gap-2">
-              <Link href="/signup">
-                Get Started
+              <Link href="/about#contact">
+                Book a Demo
                 <ArrowRight className="size-4" />
+              </Link>
+            </Button>
+            <Button asChild variant="outline" size="lg">
+              <Link href="/signup">
+                Try It Free
               </Link>
             </Button>
           </div>
@@ -54,7 +57,7 @@ export function Hero() {
               <div className="flex-1 text-left">
                 <h3 className="font-semibold">Your Identity Core</h3>
                 <p className="text-xs text-muted-foreground">
-                  AI that sounds like your team, not generic slop
+                  Not another chatbot with a blank prompt
                 </p>
               </div>
               <Code2 className="size-5 text-muted-foreground" />

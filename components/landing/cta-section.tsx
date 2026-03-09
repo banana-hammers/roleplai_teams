@@ -22,21 +22,26 @@ export function CTASection() {
           </div>
 
           <h2 className="max-w-2xl font-display text-3xl font-bold tracking-tight sm:text-4xl lg:text-5xl">
-            Ready to{" "}
+            Let&apos;s Talk About{" "}
             <span className="bg-linear-to-r from-primary to-accent bg-clip-text text-transparent">
-              Elevate Your Team?
+              Your Portfolio
             </span>
           </h2>
 
           <p className="mt-6 max-w-xl text-lg text-muted-foreground">
-            Meet Nova, your AI guide. In 5 minutes, capture your voice and start building AI that actually sounds like you.
+            We partner with incubators to roll out RoleplAI Teams across cohorts. See how your startups can ship faster with AI agents that actually know their business.
           </p>
 
-          <div className="mt-10">
+          <div className="mt-10 flex flex-col items-center gap-3 sm:flex-row">
             <Button asChild variant="gradient" size="lg" className="gap-2">
-              <Link href="/signup">
-                Get Started
+              <Link href="/about#contact">
+                Book a Demo
                 <ArrowRight className="size-4" />
+              </Link>
+            </Button>
+            <Button asChild variant="outline" size="lg">
+              <Link href="/signup">
+                Try It Free
               </Link>
             </Button>
           </div>

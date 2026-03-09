@@ -45,7 +45,7 @@ export async function updateIdentityCore(
 
     if (error) {
       console.error('Identity core update error:', error)
-      return { success: false, error: 'Failed to update identity core' }
+      return { success: false, error: `Failed to update identity core: ${error.message}` }
     }
 
     if (!rows || rows.length === 0) {
