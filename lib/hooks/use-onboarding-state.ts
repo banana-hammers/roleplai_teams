@@ -1,11 +1,23 @@
 'use client'
 
 import type { ExtractedPersonality } from '@/lib/onboarding/generate-identity'
+import type { LoreType } from '@/types/identity'
 import { useLocalStorage } from '@/lib/hooks/use-local-storage'
 
+export interface ExtractedLoreEntry {
+  name: string
+  content: string
+  type: LoreType
+}
+
 export interface OnboardingLocalState {
-  currentStep: number // 1-5
+  currentStep: number // 1-7
   aliasName?: string
+  loremasterMessages?: Array<{ role: string; content: string }>
+  extractedLore?: ExtractedLoreEntry[]
+  companyName?: string
+  loreSaved?: boolean
+  loremasterSkipped?: boolean
   interviewMessages?: Array<{ role: string; content: string }>
   extractedPersonality?: ExtractedPersonality
   testDriveMessages?: Array<{ role: string; content: string }>

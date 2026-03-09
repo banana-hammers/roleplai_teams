@@ -1,9 +1,9 @@
 'use client'
 
 import { cn } from '@/lib/utils'
-import { Sparkle, Hammer } from 'lucide-react'
+import { Sparkle, Hammer, ScrollText } from 'lucide-react'
 
-export type CharacterName = 'Nova' | 'Forge'
+export type CharacterName = 'Nova' | 'Forge' | 'Loremaster'
 
 export interface CharacterAvatarProps {
   character: CharacterName
@@ -38,6 +38,15 @@ const characters: Record<CharacterName, {
     idleAnimation: 'animate-[orb-breathe_3s_ease-in-out_infinite]',
     typingAnimation: 'animate-[forge-hammer_0.6s_ease-in-out_infinite]',
     iconAnimation: '',
+  },
+  Loremaster: {
+    icon: ScrollText,
+    gradient: 'from-emerald-400 via-teal-500 to-green-600',
+    glowColor: 'shadow-[0_0_8px_oklch(0.65_0.18_160),0_0_16px_oklch(0.65_0.18_160)]',
+    ringColor: 'bg-emerald-400/20',
+    idleAnimation: 'animate-[orb-breathe_3s_ease-in-out_infinite]',
+    typingAnimation: 'animate-[loremaster-scribble_0.8s_ease-in-out_infinite]',
+    iconAnimation: 'animate-[loremaster-flip_3s_ease-in-out_infinite]',
   },
 }
 
@@ -138,5 +147,5 @@ export function CharacterAvatar({
 
 /** Check if a sender name corresponds to a known character */
 export function isCharacterName(name: string | undefined): name is CharacterName {
-  return name === 'Nova' || name === 'Forge'
+  return name === 'Nova' || name === 'Forge' || name === 'Loremaster'
 }

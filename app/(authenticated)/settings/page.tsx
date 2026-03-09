@@ -38,6 +38,13 @@ export default async function SettingsPage() {
     .eq('user_id', user.id)
     .maybeSingle()
 
+  // Fetch user's lore entries
+  const { data: lore } = await supabase
+    .from('lore')
+    .select('*')
+    .eq('user_id', user.id)
+    .order('created_at', { ascending: false })
+
   return (
     <div className="min-h-screen bg-background">
       <main className="mx-auto max-w-4xl px-4 py-8">
@@ -47,6 +54,7 @@ export default async function SettingsPage() {
           profile={profile}
           apiKeys={apiKeys || []}
           mcpServers={mcpServers || []}
+          lore={lore || []}
           userEmail={user.email || ''}
         />
       </main>

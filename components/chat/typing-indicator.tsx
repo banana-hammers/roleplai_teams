@@ -32,6 +32,7 @@ export interface TypingIndicatorProps {
 const characterDotColors: Record<string, string> = {
   Nova: 'bg-cyan-400/60',
   Forge: 'bg-orange-400/60',
+  Loremaster: 'bg-emerald-400/60',
 }
 
 export function TypingIndicator({ senderName = 'Assistant', tierConfig, className }: TypingIndicatorProps) {

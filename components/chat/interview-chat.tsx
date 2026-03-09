@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { MessageBubble } from '@/components/chat/message-bubble'
 import { TypingIndicator } from '@/components/chat/typing-indicator'
+import { SkipForward } from 'lucide-react'
 
 interface CompletionConfig {
   /** Minimum assistant messages before checking for completion */
@@ -28,6 +29,10 @@ interface InterviewChatProps {
   onComplete: (messages: Array<{ role: string; content: string }>) => void
   /** Optional back button handler */
   onBack?: () => void
+  /** Optional skip handler (renders skip button in footer) */
+  onSkip?: () => void
+  /** Label for the skip button */
+  skipLabel?: string
   /** Initial message sent to start the interview */
   initialMessage: string
   /** Header title */
@@ -53,6 +58,8 @@ export function InterviewChat({
   assistantName,
   onComplete,
   onBack,
+  onSkip,
+  skipLabel,
   initialMessage,
   title,
   subtitle,
@@ -220,12 +227,24 @@ export function InterviewChat({
         </div>
       )}
 
-      {/* Back button when interview not complete */}
-      {!isComplete && onBack && (
-        <div className="flex justify-start">
-          <Button variant="outline" onClick={onBack}>
-            Back
-          </Button>
+      {/* Footer buttons when interview not complete */}
+      {!isComplete && (onBack || onSkip) && (
+        <div className="flex items-center justify-between">
+          {onBack ? (
+            <Button variant="outline" onClick={onBack}>
+              Back
+            </Button>
+          ) : <div />}
+          {onSkip && (
+            <Button
+              variant="ghost"
+              onClick={onSkip}
+              className="text-muted-foreground hover:text-foreground"
+            >
+              <SkipForward className="h-4 w-4 mr-2" />
+              {skipLabel || 'Skip'}
+            </Button>
+          )}
         </div>
       )}
     </div>

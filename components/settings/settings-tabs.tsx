@@ -6,7 +6,8 @@ import { ApiKeysSettings } from './api-keys-settings'
 import { McpServersSettings } from './mcp-servers-settings'
 import { PreferencesSettings } from './preferences-settings'
 import { IdentitySettings } from './identity-settings'
-import type { IdentityCore } from '@/types/identity'
+import { LoreSettings } from './lore-settings'
+import type { IdentityCore, Lore } from '@/types/identity'
 
 interface SettingsTabsProps {
   identityCore: IdentityCore | null
@@ -28,15 +29,17 @@ interface SettingsTabsProps {
     config: Record<string, unknown>
     is_enabled: boolean | null
   }>
+  lore: Lore[]
   userEmail: string
 }
 
-export function SettingsTabs({ identityCore, profile, apiKeys, mcpServers, userEmail }: SettingsTabsProps) {
+export function SettingsTabs({ identityCore, profile, apiKeys, mcpServers, lore, userEmail }: SettingsTabsProps) {
   return (
     <Tabs defaultValue="profile" className="space-y-6">
       <div className="overflow-x-auto scrollbar-hide -mx-4 px-4 md:mx-0 md:px-0 md:overflow-visible">
-        <TabsList className="inline-flex w-max gap-1 md:grid md:w-full md:grid-cols-5">
+        <TabsList className="inline-flex w-max gap-1 md:grid md:w-full md:grid-cols-6">
           <TabsTrigger value="identity" className="min-w-0 px-3 truncate">Identity</TabsTrigger>
+          <TabsTrigger value="lore" className="min-w-0 px-3 truncate">Lore</TabsTrigger>
           <TabsTrigger value="profile" className="min-w-0 px-3 truncate">Profile</TabsTrigger>
           <TabsTrigger value="api-keys" className="min-w-0 px-3 truncate">API Keys</TabsTrigger>
           <TabsTrigger value="mcp-servers" className="min-w-0 px-3 truncate">MCP</TabsTrigger>
@@ -46,6 +49,10 @@ export function SettingsTabs({ identityCore, profile, apiKeys, mcpServers, userE
 
       <TabsContent value="identity">
         <IdentitySettings identityCore={identityCore} />
+      </TabsContent>
+
+      <TabsContent value="lore">
+        <LoreSettings lore={lore} />
       </TabsContent>
 
       <TabsContent value="profile">
