@@ -17,7 +17,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   if (!post) return { title: 'Post Not Found' }
 
   return {
-    title: post.meta_title || `${post.title} | RoleplAI Teams Blog`,
+    title: post.meta_title || `${post.title} | Lorebound Blog`,
     description: post.meta_description || post.excerpt || '',
     openGraph: {
       title: post.meta_title || post.title,
@@ -42,7 +42,7 @@ export default async function BlogPostPage({ params }: PageProps) {
   const relatedPosts = await getRelatedPosts(post.id, categoryIds)
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Supabase nested join shape
-  const authorName = (post.profiles as any)?.full_name ?? 'RoleplAI Team'
+  const authorName = (post.profiles as any)?.full_name ?? 'Lorebound Team'
 
   return (
     <>

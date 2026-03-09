@@ -50,7 +50,7 @@ const features: {
   {
     icon: Users2,
     title: "Cross-Functional Teams",
-    description: "Sales, support, marketing — RoleplAIrs that cover every function",
+    description: "Sales, support, marketing — agents that cover every function",
     color: "roles-accent",
   },
   {
@@ -68,7 +68,7 @@ const features: {
   {
     icon: CalendarClock,
     title: "Async Collaboration",
-    description: "Your startup ships around the clock, even with a lean team",
+    description: "Your team ships around the clock, even while you sleep",
     color: "missions-accent",
   },
 ];
@@ -92,10 +92,10 @@ export function PhaseMissions() {
             <span className="bg-linear-to-r from-missions-accent to-context-accent bg-clip-text text-transparent">
               Scale
             </span>{" "}
-            As Your Startup Grows
+            Your Party Grows With You
           </h2>
           <p className="mt-4 text-lg text-muted-foreground">
-            Your sales RoleplAIr hands off to onboarding seamlessly — every agent shares context, nothing falls through the cracks
+            Deploy a team of agents that share context, coordinate handoffs, and level up together
           </p>
         </div>
 

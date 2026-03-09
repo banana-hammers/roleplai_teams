@@ -2,23 +2,23 @@
 
 import { cn } from "@/lib/utils";
 
-type Phase = "identity" | "roleplaairs" | "missions";
+type Phase = "define" | "build" | "scale";
 
 const phaseColors: Record<Phase, string> = {
-  identity: "from-identity-accent",
-  roleplaairs: "from-roles-accent to-roles-accent",
-  missions: "to-missions-accent",
+  define: "from-identity-accent",
+  build: "from-roles-accent to-roles-accent",
+  scale: "to-missions-accent",
 };
 
 const phaseDotColors: Record<Phase, string> = {
-  identity: "bg-identity-accent",
-  roleplaairs: "bg-roles-accent",
-  missions: "bg-missions-accent",
+  define: "bg-identity-accent",
+  build: "bg-roles-accent",
+  scale: "bg-missions-accent",
 };
 
 interface JourneyConnectorProps {
-  from: "identity" | "roleplaairs";
-  to: "roleplaairs" | "missions";
+  from: "define" | "build";
+  to: "build" | "scale";
   message: string;
 }
 

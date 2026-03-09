@@ -80,14 +80,14 @@ export default function LoginPage() {
       <div className="pointer-events-none absolute -bottom-24 -right-24 h-96 w-96 rounded-full bg-accent/10 blur-3xl" />
 
       <div className="mb-8 text-center">
-        <h1 className="text-display-md text-primary">Roleplai Teams</h1>
+        <h1 className="text-display-md text-primary">Lorebound</h1>
       </div>
 
       <Card className="relative w-full max-w-md bg-card/70 backdrop-blur-xl shadow-2xl">
         <CardHeader>
           <CardTitle className="text-2xl">Sign In</CardTitle>
           <CardDescription>
-            Sign in to your RoleplAI Teams account
+            Sign in to your Lorebound account
           </CardDescription>
         </CardHeader>
         <CardContent>

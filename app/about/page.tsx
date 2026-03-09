@@ -4,65 +4,61 @@ import { Footer } from "@/components/landing/footer";
 import { Button } from "@/components/ui/button";
 import {
   ArrowRight,
-  Fingerprint,
+  BookOpen,
+  Eye,
+  Layers,
+  Leaf,
   MapPin,
-  Monitor,
-  Cloud,
-  Bot,
   Shield,
-  TrendingUp,
+  Sparkles,
   Users,
-  Zap,
 } from "lucide-react";
 
 export const metadata = {
-  title: "About | RoleplAI Teams — AI for Canadian SaaS Startups",
+  title: "About | Lorebound — Our Story",
   description:
-    "Built in Canada for scaling SaaS teams. RoleplAI Teams gives early-stage startups AI agents that carry their voice and expertise — so lean teams ship like large ones.",
+    "Four founders with 80+ combined years shipping products at EA, Unbounce, FullStory, and the Canadian Forces. We built the AI identity platform we always needed.",
 };
 
-const eras = [
+const observations = [
   {
-    icon: Monitor,
-    era: "Computers",
-    decade: "1980s",
-    description:
-      "A solo founder could produce professional work that once required an entire department",
+    icon: Eye,
+    insight: "Identity resets every session",
+    detail:
+      "We watched teams paste the same brand voice guide into ChatGPT hundreds of times. The AI never remembered who it was working for — so every interaction started from zero.",
   },
   {
-    icon: Cloud,
-    era: "SaaS",
-    decade: "2000s",
-    description:
-      "Startups could compete with enterprises using the same tools at a fraction of the cost",
+    icon: Layers,
+    insight: "Knowledge doesn't compound",
+    detail:
+      "At EA, Unbounce, and FullStory, we built institutional knowledge over years. Generic AI tools throw that away between sessions. There's no continuity, no growth.",
   },
   {
-    icon: Bot,
-    era: "AI Agents",
-    decade: "Now",
-    description:
-      "A lean startup team can delegate open-ended work to AI that carries their brand voice and domain expertise",
+    icon: BookOpen,
+    insight: "Small teams pay the highest price",
+    detail:
+      "Enterprise teams can hire prompt engineers. A 5-person startup can't. The teams that need AI leverage the most are the ones worst served by today's tools.",
   },
 ];
 
-const pillars = [
+const beliefs = [
   {
-    icon: Fingerprint,
-    title: "Brand Voice at Scale",
+    icon: Sparkles,
+    title: "Identity is infrastructure",
     description:
-      "Every RoleplAIr carries the startup's unique voice. Customer support, sales outreach, and content stay on-brand without a review loop.",
+      "An AI agent without persistent identity is just autocomplete. Voice, boundaries, and domain knowledge should be first-class — stored, versioned, and present in every interaction.",
   },
   {
-    icon: TrendingUp,
-    title: "Ship More With Less",
+    icon: Users,
+    title: "Teams deserve compounding returns",
     description:
-      "A 5-person startup gets the output velocity of a much larger team. RoleplAIrs handle drafting, research, customer responses — so founders focus on strategy.",
+      "Every skill taught, every piece of lore added, every refinement to an agent's personality should make the whole team more capable. AI should build equity, not burn hours.",
   },
   {
-    icon: Zap,
-    title: "Compound Over Time",
+    icon: Shield,
+    title: "Ship reliably or don't ship",
     description:
-      "Unlike prompt-and-pray tools, RoleplAIrs improve as the team uses them. Skills, lore, and identity build up into a durable knowledge asset.",
+      "We've run websites serving tens of millions of users and led soldiers in disaster response. We build with the rigor those roles demand — not move-fast-and-break-things.",
   },
 ];
 
@@ -71,19 +67,19 @@ const canadianPoints = [
     icon: MapPin,
     title: "Canadian-Founded, Canadian-Hosted",
     description:
-      "Data residency and privacy compliance matter. Built by a Canadian team that understands PIPEDA and provincial privacy requirements.",
+      "Data residency and privacy compliance matter. Built by a team that understands PIPEDA and provincial privacy requirements firsthand.",
   },
   {
     icon: Users,
-    title: "Designed for Lean Teams",
+    title: "Built for Growing Teams",
     description:
-      "Purpose-built for the 3–15 person SaaS companies that make up incubator cohorts. Not enterprise bloatware scaled down.",
+      "Purpose-built for the lean SaaS companies scaling from 3 to 50 people. Not enterprise bloatware scaled down.",
   },
   {
     icon: Shield,
-    title: "BYO API Keys, Control Costs",
+    title: "BYO API Keys, No Markup",
     description:
-      "Startups bring their own AI provider keys and control costs directly. No hidden markup on API calls.",
+      "Bring your own AI provider keys and control costs directly. Transparent pricing, no hidden margins on API calls.",
   },
 ];
 
@@ -92,25 +88,25 @@ const team = [
     name: "Ryan Eves",
     role: "Chief Executive Officer",
     classTitle: "The Bard",
-    bio: "Nearly 20 years in product and design. Built products at startups and enterprises alike. Believes the best software feels effortless.",
+    bio: "15+ years in product and UX leadership. Led Unbounce's evolution to an AI/ML platform and designed EA's Network Design System. Teaches product strategy and builds things that feel effortless.",
   },
   {
     name: "Anthony Charles",
     role: "Chief Technology Officer",
     classTitle: "The Artificer",
-    bio: "30+ years building intuitive products. Seen every technology hype cycle and knows what actually works.",
+    bio: "30+ years building for the web. Software Engineering Manager at EA leading the team behind ea.com. Built game analytics visualization tools and taught web technologies at BCIT for 16 years.",
   },
   {
     name: "Rob Bauman",
     role: "Chief Operating Officer",
     classTitle: "The Paladin",
-    bio: "22+ years in operations. Former EA.com global lead who scaled systems that actually ship.",
+    bio: "25+ years leading digital operations at scale. Ran EA.com and 50+ franchise websites serving tens of millions of users in 20+ languages. Canadian Forces Company Sergeant Major with 30+ years of military leadership.",
   },
   {
     name: "Thomas Levi",
     role: "Chief Data Scientist",
     classTitle: "The Sorcerer",
-    bio: "ML expert and former physicist. Cuts through AI hype with rigorous, practical approaches.",
+    bio: "PhD in Theoretical Physics turned AI leader. Built data science teams from scratch at Unbounce and FullStory. Now VP of AI at Agiloft leading 20+ engineers. Multiple AI/ML patents pending and UBC Data Science advisory board member.",
   },
 ];
 
@@ -125,135 +121,95 @@ export default function AboutPage() {
 
           <div className="mx-auto max-w-4xl px-6 py-24 text-center sm:py-32">
             <h1 className="font-display text-4xl font-bold tracking-tight sm:text-5xl lg:text-6xl">
-              Give Every Portfolio Company a{" "}
+              80+ Years Building Products.{" "}
               <span className="bg-linear-to-r from-primary via-indigo-400 to-accent bg-clip-text text-transparent">
-                10x Team
+                One We Always Needed.
               </span>
             </h1>
             <p className="mx-auto mt-6 max-w-2xl text-lg text-muted-foreground sm:text-xl">
-              Your startups are hiring cautiously and shipping fast. RoleplAI
-              Teams gives lean SaaS teams AI agents that carry their
-              founders&apos; voice and expertise — so a team of 5 operates like
-              a team of 50.
+              We&apos;ve scaled ea.com to tens of millions of users, shipped ML
+              features that moved business metrics, published physics research,
+              taught thousands of students, and led soldiers in wildfire
+              response. Lorebound is the platform we kept wishing existed.
             </p>
           </div>
         </section>
 
-        {/* Evolution Timeline */}
+        {/* Our Thesis */}
         <section className="border-y border-border/40 bg-muted/20 py-16 sm:py-24">
-          <div className="mx-auto max-w-6xl px-6">
-            <div className="grid gap-8 md:grid-cols-3">
-              {eras.map((era, index) => (
-                <div
-                  key={era.era}
-                  className="relative rounded-xl border border-border/50 bg-card p-6 text-center"
-                >
-                  {index < eras.length - 1 && (
-                    <div className="absolute -right-4 top-1/2 z-10 hidden -translate-y-1/2 md:block">
-                      <ArrowRight className="size-6 text-muted-foreground/50" />
-                    </div>
-                  )}
-                  <div className="mx-auto mb-4 flex size-14 items-center justify-center rounded-2xl bg-primary/10">
-                    <era.icon className="size-7 text-primary" />
-                  </div>
-                  <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                    {era.decade}
-                  </p>
-                  <h3 className="mt-1 text-xl font-semibold">{era.era}</h3>
-                  <p className="mt-3 text-sm text-muted-foreground">
-                    {era.description}
-                  </p>
-                </div>
-              ))}
+          <div className="mx-auto max-w-4xl px-6">
+            <div className="text-center">
+              <h2 className="font-display text-2xl font-bold tracking-tight sm:text-3xl">
+                Our Thesis
+              </h2>
+              <p className="mx-auto mt-6 max-w-3xl text-xl text-muted-foreground">
+                AI tools treat every conversation as a blank slate. But real
+                teams don&apos;t work that way — they build shared context,
+                develop a voice, and get sharper over time. The missing layer
+                in AI isn&apos;t intelligence.{" "}
+                <span className="font-medium text-foreground">
+                  It&apos;s identity.
+                </span>
+              </p>
+              <p className="mx-auto mt-4 max-w-3xl text-lg text-muted-foreground">
+                Lorebound makes identity persistent. Your AI agents
+                remember who they are, what your team knows, and how you
+                communicate — across every session, every workflow, every team
+                member.
+              </p>
             </div>
           </div>
         </section>
 
-        {/* The Real Problem */}
+        {/* What We Saw */}
         <section className="py-16 sm:py-24">
           <div className="mx-auto max-w-4xl px-6">
             <div className="text-center">
               <h2 className="font-display text-2xl font-bold tracking-tight sm:text-3xl">
-                Your Startups Tried AI. Here&apos;s Why It Didn&apos;t Stick.
+                What We Saw
               </h2>
-              <p className="mt-2 text-xl font-medium text-primary">
-                Generic Tools Create More Work for Lean Teams
+              <p className="mt-2 text-lg text-muted-foreground">
+                Patterns from decades of building products and leading teams
               </p>
             </div>
 
-            <div className="mt-12 rounded-xl border border-border/50 bg-card p-8">
-              <div className="space-y-4">
-                <div className="flex items-start gap-3">
-                  <div className="mt-1 flex size-6 shrink-0 items-center justify-center rounded-full bg-destructive/10 text-destructive">
-                    <span className="text-sm font-bold">1</span>
+            <div className="mt-12 space-y-6">
+              {observations.map((obs) => (
+                <div
+                  key={obs.insight}
+                  className="flex items-start gap-4 rounded-xl border border-border/50 bg-card p-6"
+                >
+                  <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary/10">
+                    <obs.icon className="size-5 text-primary" />
                   </div>
-                  <p className="text-lg text-muted-foreground">
-                    <span className="font-medium text-foreground">
-                      Generic outputs dilute brand
-                    </span>{" "}
-                    — AI-generated content strips away the differentiation
-                    startups worked hard to build.
-                  </p>
-                </div>
-                <div className="flex items-start gap-3">
-                  <div className="mt-1 flex size-6 shrink-0 items-center justify-center rounded-full bg-destructive/10 text-destructive">
-                    <span className="text-sm font-bold">2</span>
+                  <div>
+                    <h3 className="text-lg font-semibold">{obs.insight}</h3>
+                    <p className="mt-1 text-muted-foreground">{obs.detail}</p>
                   </div>
-                  <p className="text-lg text-muted-foreground">
-                    <span className="font-medium text-foreground">
-                      Founders become AI editors
-                    </span>{" "}
-                    — Instead of building product and closing deals, founders
-                    spend hours fixing AI output.
-                  </p>
                 </div>
-                <div className="flex items-start gap-3">
-                  <div className="mt-1 flex size-6 shrink-0 items-center justify-center rounded-full bg-destructive/10 text-destructive">
-                    <span className="text-sm font-bold">3</span>
-                  </div>
-                  <p className="text-lg text-muted-foreground">
-                    <span className="font-medium text-foreground">
-                      Zero context about the business
-                    </span>{" "}
-                    — Off-the-shelf AI doesn&apos;t know the startup&apos;s ICP,
-                    tone, or competitive landscape.
-                  </p>
-                </div>
-              </div>
-
-              <div className="mt-8 border-t border-border/50 pt-6">
-                <p className="text-lg font-medium text-foreground">
-                  RoleplAI Teams is different. Each startup creates AI agents
-                  that learn their voice, their market, and their workflows —
-                  and get better over time.
-                </p>
-              </div>
+              ))}
             </div>
           </div>
         </section>
 
-        {/* Why Incubators Choose RoleplAI Teams */}
+        {/* What We Believe */}
         <section className="border-y border-border/40 bg-muted/20 py-16 sm:py-24">
           <div className="mx-auto max-w-6xl px-6">
             <div className="text-center">
               <h2 className="font-display text-2xl font-bold tracking-tight sm:text-3xl">
-                Why Incubators Choose RoleplAI Teams
+                What We Believe
               </h2>
-              <p className="mt-4 max-w-2xl mx-auto text-lg text-muted-foreground">
-                Your portfolio companies need tools that deliver ROI in weeks,
-                not months. Here&apos;s what we&apos;ve built for them.
-              </p>
             </div>
 
             <div className="mt-16 grid gap-8 sm:grid-cols-3">
-              {pillars.map((pillar) => (
-                <div key={pillar.title} className="text-center">
+              {beliefs.map((belief) => (
+                <div key={belief.title} className="text-center">
                   <div className="mx-auto mb-6 flex size-16 items-center justify-center rounded-2xl bg-primary/10">
-                    <pillar.icon className="size-8 text-primary" />
+                    <belief.icon className="size-8 text-primary" />
                   </div>
-                  <h3 className="text-xl font-semibold">{pillar.title}</h3>
+                  <h3 className="text-xl font-semibold">{belief.title}</h3>
                   <p className="mt-3 text-muted-foreground">
-                    {pillar.description}
+                    {belief.description}
                   </p>
                 </div>
               ))}
@@ -261,13 +217,17 @@ export default function AboutPage() {
           </div>
         </section>
 
-        {/* Built for the Canadian SaaS Ecosystem */}
+        {/* Built in Canada */}
         <section className="py-16 sm:py-24">
           <div className="mx-auto max-w-6xl px-6">
             <div className="text-center">
               <h2 className="font-display text-2xl font-bold tracking-tight sm:text-3xl">
-                Built for the Canadian SaaS Ecosystem
+                Built in Canada
               </h2>
+              <p className="mx-auto mt-4 max-w-2xl text-lg text-muted-foreground">
+                All four founders are based in British Columbia. We build where
+                we live and we take Canadian data sovereignty seriously.
+              </p>
             </div>
 
             <div className="mt-12 grid gap-8 md:grid-cols-3">
@@ -294,19 +254,22 @@ export default function AboutPage() {
           <div className="mx-auto max-w-4xl px-6">
             <div className="text-center">
               <h2 className="font-display text-2xl font-bold tracking-tight sm:text-3xl">
-                Why We&apos;re Building This
+                Why Us, Why Now
               </h2>
               <p className="mx-auto mt-8 max-w-3xl text-xl text-muted-foreground">
-                We&apos;ve spent 80+ combined years building products at
-                startups and enterprises. We know what scales: technology that
-                makes small teams dangerous, not tools that require a small team
-                just to manage them.
+                We&apos;ve led digital operations serving tens of millions of
+                users across 50+ websites in 20+ languages. We&apos;ve built AI
+                departments from scratch, shipped ML features that drove 20%
+                lifts in customer lifetime value, published physics research,
+                and held patents in machine learning. One of us has commanded
+                soldiers in wildfire disaster response.
               </p>
               <p className="mx-auto mt-6 max-w-3xl text-xl font-medium text-foreground">
-                RoleplAI Teams is the AI platform we wish existed when we were
-                scaling our own companies. AI agents that carry your
-                founders&apos; judgment, learn your startups&apos; domains, and
-                compound in value — not another chatbot with a blank prompt.
+                That breadth is the point. Building AI agents that actually work
+                requires more than ML chops — it takes operational rigor,
+                product instinct, engineering craft honed over decades, and the
+                discipline to ship reliably. Lorebound is the platform we
+                wish existed when we were scaling our own companies.
               </p>
             </div>
           </div>
@@ -317,13 +280,16 @@ export default function AboutPage() {
           <div className="mx-auto max-w-6xl px-6">
             <div className="text-center">
               <h2 className="font-display text-2xl font-bold tracking-tight sm:text-3xl">
-                The Team
+                The Founding Party
               </h2>
               <p className="mt-4 max-w-2xl mx-auto text-lg text-muted-foreground">
-                A Canadian founding team with 80+ combined years building
-                products that ship. We&apos;ve scaled systems at EA, led product
-                at startups and enterprises, and published ML research. We know
-                what hype looks like — and what works.
+                A Canadian founding team with 25+ years at Electronic Arts
+                between them, plus a PhD physicist turned AI leader, and a
+                Company Sergeant Major who commands soldiers in disaster
+                response. We&apos;ve built ea.com, designed the systems behind
+                it, shipped ML products at scale, and taught the next generation
+                of engineers. We know what hype looks like — and what actually
+                ships.
               </p>
             </div>
 
@@ -363,17 +329,18 @@ export default function AboutPage() {
 
           <div className="mx-auto max-w-4xl px-6 text-center">
             <h2 className="font-display text-2xl font-bold tracking-tight sm:text-3xl">
-              Let&apos;s Talk About Your Portfolio
+              Build With Us
             </h2>
             <p className="mt-4 text-lg text-muted-foreground">
-              We partner with incubators to roll out RoleplAI Teams across
-              cohorts. Book a call to see how your startups can ship faster with
-              AI agents that actually know their business.
+              We&apos;re looking for teams who are tired of AI that forgets who
+              it&apos;s working for. Whether you&apos;re a startup founder, an
+              incubator, or just curious — we&apos;d love to show you what
+              persistent identity changes.
             </p>
             <div className="mt-8 flex items-center justify-center gap-4">
               <Button asChild variant="gradient" size="lg" className="gap-2">
                 <Link href="/contact">
-                  Book a Demo
+                  Get in Touch
                   <ArrowRight className="size-4" />
                 </Link>
               </Button>

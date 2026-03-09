@@ -17,8 +17,8 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   if (!category) return { title: 'Category Not Found' }
 
   return {
-    title: `${category.name} | RoleplAI Teams Blog`,
-    description: category.description || `Posts about ${category.name} from the RoleplAI Teams blog.`,
+    title: `${category.name} | Lorebound Blog`,
+    description: category.description || `Posts about ${category.name} from the Lorebound blog.`,
   }
 }
 

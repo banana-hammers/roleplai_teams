@@ -224,7 +224,7 @@ export function RoleMcpManager({ roleId, mcpServers, onUpdate }: RoleMcpManagerP
             </div>
           ) : (
             <p className="text-sm text-muted-foreground">
-              No MCP servers connected to this role. Add one to give your RoleplAIr access to external tools.
+              No MCP servers connected to this role. Add one to give your agent access to external tools.
             </p>
           )}
         </CardContent>

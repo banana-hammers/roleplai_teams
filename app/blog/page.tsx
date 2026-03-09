@@ -5,8 +5,8 @@ import { BlogPostCard } from '@/components/blog/blog-post-card'
 import { BlogCategoryFilter } from '@/components/blog/blog-category-filter'
 
 export const metadata = {
-  title: 'Blog | RoleplAI Teams',
-  description: 'Thoughts on AI identity, brand voice at scale, and the future of AI agents for SaaS startups.',
+  title: 'Blog | Lorebound',
+  description: 'Thoughts on AI identity, compounding knowledge, and the future of AI agents.',
 }
 
 export default async function BlogPage({

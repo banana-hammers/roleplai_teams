@@ -42,7 +42,7 @@ export function NavbarClient({ variant, user }: NavbarClientProps) {
         {/* Logo */}
         <Link href={isAuthenticated ? '/roles' : '/'} className="flex items-center gap-2">
           <span className="font-display text-xl font-bold tracking-tight text-primary">
-            Roleplai Teams
+            Lorebound
           </span>
         </Link>
 

@@ -31,7 +31,7 @@ export function BlogJsonLd({
     },
     publisher: {
       '@type': 'Organization',
-      name: 'RoleplAI Teams',
+      name: 'Lorebound',
     },
     ...(image_url && { image: image_url }),
   }

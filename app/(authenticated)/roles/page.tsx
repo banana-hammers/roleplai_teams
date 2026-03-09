@@ -87,10 +87,10 @@ export default function RolesPage() {
             </div>
 
             <h2 className="font-display text-2xl font-bold text-center mb-3">
-              Create Your First RoleplAIr
+              Create Your First Agent
             </h2>
             <p className="text-muted-foreground text-center max-w-sm mb-8">
-              RoleplAIrs are AI agents that share your identity. They can take actions, answer questions, and grow with you.
+              Agents are AI extensions of your identity. They can take actions, answer questions, and grow with you.
             </p>
 
             <Button

@@ -12,7 +12,7 @@ export const runtime = 'edge'
  * AI Role Interview Endpoint with Nova
  * POST /api/roles/interview
  *
- * Nova interviews users to design their RoleplAIr.
+ * Nova interviews users to design their Agent.
  * Nova knows their identity core and builds roles that complement it.
  */
 export async function POST(req: NextRequest) {

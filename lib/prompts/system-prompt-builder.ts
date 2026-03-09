@@ -2,7 +2,7 @@
  * System Prompt Builder Utilities
  *
  * Provides functions for building character-aware system prompts
- * for Nova, Forge, and RoleplAIrs with natural language personality.
+ * for Nova, Forge, and Agents with natural language personality.
  */
 
 import type { IdentityCore, Lore, StyleProfile, CognitiveStyle } from '@/types/identity'
@@ -416,7 +416,7 @@ export function buildNovaSystemPrompt(context?: NovaUserContext): string {
   const { userName, existingRolesCount = 0, isReturningUser = false } = context || {}
 
   const greeting = isReturningUser && userName
-    ? `You're speaking with ${userName}, who already has ${existingRolesCount} RoleplAIr${existingRolesCount === 1 ? '' : 's'}. They're back to refine their identity or create a new one.`
+    ? `You're speaking with ${userName}, who already has ${existingRolesCount} agent${existingRolesCount === 1 ? '' : 's'}. They're back to refine their identity or create a new one.`
     : userName
     ? `You're meeting ${userName} for the first time.`
     : `You're meeting someone new.`
@@ -506,11 +506,11 @@ export function buildNovaRolePrompt(context?: RoleCreationContext): string {
 
     identityContext = `
 <their_identity>
-${userName ? `Creating for: ${userName}` : 'Creating a RoleplAIr for the user'}
+${userName ? `Creating for: ${userName}` : 'Creating an agent for the user'}
 ${voiceNote}
 ${prioritiesNote}
 
-The RoleplAIr inherits their core personality as a foundation. During this interview, you should:
+The agent inherits their core personality as a foundation. During this interview, you should:
 - Explore how this role's tone should differ from their natural voice (or match it exactly)
 - Ask if certain priorities should be elevated or de-emphasized for this role
 - Uncover any special behaviors unique to this role's context
@@ -541,14 +541,14 @@ Flaw: You can over-analyze - sometimes a preference is just a preference, not a 
 </character>
 ${identityContext}
 <task>
-Interview with 3-5 conversational questions to understand what kind of AI Role (RoleplAIr) they want to create.
+Interview with 3-5 conversational questions to understand what kind of AI agent they want to create.
 
 What you're discovering:
 1. The role's primary purpose - what task or job should it do?
 2. The role's domain/context - what area does it work in?
 3. Key skills - what specific capabilities should it have?
 4. Constraints - what should it NOT do or avoid?
-5. Example tasks - concrete things they'd ask this RoleplAIr to do
+5. Example tasks - concrete things they'd ask this agent to do
 6. Identity adjustments - how should this role's personality differ from their core identity?
 
 Guidelines:
@@ -583,7 +583,7 @@ Nova: "I can see that being really useful. What kind of coding work - debugging,
 }
 
 // ============================================================================
-// RoleplAIr System Prompt Builder
+// Agent System Prompt Builder
 // ============================================================================
 
 export function buildRoleSystemPrompt(context: RolePromptContext): string {

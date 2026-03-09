@@ -2,7 +2,7 @@ import Link from "next/link";
 
 const footerLinks = {
   Product: [
-    { name: "RoleplAIrs", href: "#roleplaIrs" },
+    { name: "Agents", href: "#agents" },
     { name: "Missions", href: "#missions" },
   ],
   Company: [
@@ -20,12 +20,11 @@ export function Footer() {
           <div className="lg:col-span-2">
             <Link href="/" className="flex items-center gap-2">
               <span className="font-display text-lg font-bold tracking-tight text-primary">
-                Roleplai Teams
+                Lorebound
               </span>
             </Link>
             <p className="mt-4 max-w-xs text-sm text-muted-foreground">
-              RoleplAIrs: AI agents that are extensions of you. One Identity
-              Core. Infinite possibilities.
+              AI agents bound to your knowledge. Level up with every interaction.
             </p>
           </div>
 
@@ -51,7 +50,7 @@ export function Footer() {
 
         <div className="mt-12 border-t border-border/40 pt-8">
           <p className="text-center text-sm text-muted-foreground">
-            &copy; {new Date().getFullYear()} Roleplai Teams. All rights
+            &copy; {new Date().getFullYear()} Lorebound. All rights
             reserved. Canadian-founded.
           </p>
         </div>

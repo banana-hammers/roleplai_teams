@@ -16,15 +16,15 @@ export function Hero() {
         <div className="flex flex-col items-center text-center">
           {/* Headline */}
           <h1 className="max-w-4xl font-display text-5xl font-bold tracking-tight sm:text-6xl lg:text-7xl">
-            AI Agents That Carry Your{" "}
+            Your Knowledge,{" "}
             <span className="bg-linear-to-r from-primary via-indigo-400 to-accent bg-clip-text text-transparent">
-              Startup&apos;s Voice
+              Amplified
             </span>
           </h1>
 
           {/* Subheadline */}
           <p className="mt-6 max-w-2xl text-lg text-muted-foreground sm:text-xl">
-            Your lean team is hiring cautiously and shipping fast. RoleplAIrs are AI agents that know your brand, your market, and your workflows — so a team of 5 ships like a team of 50.
+            Lorebound agents carry your identity, knowledge, and skills into every interaction. The more you invest, the more powerful they become.
           </p>
 
           {/* CTA */}
@@ -94,7 +94,7 @@ export function Hero() {
             {/* Value prop */}
             <div className="border-t border-border/40 bg-muted/30 p-4">
               <p className="text-sm text-muted-foreground text-left">
-                Captured in a 5-minute conversation with Nova, your AI guide.
+                Captured in a 5-minute conversation with Nova, your identity guide.
               </p>
             </div>
           </div>

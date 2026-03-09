@@ -105,7 +105,7 @@ export function IdentitySettings({ identityCore }: IdentitySettingsProps) {
         <CardHeader>
           <CardTitle>Your Identity Core</CardTitle>
           <CardDescription>
-            The soul behind every RoleplAIr you create
+            The soul behind every agent you create
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -276,7 +276,7 @@ export function IdentitySettings({ identityCore }: IdentitySettingsProps) {
       <CardHeader>
         <CardTitle>Your Identity Core</CardTitle>
         <CardDescription>
-          The soul behind every RoleplAIr you create
+          The soul behind every agent you create
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">

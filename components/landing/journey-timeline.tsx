@@ -14,8 +14,8 @@ const phases: {
   bgColor: string;
 }[] = [
   {
-    id: "start",
-    label: "Start",
+    id: "define",
+    label: "Define",
     shortLabel: "1",
     icon: Fingerprint,
     color: "text-identity-accent",
@@ -23,8 +23,8 @@ const phases: {
     bgColor: "bg-identity-accent/20",
   },
   {
-    id: "grow",
-    label: "Evolve",
+    id: "build",
+    label: "Build",
     shortLabel: "2",
     icon: Zap,
     color: "text-roles-accent",

@@ -19,7 +19,7 @@ const fraunces = Fraunces({
 });
 
 export const metadata: Metadata = {
-  title: "Roleplai Teams",
+  title: "Lorebound",
   description: "Level up by extending your identity into purpose-built roles that can take action safely",
 };
 

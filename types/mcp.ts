@@ -2,7 +2,7 @@
  * MCP Server Types
  *
  * Model Context Protocol server configurations for connecting
- * RoleplAI roles to external systems (databases, APIs, browsers).
+ * Lorebound roles to external systems (databases, APIs, browsers).
  */
 
 /**

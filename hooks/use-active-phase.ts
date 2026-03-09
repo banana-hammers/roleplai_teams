@@ -2,10 +2,10 @@
 
 import { useEffect, useState } from "react";
 
-export type Phase = "start" | "grow" | "scale";
+export type Phase = "define" | "build" | "scale";
 
 export function useActivePhase() {
-  const [activePhase, setActivePhase] = useState<Phase>("start");
+  const [activePhase, setActivePhase] = useState<Phase>("define");
 
   useEffect(() => {
     const observer = new IntersectionObserver(

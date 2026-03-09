@@ -1,6 +1,6 @@
 import { Navbar } from "@/components/navigation";
 import { Hero } from "@/components/landing/hero";
-import { PhaseRoleplAIrs } from "@/components/landing/phase-roleplaairs";
+import { PhaseBuild } from "@/components/landing/phase-build";
 import { PhaseMissions } from "@/components/landing/phase-missions";
 import { JourneyConnector } from "@/components/landing/journey-connector";
 import { JourneyTimeline } from "@/components/landing/journey-timeline";
@@ -17,28 +17,28 @@ export default function Home() {
         <JourneyTimeline />
 
         <main>
-          {/* Phase 1: START - Identity Core */}
-          <section id="phase-start">
+          {/* Phase 1: DEFINE - Identity Core */}
+          <section id="phase-define">
             <Hero />
           </section>
 
-          {/* Connector: Identity → RoleplAIrs */}
+          {/* Connector: Define → Build */}
           <JourneyConnector
-            from="identity"
-            to="roleplaairs"
-            message="Your voice powers everything"
+            from="define"
+            to="build"
+            message="Your identity fuels everything"
           />
 
-          {/* Phase 2: EVOLVE - RoleplAIrs */}
-          <section id="phase-grow">
-            <PhaseRoleplAIrs />
+          {/* Phase 2: BUILD - Agents */}
+          <section id="phase-build">
+            <PhaseBuild />
           </section>
 
-          {/* Connector: RoleplAIrs → Missions */}
+          {/* Connector: Build → Scale */}
           <JourneyConnector
-            from="roleplaairs"
-            to="missions"
-            message="From individual to team"
+            from="build"
+            to="scale"
+            message="From agent to party"
           />
 
           {/* Phase 3: SCALE - Missions */}

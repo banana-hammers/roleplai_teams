@@ -14,7 +14,7 @@ export type PhaseThreeData = {
 export type IndustryData = {
   label: string;
   icon: LucideIcon;
-  roleplAIr: {
+  agent: {
     name: string;
     description: string;
   };
@@ -42,7 +42,7 @@ export type IndustryData = {
 const techData: IndustryData = {
   label: "SaaS Startup",
   icon: Code2,
-  roleplAIr: {
+  agent: {
     name: "Founder's Right Hand",
     description: "Wears every hat, knows every context",
   },
@@ -68,9 +68,9 @@ const techData: IndustryData = {
   },
   phaseTwo: {
     benefits: [
-      "Learns your startup's ICP and messaging",
-      "Remembers every customer conversation",
-      "Adapts to your founder's voice",
+      "More lore + more skills = exponentially better output",
+      "Every interaction refines your agents further",
+      "Knowledge compounds across your entire team",
     ],
   },
   phaseThree: {

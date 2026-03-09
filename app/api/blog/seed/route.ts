@@ -87,7 +87,7 @@ const SEED_POSTS = [
     slug: 'the-identity-gap',
     excerpt:
       'Every SaaS founder has the same story: they adopted AI tools, and everything started sounding the same. Here\'s why — and what to do about it.',
-    meta_title: 'The Identity Gap: Why 81% of AI Output Sounds Nothing Like Your Brand | RoleplAI Teams',
+    meta_title: 'The Identity Gap: Why 81% of AI Output Sounds Nothing Like Your Brand | Lorebound',
     meta_description:
       '85% of teams use AI writing tools. 81% produce off-brand content. The identity gap is costing lean startups their differentiation.',
     category_slugs: ['ai-identity', 'startup-insights'],
@@ -153,14 +153,14 @@ In a market where $2 trillion in SaaS market cap evaporated in a single month �
 
 ---
 
-*RoleplAI Teams is building the identity layer for AI agents. If you're a lean SaaS team that's tired of editing AI output back into your voice, [we'd love to show you what identity-first looks like](/signup).*`,
+*Lorebound is building the identity layer for AI agents. If you're a lean SaaS team that's tired of editing AI output back into your voice, [we'd love to show you what identity-first looks like](/signup).*`,
   },
   {
     title: 'The AI Editor Tax: How Lean Teams Lose 11 Hours a Week Fixing AI Output',
     slug: 'the-ai-editor-tax',
     excerpt:
       'AI was supposed to save your team time. Instead, you\'re spending hours every day editing its output back into your voice. Here\'s what the AI Editor Tax is really costing you.',
-    meta_title: 'The AI Editor Tax: How Lean Teams Lose 11 Hours a Week Fixing AI Output | RoleplAI Teams',
+    meta_title: 'The AI Editor Tax: How Lean Teams Lose 11 Hours a Week Fixing AI Output | Lorebound',
     meta_description:
       'The average 5-person startup spends 11+ hours per week editing AI-generated content back into brand voice. That\'s a full headcount in invisible labor.',
     category_slugs: ['startup-insights', 'ai-identity'],
@@ -230,14 +230,14 @@ For lean teams evaluating AI tools, the AI Editor Tax is the metric that matters
 
 ---
 
-*The AI Editor Tax is a symptom of the [identity gap](/blog/the-identity-gap). RoleplAI Teams eliminates it by giving your AI agents persistent identity, organizational knowledge, and behavioral boundaries. [See what identity-first AI looks like](/signup).*`,
+*The AI Editor Tax is a symptom of the [identity gap](/blog/the-identity-gap). Lorebound eliminates it by giving your AI agents persistent identity, organizational knowledge, and behavioral boundaries. [See what identity-first AI looks like](/signup).*`,
   },
   {
     title: 'System Prompts Are Post-it Notes: The Case for Persistent AI Identity',
     slug: 'system-prompts-are-post-it-notes',
     excerpt:
       'Your team pastes the same brand guidelines into AI tools dozens of times a day. Each session starts from zero. There\'s a better architecture — and the industry is already moving toward it.',
-    meta_title: 'System Prompts Are Post-it Notes: The Case for Persistent AI Identity | RoleplAI Teams',
+    meta_title: 'System Prompts Are Post-it Notes: The Case for Persistent AI Identity | Lorebound',
     meta_description:
       'System prompts reset every session, drift across teams, and can\'t evolve. Persistent AI identity is the architectural shift that makes agents actually useful.',
     category_slugs: ['ai-identity', 'engineering'],
@@ -321,6 +321,6 @@ A Post-it note reminds you of something you might forget. Identity is something 
 
 ---
 
-*Ready to move beyond system prompts? RoleplAI Teams provides the full identity stack — identity core, roles, lore, skills, and boundaries — so your AI agents carry your brand with them in every interaction. [Start building your identity layer](/signup).*`,
+*Ready to move beyond system prompts? Lorebound provides the full identity stack — identity core, roles, lore, skills, and boundaries — so your AI agents carry your brand with them in every interaction. [Start building your identity layer](/signup).*`,
   },
 ]

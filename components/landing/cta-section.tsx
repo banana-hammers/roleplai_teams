@@ -22,20 +22,20 @@ export function CTASection() {
           </div>
 
           <h2 className="max-w-2xl font-display text-3xl font-bold tracking-tight sm:text-4xl lg:text-5xl">
-            Let&apos;s Talk About{" "}
+            Begin Your{" "}
             <span className="bg-linear-to-r from-primary to-accent bg-clip-text text-transparent">
-              Your Portfolio
+              Journey
             </span>
           </h2>
 
           <p className="mt-6 max-w-xl text-lg text-muted-foreground">
-            We partner with incubators to roll out RoleplAI Teams across cohorts. See how your startups can ship faster with AI agents that actually know their business.
+            Start with your Identity Core. Build agents bound to your knowledge. Watch everything compound.
           </p>
 
           <div className="mt-10 flex flex-col items-center gap-3 sm:flex-row">
             <Button asChild variant="gradient" size="lg" className="gap-2">
-              <Link href="/about#contact">
-                Book a Demo
+              <Link href="/signup">
+                Get Started
                 <ArrowRight className="size-4" />
               </Link>
             </Button>

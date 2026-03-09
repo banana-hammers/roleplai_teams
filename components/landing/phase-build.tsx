@@ -50,51 +50,51 @@ const components: {
   {
     icon: Fingerprint,
     name: "Identity Core",
-    description: "Your founder's voice carried into every customer touchpoint",
+    description: "Your voice and values, persistent in every interaction",
     color: "identity-accent",
   },
   {
     icon: BookOpen,
     name: "Lore",
-    description: "Your ICP, competitive landscape, brand guidelines — context that makes output startup-ready",
+    description: "Reusable knowledge that compounds — context that makes output yours",
     color: "context-accent",
   },
   {
     icon: Zap,
     name: "Skills",
-    description: "Capabilities that compound as your team uses them — not prompt-and-pray",
+    description: "Capabilities that level up with use — not prompt-and-pray",
     color: "skills-accent",
   },
   {
     icon: Wrench,
     name: "Tools",
-    description: "Connect your startup's stack via MCP integrations",
+    description: "Connect your stack via MCP integrations",
     color: "muted",
     muted: true,
   },
 ];
 
-export function PhaseRoleplAIrs() {
+export function PhaseBuild() {
   const { current, isTransitioning } = useIndustry();
   const Icon = current.icon;
 
   return (
-    <section id="roleplaIrs" className="bg-muted/20 py-12 sm:py-16 lg:py-20">
+    <section id="agents" className="bg-muted/20 py-12 sm:py-16 lg:py-20">
       <div className="mx-auto max-w-6xl px-6">
         <div className="text-center">
           <h2 className="font-display text-3xl font-bold tracking-tight sm:text-4xl lg:text-5xl">
             <span className="bg-linear-to-r from-roles-accent to-accent bg-clip-text text-transparent">
               Build
             </span>{" "}
-            AI Agents That Evolve With Your Startup
+            Build Agents Bound to Your Lore
           </h2>
           <p className="mt-4 text-lg text-muted-foreground">
-            RoleplAIrs learn your business and grow with your team — not generic bots you have to re-prompt every time
+            Every skill you teach, every piece of lore you add makes everything exponentially better. Knowledge compounds.
           </p>
         </div>
 
         <div className="mt-10 grid gap-8 lg:grid-cols-2">
-          {/* Left: Example RoleplAIr Card */}
+          {/* Left: Example Agent Card */}
           <div className="flex items-center justify-center">
             <div
               className={cn(
@@ -110,9 +110,9 @@ export function PhaseRoleplAIrs() {
                   <Icon className="size-6 text-roles-accent" />
                 </div>
                 <div className="flex-1">
-                  <h3 className="font-semibold">{current.roleplAIr.name}</h3>
+                  <h3 className="font-semibold">{current.agent.name}</h3>
                   <p className="text-sm text-muted-foreground">
-                    {current.roleplAIr.description}
+                    {current.agent.description}
                   </p>
                 </div>
               </div>
@@ -218,7 +218,7 @@ export function PhaseRoleplAIrs() {
             >
               <div className="flex items-center gap-2 text-roles-accent">
                 <Sparkles className="size-5" />
-                <h4 className="font-semibold">AI that evolves with your team</h4>
+                <h4 className="font-semibold">The compound growth loop</h4>
               </div>
               <ul className="mt-3 space-y-2">
                 {current.phaseTwo.benefits.map((benefit, i) => (
